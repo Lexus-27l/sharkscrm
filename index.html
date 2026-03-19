@@ -397,6 +397,7 @@ input[type=file]{display:none}
       <button class="tab-btn on" data-t="stats"    onclick="aTab('stats')">📊 Статистика</button>
       <button class="tab-btn"    data-t="upload"   onclick="aTab('upload')">📤 Загрузить Excel</button>
       <button class="tab-btn"    data-t="textup"   onclick="aTab('textup')">📝 Загрузить текст</button>
+      <button class="tab-btn"    data-t="bases"    onclick="aTab('bases')">📁 Мои базы</button>
       <button class="tab-btn"    data-t="add"      onclick="aTab('add')">➕ Добавить вручную</button>
       <button class="tab-btn"    data-t="clients"  onclick="aTab('clients')">📋 База клиентов</button>
       <button class="tab-btn"    data-t="managers" onclick="aTab('managers')">👥 Менеджеры</button>
@@ -459,6 +460,10 @@ input[type=file]{display:none}
             <li>Форматы: <code>.xlsx</code>, <code>.xls</code>, <code>.csv</code></li>
           </ol>
         </div>
+        <div class="fg" style="margin-bottom:12px">
+            <label>Название базы *</label>
+            <input id="excel-base-name" placeholder="Например: База_МТС или Питер_январь">
+          </div>
         <div class="upload-zone" onclick="document.getElementById('fu').click()">
           <span class="upload-ico">📂</span>
           <p>Нажми чтобы выбрать файл Excel или CSV</p>
@@ -486,6 +491,10 @@ input[type=file]{display:none}
         </div>
         <div class="card">
           <div class="card-title">Вставь текст или загрузи .txt файл</div>
+          <div class="fg" style="margin-bottom:12px">
+            <label>Название базы *</label>
+            <input id="txt-base-name" placeholder="Например: Вологда_57 или LEXUS_Казань">
+          </div>
           <div style="display:flex;gap:10px;margin-bottom:12px">
             <button class="btn btn-ghost" onclick="document.getElementById('txt-file').click()">📂 Выбрать .txt файл</button>
             <input type="file" id="txt-file" accept=".txt" style="display:none" onchange="loadTxtFile(event)">
@@ -494,6 +503,23 @@ input[type=file]{display:none}
           <textarea id="txt-area" style="min-height:200px;font-family:var(--mono);font-size:12px;resize:vertical" placeholder="Вставь текст здесь или загрузи файл..."></textarea>
           <div id="txt-preview" style="margin-top:10px;font-size:12px;color:var(--text2)"></div>
           <button class="btn btn-pri" style="margin-top:12px" onclick="importText()">✅ Загрузить в базу</button>
+        </div>
+      </div>
+
+      <!-- BASES MANAGEMENT -->
+      <div class="tab-pane" id="tp-bases">
+        <div class="card">
+          <div class="card-title">📁 Управление базами</div>
+          <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:flex-end">
+            <div class="fg" style="flex:1;min-width:200px">
+              <label>Поиск по названию</label>
+              <input id="bases-search" placeholder="Введите название..." oninput="filterBases()">
+            </div>
+            <button class="btn btn-ghost" onclick="loadBases()">🔄 Обновить</button>
+          </div>
+          <div id="bases-list">
+            <div class="empty-cell">Загрузка...</div>
+          </div>
         </div>
       </div>
 
@@ -774,6 +800,7 @@ window.aTab = t => {
   if (t==='clients')  loadClients();
   if (t==='managers') loadMgrList();
   if (t==='textup')   {}
+  if (t==='bases')    loadBases();
 };
 
 /* ──────── STATS ──────── */
@@ -929,11 +956,15 @@ window.handleFile = e => {
 async function doImport() {
   const rows    = importData;
   const headers = rows[0].map(h => String(h).toLowerCase().trim());
-  // Load existing deceased names to check duplicates
+  const baseName = (el('excel-base-name') && el('excel-base-name').value.trim()) || ('Excel_' + new Date().toLocaleDateString('ru-RU'));
   const existingSnap = await getDocs(collection(db,'clients'));
   const existingNames = new Set(existingSnap.docs.map(d => (d.data().deceased||'').toLowerCase().trim()));
+  // Create base record
+  const baseRef = await addDoc(collection(db,'bases'), {
+    name: baseName, createdAt: Timestamp.now(), total: 0, clientIds: []
+  });
   const batch   = writeBatch(db);
-  let count = 0; let skipped = 0;
+  let count = 0; let skipped = 0; const addedIds = [];
   for (let i = 1; i < rows.length; i++) {
     const row = rows[i];
     const get = (...keys) => { for (const k of keys) { const idx=headers.indexOf(k); if (idx>=0&&row[idx]) return String(row[idx]); } return ''; };
@@ -957,7 +988,8 @@ async function doImport() {
     if (count % 400 === 0) { await batch.commit(); /* reset batch impossible with sdk v9 modular, just commit */ }
   }
   await batch.commit();
-  const msg = skipped > 0 ? '✅ Загружено '+count+' | ⚠️ Пропущено дублей: '+skipped : '✅ Загружено '+count+' клиентов';
+  await updateDoc(doc(db,'bases',baseRef.id), { total: count, clientIds: addedIds });
+  const msg = skipped > 0 ? '✅ Загружено '+count+' | ⚠️ Пропущено дублей: '+skipped : '✅ Загружено '+count+' клиентов в базу "'+baseName+'"';
   toast(msg);
   el('import-preview').style.display = 'none';
   importData = [];
@@ -1233,146 +1265,262 @@ window.loadTxtFile = (e) => {
 window.importText = async () => {
   const raw = el('txt-area').value;
   if (!raw.trim()) { toast('⚠️ Вставь текст!','warn'); return; }
+  const baseName = el('txt-base-name').value.trim() || ('База_' + new Date().toLocaleDateString('ru-RU'));
   
   const clients = parseTxtClients(raw);
   if (!clients.length) { toast('⚠️ Не удалось распознать клиентов','warn'); return; }
   
   el('txt-preview').textContent = '⏳ Загружаю ' + clients.length + ' клиентов...';
   
-  // Load existing for dedup
   const existingSnap = await getDocs(collection(db,'clients'));
   const existingNames = new Set(existingSnap.docs.map(d => (d.data().deceased||'').toLowerCase().trim()));
   
+  // Create base record
+  const baseRef = await addDoc(collection(db,'bases'), {
+    name: baseName,
+    createdAt: Timestamp.now(),
+    total: 0,
+    clientIds: []
+  });
+  
   const batch = writeBatch(db);
   let count = 0; let skipped = 0;
+  const addedIds = [];
   
   for (const c of clients) {
     if (existingNames.has(c.deceased.toLowerCase().trim())) { skipped++; continue; }
     const ref = doc(collection(db,'clients'));
+    addedIds.push(ref.id);
     batch.set(ref, {
-      deceased: c.deceased,
-      dob: c.dob || '',
-      region: c.region || '',
-      relatives: c.relatives || [],
+      deceased: c.deceased, dob: c.dob || '',
+      region: c.region || '', relatives: c.relatives || [],
       status: 'new', result: null, comment: '',
-      calledBy: null, calledAt: null, createdAt: Timestamp.now()
+      calledBy: null, calledAt: null,
+      baseId: baseRef.id, baseName: baseName,
+      createdAt: Timestamp.now()
     });
     count++;
   }
   await batch.commit();
   
+  // Update base with real count
+  await updateDoc(doc(db,'bases',baseRef.id), { total: count, clientIds: addedIds });
+  
   const msg = skipped > 0 
     ? '✅ Загружено ' + count + ' | ⚠️ Пропущено дублей: ' + skipped 
-    : '✅ Загружено ' + count + ' клиентов';
+    : '✅ Загружено ' + count + ' клиентов в базу "' + baseName + '"';
   el('txt-preview').textContent = msg;
   toast(msg);
 };
 
 function parseTxtClients(raw) {
   const clients = [];
-  // Split by lines
-  const lines = raw.split('\n').map(l => l.trim());
-  
+  const lines = raw.split('\n');
   let current = null;
   let currentRel = null;
   let inPhones = false;
-  
+
+  function cleanEmoji(s) {
+    return s.replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27FF}\u{2300}-\u{23FF}\uFE00-\uFE0F\u200D]/gu, '').trim();
+  }
+
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    
-    // Detect new client: line contains <b>...</b> 
-    if (line.match(/<b>/i) || line.match(/^\d+\./)) {
-      // Save previous
+    const raw_line = lines[i];
+    const stripped = raw_line.trim();
+    const clean = cleanEmoji(stripped);
+
+    // New client: "N. ... <b>NAME</b> DATE"
+    if (/^\d+\./.test(clean) && stripped.includes('<b>')) {
       if (current) {
-        if (currentRel) { current.relatives.push({...currentRel}); currentRel = null; }
+        if (currentRel) current.relatives.push({...currentRel});
         clients.push(current);
       }
-      inPhones = false;
-      // Parse deceased name and dob
-      let clean = line.replace(/^\d+\.\s*/, '').replace(/<[^>]+>/g, '').trim();
-      // Extract dob: pattern DD.MM.YYYY at end
-      const dobMatch = clean.match(/(\d{1,2}\.\d{1,2}\.\d{4})$/);
-      const dob = dobMatch ? dobMatch[1] : '';
-      const deceased = clean.replace(/(\d{1,2}\.\d{1,2}\.\d{4})$/, '').trim();
+      inPhones = false; currentRel = null;
+      let namePart = stripped.replace(/<[^>]+>/g, '').replace(/^\d+\.\s*/, '');
+      namePart = cleanEmoji(namePart);
+      const dobM = namePart.match(/(\d{1,2}\.\d{2}\.\d{4})/);
+      const dob = dobM ? dobM[1] : '';
+      const deceased = namePart.replace(/\d{1,2}\.\d{2}\.\d{4}/, '').trim();
       current = { deceased, dob, region: '', relatives: [] };
-      currentRel = null;
       continue;
     }
-    
+
     if (!current) continue;
-    
-    // Address of deceased
-    if (line.match(/^адрес цели:/i)) {
-      current.region = line.replace(/^адрес цели:\s*/i, '').trim();
-      inPhones = false;
-      continue;
+
+    // Deceased address
+    if (/^адрес цели:/i.test(clean)) {
+      current.region = clean.replace(/^адрес цели:\s*/i, '').trim();
+      inPhones = false; continue;
     }
-    
-    // New relative: starts with #N
-    if (line.match(/^#\d+/)) {
+
+    // Skip "Родственников: N"
+    if (/^родственников:/i.test(clean)) continue;
+
+    // New relative: "#N NAME DATE"
+    const relM = clean.match(/^#(\d+)\s+(.+)/);
+    if (relM) {
       if (currentRel) current.relatives.push({...currentRel});
       inPhones = false;
-      let relLine = line.replace(/^#\d+\s*/, '').trim();
-      const relDobMatch = relLine.match(/(\d{1,2}\.\d{1,2}\.\d{4})/);
-      const relDob = relDobMatch ? relDobMatch[1] : '';
-      const relName = relLine.replace(/(\d{1,2}\.\d{1,2}\.\d{4})/, '').replace(/\(.*?\)/, '').trim();
-      currentRel = { name: relName, dob: relDob, phone: '', address: '', passport: '', snils: '', relation: '' };
+      let relText = relM[2];
+      const rdob = (relText.match(/(\d{1,2}\.\d{2}\.\d{4})/) || [])[1] || '';
+      const relName = relText.replace(/\d{1,2}\.\d{2}\.\d{4}/, '').replace(/\(.*?\)/g, '').trim();
+      currentRel = { name: relName, dob: rdob, phone: '', address: '', passport: '', snils: '', relation: '' };
       continue;
     }
-    
+
     if (!currentRel) continue;
-    
-    // Relative address
-    if (line.match(/^адрес:/i)) {
-      currentRel.address = line.replace(/^адрес:\s*/i, '').trim();
+
+    // Relative fields
+    if (/^адрес:/i.test(clean)) {
+      currentRel.address = clean.replace(/^адрес:\s*/i, '').trim();
       inPhones = false;
-      continue;
-    }
-    // Passport
-    if (line.match(/^паспорт:/i)) {
-      currentRel.passport = line.replace(/^паспорт:\s*/i, '').trim();
+    } else if (/^паспорт:/i.test(clean)) {
+      currentRel.passport = clean.replace(/^паспорт:\s*/i, '').trim();
       inPhones = false;
-      continue;
-    }
-    // SNILS
-    if (line.match(/^снилс:/i)) {
-      currentRel.snils = line.replace(/^снилс:\s*/i, '').trim();
+    } else if (/^снилс:/i.test(clean)) {
+      const val = clean.replace(/^снилс:\s*/i, '').trim();
+      currentRel.snils = val === '—' ? '' : val;
       inPhones = false;
-      continue;
-    }
-    // Phones section
-    if (line.match(/^номера:/i)) {
+    } else if (/^номера:/i.test(clean)) {
       inPhones = true;
-      continue;
-    }
-    // Phone lines (start with • or - or digit)
-    if (inPhones && (line.match(/^[•\-•]/) || line.match(/^7\d{10}/))) {
-      const phoneMatch = line.match(/(7\d{10})/);
-      if (phoneMatch) {
-        if (!currentRel.phone) {
-          currentRel.phone = phoneMatch[1];
-        } else {
-          // Additional phones — append
-          currentRel.phone += ', ' + phoneMatch[1];
-        }
+    } else if (inPhones && stripped) {
+      const pm = stripped.match(/(7\d{10})/);
+      if (pm) {
+        currentRel.phone = currentRel.phone ? currentRel.phone + ', ' + pm[1] : pm[1];
       }
-      continue;
-    }
-    
-    // Empty line or separator — stop phones
-    if (!line || line.match(/^-{3,}/)) {
+    } else if (!stripped || /^[─═\-]{3,}/.test(stripped)) {
       inPhones = false;
     }
   }
-  
-  // Don't forget last client
+
   if (current) {
     if (currentRel) current.relatives.push({...currentRel});
     if (current.deceased) clients.push(current);
   }
-  
+
   return clients;
 }
+
+
+/* ──────── BASES MANAGEMENT ──────── */
+let allBases = [];
+
+async function loadBases() {
+  el('bases-list').innerHTML = '<div class="empty-cell">⏳ Загрузка...</div>';
+  const snap = await getDocs(query(collection(db,'bases'), orderBy('createdAt','desc')));
+  allBases = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  renderBases(allBases);
+}
+
+window.filterBases = () => {
+  const q = el('bases-search').value.toLowerCase().trim();
+  renderBases(q ? allBases.filter(b => b.name.toLowerCase().includes(q)) : allBases);
+};
+
+function renderBases(bases) {
+  if (!bases.length) {
+    el('bases-list').innerHTML = '<div class="empty-cell">Нет баз. Загрузи первую!</div>';
+    return;
+  }
+  el('bases-list').innerHTML = `
+    <table class="clients-table">
+      <thead><tr>
+        <th>Название</th><th>Дата</th><th>Клиентов</th><th>Прозвонено</th><th>Осталось</th><th>Прогресс</th><th></th>
+      </tr></thead>
+      <tbody>${bases.map(b => {
+        const total = b.total || 0;
+        const called = b.calledCount || 0;
+        const remain = total - called;
+        const pct = total > 0 ? Math.round(called/total*100) : 0;
+        return `<tr>
+          <td><b style="color:var(--acc2)">${b.name}</b></td>
+          <td style="color:var(--text2);font-size:12px">${fmt(b.createdAt)}</td>
+          <td class="num" style="color:var(--text)">${total}</td>
+          <td class="num" style="color:var(--green)">${called}</td>
+          <td class="num" style="color:var(--yellow)">${remain}</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="flex:1;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;min-width:60px">
+                <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--acc),var(--cyan));border-radius:3px"></div>
+              </div>
+              <span style="font-size:11px;color:var(--text2);font-family:var(--mono)">${pct}%</span>
+            </div>
+          </td>
+          <td>
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-ghost btn-sm" onclick="exportBase('${b.id}','${b.name.replace(/'/g,'')}')" title="Выгрузить">📥 Выгрузить</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteBase('${b.id}','${b.name.replace(/'/g,'')}')" title="Удалить">🗑</button>
+            </div>
+          </td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>`;
+  
+  // Load called counts async
+  loadBaseStats(bases);
+}
+
+async function loadBaseStats(bases) {
+  const clientsSnap = await getDocs(collection(db,'clients'));
+  const clients = clientsSnap.docs.map(d => ({id:d.id,...d.data()}));
+  
+  bases.forEach(b => {
+    const bClients = clients.filter(c => c.baseId === b.id);
+    const called = bClients.filter(c => c.result && c.result !== 'callback').length;
+    b.calledCount = called;
+  });
+  renderBases(bases);
+}
+
+window.exportBase = async (baseId, baseName) => {
+  toast('⏳ Подготовка выгрузки...');
+  const snap = await getDocs(query(collection(db,'clients'), where('baseId','==',baseId)));
+  const clients = snap.docs.map(d => d.data());
+  
+  if (!clients.length) { toast('⚠️ База пуста','warn'); return; }
+  
+  // Build CSV
+  const rows = [['ФИО умершего','Дата рождения','Регион/Адрес','Родственник 1','Телефон 1','Паспорт 1','СНИЛС 1','Родственник 2','Телефон 2','Паспорт 2','СНИЛС 2','Результат','Комментарий','Дата звонка']];
+  
+  clients.forEach(c => {
+    const r1 = (c.relatives||[])[0] || {};
+    const r2 = (c.relatives||[])[1] || {};
+    rows.push([
+      c.deceased||'', c.dob||'', c.region||'',
+      r1.name||'', r1.phone||'', r1.passport||'', r1.snils||'',
+      r2.name||'', r2.phone||'', r2.passport||'', r2.snils||'',
+      c.result||'', c.comment||'',
+      c.calledAt ? (c.calledAt.toDate ? c.calledAt.toDate().toLocaleDateString('ru-RU') : '') : ''
+    ]);
+  });
+  
+  const csvContent = rows.map(r => r.map(v => '"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob = new Blob(['\uFEFF'+csvContent], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = baseName + '.csv';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('✅ Выгружено ' + clients.length + ' клиентов!');
+};
+
+window.deleteBase = async (baseId, baseName) => {
+  if (!confirm('Удалить базу "' + baseName + '" и всех её клиентов?')) return;
+  toast('⏳ Удаляю...');
+  
+  // Delete all clients in this base
+  const snap = await getDocs(query(collection(db,'clients'), where('baseId','==',baseId)));
+  const batch = writeBatch(db);
+  snap.docs.forEach(d => batch.delete(d.ref));
+  await batch.commit();
+  
+  // Delete base record
+  await deleteDoc(doc(db,'bases',baseId));
+  
+  toast('✅ База "' + baseName + '" удалена');
+  loadBases();
+};
 
 </script>
 </body>
