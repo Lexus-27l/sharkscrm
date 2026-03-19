@@ -645,7 +645,9 @@ input[type=file]{display:none}
       </div>
     </div>
 
-    <div class="call-area">
+    <!-- Callback queue sidebar -->
+    <div style="display:flex;flex:1;overflow:hidden">
+      <div class="call-area" id="main-call-area" style="flex:1">
       <div class="call-loading" id="cl-loading"><span class="spin">⏳</span>Загрузка...</div>
       <div class="call-empty" id="cl-empty">
         <div class="ico">🎉</div>
@@ -679,6 +681,18 @@ input[type=file]{display:none}
         </div>
       </div>
     </div>
+      </div><!-- main-call-area -->
+      <!-- Callback sidebar -->
+      <div id="callback-sidebar" style="width:260px;min-width:260px;background:var(--bg2);border-left:1px solid var(--brd);display:flex;flex-direction:column;overflow:hidden">
+        <div style="padding:12px 14px;border-bottom:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">🔄 Перезвоны</span>
+          <span id="cb-count" style="background:var(--acc);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px">0</span>
+        </div>
+        <div id="cb-list" style="flex:1;overflow-y:auto;padding:8px">
+          <div style="text-align:center;padding:20px;color:var(--text2);font-size:12px">Перезвонов нет</div>
+        </div>
+      </div>
+    </div><!-- flex wrapper -->
   </div><!-- manager-panel -->
 
 </div><!-- screen-app -->
@@ -1214,8 +1228,10 @@ function renderCard(c) {
   rtag.textContent = c.region || '';
   rtag.style.display = c.region ? 'inline-block' : 'none';
   const dobtag = el('cc-dob');
-  dobtag.textContent = c.dob ? '🎂 ' + c.dob : '';
-  dobtag.style.display = c.dob ? 'inline-block' : 'none';
+  if (dobtag) {
+    dobtag.textContent = c.dob ? '🎂 ' + c.dob : '';
+    dobtag.style.display = c.dob ? 'inline-block' : 'none';
+  }
   el('cc-comment').value = c.comment || '';
 
   el('cc-rels').innerHTML = (c.relatives||[]).length
@@ -1225,7 +1241,9 @@ function renderCard(c) {
             <span class="rel-fname">${r.name||'—'}</span>
             ${r.relation?`<span class="rel-relation">${r.relation}</span>`:''}
           </div>
-          ${r.phone?`<div class="rel-phone">📞 <a href="tel:${r.phone}">${r.phone}</a></div>`:''}
+          ${r.phone ? r.phone.split(',').map(p => p.trim()).filter(Boolean).map(p => 
+            `<div class="rel-phone">📞 <a href="tel:${p}" onclick="event.stopPropagation()">${p}</a></div>`
+          ).join('') : ''}
           ${r.dob?`<div class="rel-addr">🎂 ${r.dob}</div>`:''}
           ${r.passport?`<div class="rel-addr">🪪 Паспорт: ${r.passport}</div>`:''}
           ${r.snils?`<div class="rel-addr">📋 СНИЛС: ${r.snils}</div>`:''}
@@ -1242,14 +1260,82 @@ window.act = async result => {
   const id = el('cc-id').value;
   const comment = el('cc-comment').value;
   if (!id) return;
+  
   await updateDoc(doc(db,'clients',id), {
     result, status:'called', comment,
     calledBy:me.uid, calledAt:Timestamp.now()
   });
+  
+  // If callback - add to sidebar queue
+  if (result === 'callback') {
+    addToCallbackQueue(id);
+  }
+  
   const card = el('call-card');
   card.classList.add('leaving');
   el('cc-comment').value = '';
   setTimeout(() => { card.classList.remove('leaving'); loadNextClient(); }, 280);
+};
+
+/* ──────── CALLBACK QUEUE ──────── */
+let callbackQueue = []; // [{id, deceased, relatives, region, dob, comment}]
+
+async function addToCallbackQueue(clientId) {
+  if (callbackQueue.length >= 10) {
+    toast('⚠️ Максимум 10 перезвонов в очереди','warn');
+    return;
+  }
+  // Get client data
+  const snap = await getDoc(doc(db,'clients',clientId));
+  if (!snap.exists()) return;
+  const c = { id: clientId, ...snap.data() };
+  // Don't add duplicates
+  if (callbackQueue.find(q => q.id === clientId)) return;
+  callbackQueue.push(c);
+  renderCallbackSidebar();
+}
+
+function renderCallbackSidebar() {
+  const countEl = el('cb-count');
+  const listEl = el('cb-list');
+  countEl.textContent = callbackQueue.length;
+  countEl.style.background = callbackQueue.length > 0 ? 'var(--yellow)' : 'var(--acc)';
+  
+  if (!callbackQueue.length) {
+    listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text2);font-size:12px">Перезвонов нет</div>';
+    return;
+  }
+  
+  listEl.innerHTML = callbackQueue.map((c, i) => `
+    <div style="background:var(--bg3);border:1px solid var(--brd);border-radius:10px;padding:10px;margin-bottom:8px;cursor:pointer" onclick="openCallbackClient(${i})">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px">
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--text);line-height:1.3">${c.deceased||'—'}</div>
+          ${c.dob ? `<div style="font-size:10px;color:var(--text2)">🎂 ${c.dob}</div>` : ''}
+          ${(c.relatives||[]).length > 0 ? `<div style="font-size:10px;color:var(--cyan);margin-top:3px">📞 ${(c.relatives[0].phone||'').split(',')[0]||'нет номера'}</div>` : ''}
+          ${c.comment ? `<div style="font-size:10px;color:var(--yellow);margin-top:3px;font-style:italic">"${c.comment.slice(0,40)}${c.comment.length>40?'...':''}"</div>` : ''}
+        </div>
+        <button onclick="event.stopPropagation();removeFromCallback(${i})" style="background:none;border:none;color:var(--text2);font-size:14px;cursor:pointer;padding:0;flex-shrink:0">✕</button>
+      </div>
+      <button onclick="event.stopPropagation();openCallbackClient(${i})" style="margin-top:8px;width:100%;padding:5px;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.3);border-radius:6px;color:var(--yellow);font-size:11px;font-weight:700;font-family:var(--font);cursor:pointer">
+        📞 Перезвонить
+      </button>
+    </div>`).join('');
+}
+
+window.openCallbackClient = async (idx) => {
+  const c = callbackQueue[idx];
+  if (!c) return;
+  // Show this client in the main card
+  renderCard(c);
+  el('cc-id').value = c.id;
+  // Scroll to card
+  el('call-card').scrollIntoView({ behavior: 'smooth' });
+};
+
+window.removeFromCallback = (idx) => {
+  callbackQueue.splice(idx, 1);
+  renderCallbackSidebar();
 };
 
 
