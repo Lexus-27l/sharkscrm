@@ -638,8 +638,11 @@ const RESULT_KEYS = Object.keys(RESULTS);
 
 /* ──────── AUTH ──────── */
 onAuthStateChanged(auth, async user => {
+  console.log('Auth state changed:', user ? user.email : 'null');
   if (!user) { show('login'); return; }
+  console.log('Loading user doc for UID:', user.uid);
   const snap = await getDoc(doc(db, 'user', user.uid));
+  console.log('User doc exists:', snap.exists(), snap.exists() ? snap.data() : 'NOT FOUND');
   if (!snap.exists()) { await signOut(auth); show('login'); return; }
   me = { uid: user.uid, ...snap.data() };
   show('app');
