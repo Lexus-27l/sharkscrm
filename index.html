@@ -395,7 +395,8 @@ input[type=file]{display:none}
   <div id="admin-panel">
     <div class="tab-bar">
       <button class="tab-btn on" data-t="stats"    onclick="aTab('stats')">📊 Статистика</button>
-      <button class="tab-btn"    data-t="upload"   onclick="aTab('upload')">📤 Загрузить базу</button>
+      <button class="tab-btn"    data-t="upload"   onclick="aTab('upload')">📤 Загрузить Excel</button>
+      <button class="tab-btn"    data-t="textup"   onclick="aTab('textup')">📝 Загрузить текст</button>
       <button class="tab-btn"    data-t="add"      onclick="aTab('add')">➕ Добавить вручную</button>
       <button class="tab-btn"    data-t="clients"  onclick="aTab('clients')">📋 База клиентов</button>
       <button class="tab-btn"    data-t="managers" onclick="aTab('managers')">👥 Менеджеры</button>
@@ -470,13 +471,40 @@ input[type=file]{display:none}
         </div>
       </div>
 
+      <!-- TEXT UPLOAD -->
+      <div class="tab-pane" id="tp-textup">
+        <div class="notice">
+          <h4>📝 Формат текстового файла</h4>
+          <ol>
+            <li>Каждый клиент начинается с: <code>&lt;b&gt;ФИО&lt;/b&gt; ДД.ММ.ГГГГ</code></li>
+            <li>Адрес умершего: <code>Адрес цели: ...</code></li>
+            <li>Родственники: <code>#1 ФИО ДД.ММ.ГГГГ</code></li>
+            <li>Данные родственника: <code>Адрес:</code>, <code>Паспорт:</code>, <code>СНИЛС:</code></li>
+            <li>Телефоны: после строки <code>Номера:</code> — каждый с новой строки через • или -</li>
+            <li>Разделитель между клиентами: пустая строка или <code>---</code></li>
+          </ol>
+        </div>
+        <div class="card">
+          <div class="card-title">Вставь текст или загрузи .txt файл</div>
+          <div style="display:flex;gap:10px;margin-bottom:12px">
+            <button class="btn btn-ghost" onclick="document.getElementById('txt-file').click()">📂 Выбрать .txt файл</button>
+            <input type="file" id="txt-file" accept=".txt" style="display:none" onchange="loadTxtFile(event)">
+            <button class="btn btn-ghost" onclick="el('txt-area').value=''">🗑 Очистить</button>
+          </div>
+          <textarea id="txt-area" style="min-height:200px;font-family:var(--mono);font-size:12px;resize:vertical" placeholder="Вставь текст здесь или загрузи файл..."></textarea>
+          <div id="txt-preview" style="margin-top:10px;font-size:12px;color:var(--text2)"></div>
+          <button class="btn btn-pri" style="margin-top:12px" onclick="importText()">✅ Загрузить в базу</button>
+        </div>
+      </div>
+
       <!-- ADD MANUAL -->
       <div class="tab-pane" id="tp-add">
         <div class="card">
           <div class="card-title">☠️ Умерший</div>
-          <div class="form-row c2">
+          <div class="form-row c3">
             <div class="fg"><label>ФИО умершего *</label><input id="m-dec" placeholder="Фамилия Имя Отчество"></div>
-            <div class="fg"><label>Регион</label><input id="m-reg" placeholder="Например: Донецк"></div>
+            <div class="fg"><label>Дата рождения</label><input type="date" id="m-dob"></div>
+            <div class="fg"><label>Регион / Адрес</label><input id="m-reg" placeholder="Например: Донецк"></div>
           </div>
         </div>
         <div class="card">
@@ -604,6 +632,7 @@ input[type=file]{display:none}
           <div class="call-name"><span class="skull">☠️</span><span id="cc-name"></span></div>
           <div class="call-tags">
             <span class="call-tag region" id="cc-region"></span>
+            <span class="call-tag" id="cc-dob" style="color:var(--yellow);border-color:rgba(245,158,11,.35);background:rgba(245,158,11,.08)"></span>
           </div>
         </div>
         <div class="call-rels">
@@ -744,6 +773,7 @@ window.aTab = t => {
   if (t==='stats')    loadStats();
   if (t==='clients')  loadClients();
   if (t==='managers') loadMgrList();
+  if (t==='textup')   {}
 };
 
 /* ──────── STATS ──────── */
@@ -974,12 +1004,12 @@ window.saveManual = async () => {
   const dupQ = await getDocs(query(collection(db,'clients'), where('deceased','==',deceased)));
   if (!dupQ.empty) { toast('⚠️ Клиент "'+deceased+'" уже есть в базе!','warn'); return; }
   await addDoc(collection(db,'clients'), {
-    deceased, region:v('m-reg'),
+    deceased, dob:v('m-dob')||'', region:v('m-reg'),
     relatives:manRels.filter(r=>r.name||r.phone||r.passport||r.snils).map(r=>({...r})),
     status:'new', result:null, comment:'',
     calledBy:null, calledAt:null, createdAt:Timestamp.now()
   });
-  el('m-dec').value=''; el('m-reg').value='';
+  el('m-dec').value=''; el('m-reg').value=''; el('m-dob').value='';
   manRels = [{ name:'',phone:'',address:'',relation:'',dob:'',passport:'',snils:'' }];
   renderManRels();
   toast('✅ Клиент добавлен');
@@ -1151,6 +1181,9 @@ function renderCard(c) {
   const rtag = el('cc-region');
   rtag.textContent = c.region || '';
   rtag.style.display = c.region ? 'inline-block' : 'none';
+  const dobtag = el('cc-dob');
+  dobtag.textContent = c.dob ? '🎂 ' + c.dob : '';
+  dobtag.style.display = c.dob ? 'inline-block' : 'none';
   el('cc-comment').value = c.comment || '';
 
   el('cc-rels').innerHTML = (c.relatives||[]).length
@@ -1186,6 +1219,160 @@ window.act = async result => {
   el('cc-comment').value = '';
   setTimeout(() => { card.classList.remove('leaving'); loadNextClient(); }, 280);
 };
+
+
+/* ──────── TEXT IMPORT ──────── */
+window.loadTxtFile = (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => { el('txt-area').value = ev.target.result; };
+  reader.readAsText(file, 'UTF-8');
+};
+
+window.importText = async () => {
+  const raw = el('txt-area').value;
+  if (!raw.trim()) { toast('⚠️ Вставь текст!','warn'); return; }
+  
+  const clients = parseTxtClients(raw);
+  if (!clients.length) { toast('⚠️ Не удалось распознать клиентов','warn'); return; }
+  
+  el('txt-preview').textContent = '⏳ Загружаю ' + clients.length + ' клиентов...';
+  
+  // Load existing for dedup
+  const existingSnap = await getDocs(collection(db,'clients'));
+  const existingNames = new Set(existingSnap.docs.map(d => (d.data().deceased||'').toLowerCase().trim()));
+  
+  const batch = writeBatch(db);
+  let count = 0; let skipped = 0;
+  
+  for (const c of clients) {
+    if (existingNames.has(c.deceased.toLowerCase().trim())) { skipped++; continue; }
+    const ref = doc(collection(db,'clients'));
+    batch.set(ref, {
+      deceased: c.deceased,
+      dob: c.dob || '',
+      region: c.region || '',
+      relatives: c.relatives || [],
+      status: 'new', result: null, comment: '',
+      calledBy: null, calledAt: null, createdAt: Timestamp.now()
+    });
+    count++;
+  }
+  await batch.commit();
+  
+  const msg = skipped > 0 
+    ? '✅ Загружено ' + count + ' | ⚠️ Пропущено дублей: ' + skipped 
+    : '✅ Загружено ' + count + ' клиентов';
+  el('txt-preview').textContent = msg;
+  toast(msg);
+};
+
+function parseTxtClients(raw) {
+  const clients = [];
+  // Split by lines
+  const lines = raw.split('\n').map(l => l.trim());
+  
+  let current = null;
+  let currentRel = null;
+  let inPhones = false;
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    
+    // Detect new client: line contains <b>...</b> 
+    if (line.match(/<b>/i) || line.match(/^\d+\./)) {
+      // Save previous
+      if (current) {
+        if (currentRel) { current.relatives.push({...currentRel}); currentRel = null; }
+        clients.push(current);
+      }
+      inPhones = false;
+      // Parse deceased name and dob
+      let clean = line.replace(/^\d+\.\s*/, '').replace(/<[^>]+>/g, '').trim();
+      // Extract dob: pattern DD.MM.YYYY at end
+      const dobMatch = clean.match(/(\d{1,2}\.\d{1,2}\.\d{4})$/);
+      const dob = dobMatch ? dobMatch[1] : '';
+      const deceased = clean.replace(/(\d{1,2}\.\d{1,2}\.\d{4})$/, '').trim();
+      current = { deceased, dob, region: '', relatives: [] };
+      currentRel = null;
+      continue;
+    }
+    
+    if (!current) continue;
+    
+    // Address of deceased
+    if (line.match(/^адрес цели:/i)) {
+      current.region = line.replace(/^адрес цели:\s*/i, '').trim();
+      inPhones = false;
+      continue;
+    }
+    
+    // New relative: starts with #N
+    if (line.match(/^#\d+/)) {
+      if (currentRel) current.relatives.push({...currentRel});
+      inPhones = false;
+      let relLine = line.replace(/^#\d+\s*/, '').trim();
+      const relDobMatch = relLine.match(/(\d{1,2}\.\d{1,2}\.\d{4})/);
+      const relDob = relDobMatch ? relDobMatch[1] : '';
+      const relName = relLine.replace(/(\d{1,2}\.\d{1,2}\.\d{4})/, '').replace(/\(.*?\)/, '').trim();
+      currentRel = { name: relName, dob: relDob, phone: '', address: '', passport: '', snils: '', relation: '' };
+      continue;
+    }
+    
+    if (!currentRel) continue;
+    
+    // Relative address
+    if (line.match(/^адрес:/i)) {
+      currentRel.address = line.replace(/^адрес:\s*/i, '').trim();
+      inPhones = false;
+      continue;
+    }
+    // Passport
+    if (line.match(/^паспорт:/i)) {
+      currentRel.passport = line.replace(/^паспорт:\s*/i, '').trim();
+      inPhones = false;
+      continue;
+    }
+    // SNILS
+    if (line.match(/^снилс:/i)) {
+      currentRel.snils = line.replace(/^снилс:\s*/i, '').trim();
+      inPhones = false;
+      continue;
+    }
+    // Phones section
+    if (line.match(/^номера:/i)) {
+      inPhones = true;
+      continue;
+    }
+    // Phone lines (start with • or - or digit)
+    if (inPhones && (line.match(/^[•\-•]/) || line.match(/^7\d{10}/))) {
+      const phoneMatch = line.match(/(7\d{10})/);
+      if (phoneMatch) {
+        if (!currentRel.phone) {
+          currentRel.phone = phoneMatch[1];
+        } else {
+          // Additional phones — append
+          currentRel.phone += ', ' + phoneMatch[1];
+        }
+      }
+      continue;
+    }
+    
+    // Empty line or separator — stop phones
+    if (!line || line.match(/^-{3,}/)) {
+      inPhones = false;
+    }
+  }
+  
+  // Don't forget last client
+  if (current) {
+    if (currentRel) current.relatives.push({...currentRel});
+    if (current.deceased) clients.push(current);
+  }
+  
+  return clients;
+}
 
 </script>
 </body>
