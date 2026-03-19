@@ -577,6 +577,7 @@ input[type=file]{display:none}
           <button class="act-btn ab-cb" onclick="act('callback')"><span class="ico">🔄</span>Перезвон</button>
           <button class="act-btn ab-tr" onclick="act('transferred')"><span class="ico">✅</span>Передал</button>
           <button class="act-btn ab-ct" onclick="act('cut')"><span class="ico">✂️</span>Срез</button>
+          <button class="act-btn" style="background:rgba(0,180,216,.12);border:1.5px solid rgba(0,180,216,.4);color:#90e0ef" onclick="act('ao')"><span class="ico">🎯</span>АО</button>
         </div>
       </div>
     </div>
@@ -619,7 +620,7 @@ const db   = getFirestore(app);
 /* ──────── STATE ──────── */
 let me = null;       // { uid, name, email, role }
 let importData = []; // pending rows
-let manRels = [{ name:'', phone:'', address:'', relation:'' }];
+let manRels = [{ name:'', phone:'', address:'', relation:'', dob:'', passport:'', snils:'' }];
 let statsUnsub = null;
 let callUnsub  = null;
 let pieChart   = null;
@@ -632,7 +633,7 @@ const RESULTS = {
   callback:    { label:'🔄 Перезвон',   cls:'rc-callback',color:'#f4a261' },
   transferred: { label:'✅ Передал',    cls:'rc-passed',  color:'#52b788' },
   cut:         { label:'✂️ Срез',       cls:'rc-pzdbl',   color:'#d00000' },
-  gotdoc:      { label:'📄 Взял документ', cls:'rc-gotdoc', color:'#e76f51' },
+  ao:          { label:'🎯 АО',             cls:'rc-ao',     color:'#00b4d8' },
 };
 const RESULT_KEYS = Object.keys(RESULTS);
 
@@ -886,7 +887,7 @@ async function doImport() {
 }
 
 /* ──────── MANUAL ADD ──────── */
-window.addRel = () => { manRels.push({ name:'',phone:'',address:'',relation:'' }); renderManRels(); };
+window.addRel = () => { manRels.push({ name:'',phone:'',address:'',relation:'',dob:'',passport:'',snils:'' }); renderManRels(); };
 window.rmRel  = i  => { manRels.splice(i,1); renderManRels(); };
 window.setRel = (i,r) => { manRels[i].relation=r; renderManRels(); };
 
@@ -905,6 +906,11 @@ function renderManRels() {
         <div class="fg"><label>ФИО</label><input placeholder="Фамилия Имя Отчество" value="${r.name}" oninput="manRels[${i}].name=this.value"></div>
         <div class="fg"><label>Телефон</label><input placeholder="79001112233" value="${r.phone}" oninput="manRels[${i}].phone=this.value"></div>
       </div>
+      <div class="form-row c3">
+        <div class="fg"><label>Дата рождения</label><input type="date" value="${r.dob}" oninput="manRels[${i}].dob=this.value"></div>
+        <div class="fg"><label>Паспорт</label><input placeholder="1234 567890" value="${r.passport}" oninput="manRels[${i}].passport=this.value"></div>
+        <div class="fg"><label>СНИЛС</label><input placeholder="123-456-789 00" value="${r.snils}" oninput="manRels[${i}].snils=this.value"></div>
+      </div>
       <div class="fg"><label>Адрес</label><input placeholder="г. Город, ул. Улица, д. 1" value="${r.address}" oninput="manRels[${i}].address=this.value"></div>
     </div>`).join('');
 }
@@ -914,7 +920,7 @@ window.saveManual = async () => {
   if (!deceased) { toast('⚠️ Введите ФИО умершего','warn'); return; }
   await addDoc(collection(db,'clients'), {
     deceased, region:v('m-reg'),
-    relatives:manRels.filter(r=>r.name||r.phone),
+    relatives:manRels.filter(r=>r.name||r.phone).map(r=>({...r})),
     status:'new', result:null, comment:'',
     calledBy:null, calledAt:null, createdAt:Timestamp.now()
   });
@@ -1041,6 +1047,9 @@ function renderCard(c) {
             ${r.relation?`<span class="rel-relation">${r.relation}</span>`:''}
           </div>
           ${r.phone?`<div class="rel-phone">📞 <a href="tel:${r.phone}">${r.phone}</a></div>`:''}
+          ${r.dob?`<div class="rel-addr">🎂 ${r.dob}</div>`:''}
+          ${r.passport?`<div class="rel-addr">🪪 Паспорт: ${r.passport}</div>`:''}
+          ${r.snils?`<div class="rel-addr">📋 СНИЛС: ${r.snils}</div>`:''}
           ${r.address?`<div class="rel-addr">📍 ${r.address}</div>`:''}
         </div>`).join('')
     : '<div style="color:var(--text2);font-size:13px">Родственники не указаны</div>';
