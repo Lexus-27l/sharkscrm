@@ -890,6 +890,7 @@ async function doImport() {
 window.addRel = () => { manRels.push({ name:'',phone:'',address:'',relation:'',dob:'',passport:'',snils:'' }); renderManRels(); };
 window.rmRel  = i  => { manRels.splice(i,1); renderManRels(); };
 window.setRel = (i,r) => { manRels[i].relation=r; renderManRels(); };
+window.updRel = (i,field,val) => { manRels[i][field]=val; };
 
 function renderManRels() {
   const TAGS = ['Мама','Папа','Брат','Сестра','Жена','Муж','Сын','Дочь'];
@@ -903,15 +904,15 @@ function renderManRels() {
         ${i>0?`<button class="btn-rm" onclick="rmRel(${i})">✕</button>`:''}
       </div>
       <div class="form-row c2">
-        <div class="fg"><label>ФИО</label><input placeholder="Фамилия Имя Отчество" value="${r.name}" oninput="manRels[${i}].name=this.value"></div>
-        <div class="fg"><label>Телефон</label><input placeholder="79001112233" value="${r.phone}" oninput="manRels[${i}].phone=this.value"></div>
+        <div class="fg"><label>ФИО</label><input id="rel_name_${i}" placeholder="Фамилия Имя Отчество" value="${r.name}" onchange="updRel(${i},'name',this.value)" oninput="updRel(${i},'name',this.value)"></div>
+        <div class="fg"><label>Телефон</label><input id="rel_phone_${i}" placeholder="79001112233" value="${r.phone}" onchange="updRel(${i},'phone',this.value)" oninput="updRel(${i},'phone',this.value)"></div>
       </div>
       <div class="form-row c3">
-        <div class="fg"><label>Дата рождения</label><input type="date" value="${r.dob}" oninput="manRels[${i}].dob=this.value"></div>
-        <div class="fg"><label>Паспорт</label><input placeholder="1234 567890" value="${r.passport}" oninput="manRels[${i}].passport=this.value"></div>
-        <div class="fg"><label>СНИЛС</label><input placeholder="123-456-789 00" value="${r.snils}" oninput="manRels[${i}].snils=this.value"></div>
+        <div class="fg"><label>Дата рождения</label><input type="date" id="rel_dob_${i}" value="${r.dob}" onchange="updRel(${i},'dob',this.value)" oninput="updRel(${i},'dob',this.value)"></div>
+        <div class="fg"><label>Паспорт</label><input id="rel_passport_${i}" placeholder="1234 567890" value="${r.passport}" onchange="updRel(${i},'passport',this.value)" oninput="updRel(${i},'passport',this.value)"></div>
+        <div class="fg"><label>СНИЛС</label><input id="rel_snils_${i}" placeholder="123-456-789 00" value="${r.snils}" onchange="updRel(${i},'snils',this.value)" oninput="updRel(${i},'snils',this.value)"></div>
       </div>
-      <div class="fg"><label>Адрес</label><input placeholder="г. Город, ул. Улица, д. 1" value="${r.address}" oninput="manRels[${i}].address=this.value"></div>
+      <div class="fg"><label>Адрес</label><input id="rel_addr_${i}" placeholder="г. Город, ул. Улица, д. 1" value="${r.address}" onchange="updRel(${i},'address',this.value)" oninput="updRel(${i},'address',this.value)"></div>
     </div>`).join('');
 }
 
@@ -920,12 +921,12 @@ window.saveManual = async () => {
   if (!deceased) { toast('⚠️ Введите ФИО умершего','warn'); return; }
   await addDoc(collection(db,'clients'), {
     deceased, region:v('m-reg'),
-    relatives:manRels.filter(r=>r.name||r.phone).map(r=>({...r})),
+    relatives:manRels.filter(r=>r.name||r.phone||r.passport||r.snils).map(r=>({...r})),
     status:'new', result:null, comment:'',
     calledBy:null, calledAt:null, createdAt:Timestamp.now()
   });
   el('m-dec').value=''; el('m-reg').value='';
-  manRels = [{ name:'',phone:'',address:'',relation:'' }];
+  manRels = [{ name:'',phone:'',address:'',relation:'',dob:'',passport:'',snils:'' }];
   renderManRels();
   toast('✅ Клиент добавлен');
 };
