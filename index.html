@@ -653,8 +653,13 @@ window.doLogin = async () => {
   const email = v('li-email');
   const pass  = v('li-pass');
   el('li-err').textContent = '';
-  try { await signInWithEmailAndPassword(auth, email, pass); }
-  catch { el('li-err').textContent = 'Неверный логин или пароль'; }
+  try { 
+    const result = await signInWithEmailAndPassword(auth, email, pass);
+    console.log('Login success:', result.user.email);
+  } catch(e) { 
+    console.error('Login error:', e.code, e.message);
+    el('li-err').textContent = e.code === 'auth/invalid-credential' ? 'Неверный пароль' : 'Ошибка: ' + e.message; 
+  }
 };
 window.doLogout = () => signOut(auth);
 
