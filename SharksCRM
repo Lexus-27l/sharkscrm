@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SharksCRM</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+/* ============================================================
+   VARIABLES & RESET
+   ============================================================ */
+:root {
+  --bg:      #0b0b14;
+  --bg2:     #10101e;
+  --bg3:     #16162a;
+  --bg4:     #1c1c32;
+  --bg5:     #22223c;
+  --acc:     #7c3aed;
+  --acc2:    #a78bfa;
+  --acc3:    #4f46e5;
+  --green:   #22c55e;
+  --red:     #ef4444;
+  --yellow:  #f59e0b;
+  --blue:    #3b82f6;
+  --cyan:    #06b6d4;
+  --pink:    #ec4899;
+  --orange:  #f97316;
+  --teal:    #14b8a6;
+  --text:    #e2e2f0;
+  --text2:   #8888a8;
+  --text3:   #5555778;
+  --brd:     rgba(124,58,237,.15);
+  --brd2:    rgba(124,58,237,.3);
+  --r:       12px;
+  --r2:      18px;
+  --font:    'Montserrat', sans-serif;
+  --mono:    'JetBrains Mono', monospace;
+  --shadow:  0 8px 32px rgba(0,0,0,.45);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;overflow:hidden}
+button{cursor:pointer;font-family:var(--font)}
+input,textarea,select{background:var(--bg3);border:1px solid var(--brd2);border-radius:8px;color:var(--text);font-family:var(--font);font-size:13px;padding:9px 12px;width:100%;outline:none;transition:border-color .2s,box-shadow .2s}
+input:focus,textarea:focus,select:focus{border-color:var(--acc2);box-shadow:0 0 0 3px rgba(124,58,237,.12)}
+input::placeholder,textarea::placeholder{color:var(--text2)}
+label{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px}
+a{color:var(--cyan)}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--brd2);border-radius:3px}
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+@keyframes cardOut{to{opacity:0;transform:translateY(-20px) scale(.96)}}
+@keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+#root{height:100vh;display:flex;flex-direction:column}
+
+/* ============================================================
+   LOGIN
+   ============================================================ */
+#screen-login{
+  position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:100;
+  background:radial-gradient(ellipse 80% 60% at 20% 80%,rgba(124,58,237,.2) 0%,transparent 60%),
+             radial-gradient(ellipse 60% 50% at 80% 20%,rgba(79,70,229,.15) 0%,transparent 50%),var(--bg);
+}
+.login-card{
+  width:380px;padding:44px 40px;background:var(--bg2);
+  border:1px solid var(--brd2);border-radius:24px;
+  box-shadow:0 32px 80px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.06);
+  animation:fadeUp .4s ease;
+}
+.login-logo{text-align:center;margin-bottom:32px}
+.login-logo .shark{font-size:52px;display:block;margin-bottom:10px}
+.login-logo h1{font-size:24px;font-weight:900;letter-spacing:-1px}
+.login-logo h1 em{color:var(--acc2);font-style:normal}
+.login-logo p{color:var(--text2);font-size:12px;margin-top:4px}
+.login-field{margin-bottom:14px}
+.login-err{color:var(--red);font-size:12px;min-height:18px;margin:6px 0}
+.login-btn{
+  width:100%;padding:13px;margin-top:4px;border:none;border-radius:10px;
+  background:linear-gradient(135deg,var(--acc),var(--acc3));
+  color:#fff;font-weight:800;font-size:15px;letter-spacing:.3px;
+  transition:all .2s;
+}
+.login-btn:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(124,58,237,.5)}
+.login-btn:active{transform:scale(.98)}
+
+/* ============================================================
+   TOPBAR
+   ============================================================ */
+.topbar{
+  height:52px;min-height:52px;background:var(--bg2);
+  border-bottom:1px solid var(--brd);display:flex;align-items:center;
+  padding:0 20px;gap:14px;z-index:10;
+}
+.topbar-logo{font-size:17px;font-weight:900;letter-spacing:-0.5px}
+.topbar-logo em{color:var(--acc2);font-style:normal}
+.spacer{flex:1}
+.topbar-user{font-size:13px;font-weight:600;color:var(--text2);display:flex;align-items:center;gap:6px}
+.topbar-user .dot{width:8px;height:8px;background:var(--green);border-radius:50%;animation:pulse 2s infinite}
+.topbar-btn{
+  padding:6px 14px;border:1px solid var(--brd2);border-radius:8px;
+  background:transparent;color:var(--text2);font-size:12px;font-weight:600;
+  transition:all .2s;
+}
+.topbar-btn:hover{background:rgba(239,68,68,.1);border-color:var(--red);color:var(--red)}
+
+/* ============================================================
+   TABS (ADMIN)
+   ============================================================ */
+.tab-bar{
+  display:flex;gap:2px;padding:10px 20px 0;background:var(--bg2);
+  border-bottom:1px solid var(--brd);
+}
+.tab-btn{
+  padding:9px 18px;border:none;border-bottom:2px solid transparent;margin-bottom:-1px;
+  background:transparent;color:var(--text2);font-weight:600;font-size:13px;
+  border-radius:8px 8px 0 0;transition:all .2s;
+}
+.tab-btn:hover{color:var(--text);background:var(--bg3)}
+.tab-btn.on{color:var(--acc2);border-bottom-color:var(--acc2);background:var(--bg3)}
+
+/* ============================================================
+   ADMIN CONTENT
+   ============================================================ */
+#admin-panel{flex:1;display:none;flex-direction:column;overflow:hidden}
+.admin-body{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px}
+.tab-pane{display:none;flex-direction:column;gap:16px;animation:fadeUp .25s ease}
+.tab-pane.on{display:flex}
+
+/* Cards */
+.card{background:var(--bg2);border:1px solid var(--brd);border-radius:var(--r2);padding:20px}
+.card-title{font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.card-title::before{content:'';display:block;width:3px;height:14px;background:var(--acc2);border-radius:2px}
+
+/* Summary stat cards */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.scard{
+  background:var(--bg2);border:1px solid var(--brd);border-radius:var(--r2);padding:20px;
+  position:relative;overflow:hidden;
+}
+.scard::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--c,var(--acc2))}
+.scard-val{font-size:34px;font-weight:900;font-family:var(--mono);color:var(--c,var(--acc2));margin:4px 0 2px}
+.scard-lbl{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px}
+.scard-sub{font-size:11px;color:var(--text2);margin-top:2px}
+
+/* Buttons */
+.btn{padding:9px 18px;border:none;border-radius:9px;font-weight:700;font-size:13px;font-family:var(--font);cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
+.btn-pri{background:linear-gradient(135deg,var(--acc),var(--acc3));color:#fff}
+.btn-pri:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(124,58,237,.4)}
+.btn-ghost{background:transparent;border:1px solid var(--brd2);color:var(--text)}
+.btn-ghost:hover{border-color:var(--acc2);color:var(--acc2)}
+.btn-danger{background:transparent;border:1px solid rgba(239,68,68,.35);color:var(--red)}
+.btn-danger:hover{background:rgba(239,68,68,.12)}
+.btn-sm{padding:5px 12px;font-size:11px}
+
+/* Forms */
+.form-row{display:grid;gap:12px}
+.form-row.c2{grid-template-columns:1fr 1fr}
+.form-row.c3{grid-template-columns:1fr 1fr 1fr}
+.fg{display:flex;flex-direction:column;gap:5px}
+
+/* Upload */
+.upload-zone{
+  border:2px dashed var(--brd2);border-radius:var(--r2);padding:40px;text-align:center;
+  background:var(--bg3);cursor:pointer;transition:all .2s;
+}
+.upload-zone:hover{border-color:var(--acc2);background:rgba(124,58,237,.05)}
+.upload-zone .upload-ico{font-size:48px;margin-bottom:12px;display:block}
+.upload-zone p{color:var(--text2);font-size:13px;margin-bottom:14px}
+input[type=file]{display:none}
+
+.import-preview{
+  background:rgba(124,58,237,.08);border:1px solid var(--brd2);
+  border-radius:var(--r);padding:14px 16px;font-size:13px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+}
+
+/* Relative card */
+.rel-block{background:var(--bg3);border:1px solid var(--brd);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:10px}
+.rel-block-header{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.rel-block-num{font-size:12px;font-weight:700;color:var(--acc2)}
+.tag-row{display:flex;gap:4px;flex-wrap:wrap;flex:1}
+.rtag{
+  padding:3px 10px;border:1px solid var(--brd2);border-radius:20px;
+  background:transparent;color:var(--text2);font-size:11px;font-weight:600;font-family:var(--font);
+  transition:all .15s;
+}
+.rtag:hover{border-color:var(--acc2);color:var(--acc2)}
+.rtag.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.btn-rm{padding:4px 10px;border:1px solid rgba(239,68,68,.3);border-radius:8px;background:transparent;color:var(--red);font-size:13px;transition:all .15s}
+.btn-rm:hover{background:rgba(239,68,68,.15)}
+
+/* Manager stats table — matches screenshot */
+.mgr-table-wrap{overflow-x:auto;border-radius:var(--r);border:1px solid var(--brd)}
+.mgr-table{width:100%;border-collapse:collapse;font-size:12px;min-width:900px}
+.mgr-table th{
+  padding:9px 10px;text-align:center;font-size:10px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;
+  border-bottom:1px solid var(--brd);
+}
+.mgr-table td{padding:8px 10px;border-bottom:1px solid rgba(124,58,237,.06);text-align:center;vertical-align:middle;white-space:nowrap}
+.mgr-table tr:last-child td{border-bottom:none}
+.mgr-table tr:hover td{background:var(--bg3)}
+.mgr-table .th-name{text-align:left;min-width:100px}
+.mgr-table .td-name{text-align:left;font-weight:700}
+.mgr-table .td-num{font-family:var(--mono);font-weight:700}
+.result-cell{
+  padding:5px 8px !important;border-radius:6px;font-size:11px;font-weight:700;
+  font-family:var(--mono);
+}
+/* result colours matching screenshot */
+.rc-ao{background:#00b4d8;color:#003049}
+.rc-nodial{background:#e63946;color:#fff}
+.rc-skip{background:#457b9d;color:#fff}
+.rc-pzdbl{background:#d00000;color:#fff}
+.rc-perekhvat{background:#ff6b35;color:#fff}
+.rc-rosko{background:#06a77d;color:#fff}
+.rc-young{background:#9b5de5;color:#fff}
+.rc-callback{background:#f4a261;color:#fff}
+.rc-company{background:#8ecae6;color:#003049}
+.rc-gotdoc{background:#e76f51;color:#fff}
+.rc-passed{background:#52b788;color:#fff}
+.rc-nonliq{background:#3a0ca3;color:#fff}
+.rc-first{background:#48cae4;color:#003049}
+.rc-transfer{background:#f3722c;color:#fff}
+.rc-recallb{background:#f8961e;color:#fff}
+
+/* Clients table */
+.clients-table{width:100%;border-collapse:collapse;font-size:13px}
+.clients-table th{padding:9px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--brd)}
+.clients-table td{padding:9px 12px;border-bottom:1px solid rgba(124,58,237,.06);vertical-align:middle}
+.clients-table tr:hover td{background:var(--bg3)}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700}
+
+/* Manager panel */
+#manager-panel{flex:1;display:none;flex-direction:column;overflow:hidden}
+.progress-wrap{background:var(--bg2);border-bottom:1px solid var(--brd);padding:12px 20px}
+.progress-counters{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px}
+.pc{text-align:center}
+.pc-val{font-size:26px;font-weight:900;font-family:var(--mono)}
+.pc-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-top:2px}
+.prog-track{height:6px;background:var(--bg3);border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--acc),var(--cyan));border-radius:3px;transition:width .6s ease}
+
+.call-area{flex:1;overflow-y:auto;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:20px}
+
+.call-loading{text-align:center;padding:80px;color:var(--text2);display:none}
+.call-loading .spin{font-size:40px;display:block;animation:spin 1.2s linear infinite;margin-bottom:16px}
+
+.call-empty{display:none;flex-direction:column;align-items:center;justify-content:center;padding:80px;text-align:center}
+.call-empty .ico{font-size:72px;margin-bottom:16px}
+.call-empty h2{font-size:22px;font-weight:900;margin-bottom:8px}
+.call-empty p{color:var(--text2)}
+
+.call-card{width:100%;max-width:680px;animation:fadeUp .3s ease;display:none}
+.call-card.leaving{animation:cardOut .3s ease forwards}
+
+.call-top{
+  background:var(--bg2);border:1px solid var(--brd2);border-radius:var(--r2) var(--r2) 0 0;
+  padding:20px 22px;
+  background-image:linear-gradient(135deg,rgba(124,58,237,.1),rgba(79,70,229,.05));
+  border-bottom:1px solid var(--brd);
+}
+.call-name{font-size:21px;font-weight:900;letter-spacing:-.3px;margin-bottom:6px}
+.call-name .skull{margin-right:8px;opacity:.75}
+.call-tags{display:flex;gap:6px;flex-wrap:wrap}
+.call-tag{display:inline-block;padding:3px 10px;border:1px solid var(--brd2);border-radius:20px;font-size:11px;font-weight:600}
+.call-tag.region{color:var(--acc2);border-color:rgba(167,139,250,.35);background:rgba(124,58,237,.1)}
+
+.call-rels{
+  background:var(--bg2);border:1px solid var(--brd2);border-left:1px solid var(--brd2);border-right:1px solid var(--brd2);
+  padding:16px 22px;
+}
+.rels-label{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px}
+.rel-row{background:var(--bg3);border:1px solid var(--brd);border-radius:var(--r);padding:12px 14px;margin-bottom:8px}
+.rel-row:last-child{margin-bottom:0}
+.rel-name-line{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.rel-fname{font-weight:700;font-size:14px}
+.rel-relation{padding:2px 8px;background:rgba(124,58,237,.15);border-radius:20px;font-size:11px;font-weight:600;color:var(--acc2)}
+.rel-phone{font-size:13px;color:var(--cyan);font-family:var(--mono);margin-bottom:3px}
+.rel-phone a{color:var(--cyan)}
+.rel-addr{font-size:12px;color:var(--text2)}
+
+.call-comment{
+  background:var(--bg2);border:1px solid var(--brd2);border-top:none;
+  padding:14px 22px;border-radius:0;
+}
+
+.call-actions{
+  display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:10px;
+}
+.act-btn{
+  padding:14px 8px;border:none;border-radius:14px;
+  font-weight:700;font-size:11px;font-family:var(--font);
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  transition:all .18s;line-height:1.2;text-align:center;
+}
+.act-btn .ico{font-size:22px}
+.act-btn:hover{transform:translateY(-3px)}
+.act-btn:active{transform:scale(.96)}
+.ab-nd{background:rgba(239,68,68,.12);border:1.5px solid rgba(239,68,68,.4);color:#fca5a5}
+.ab-nd:hover{background:rgba(239,68,68,.22);border-color:var(--red);box-shadow:0 4px 16px rgba(239,68,68,.2)}
+.ab-sk{background:rgba(59,130,246,.12);border:1.5px solid rgba(59,130,246,.4);color:#93c5fd}
+.ab-sk:hover{background:rgba(59,130,246,.22);border-color:var(--blue);box-shadow:0 4px 16px rgba(59,130,246,.2)}
+.ab-cb{background:rgba(245,158,11,.12);border:1.5px solid rgba(245,158,11,.4);color:#fcd34d}
+.ab-cb:hover{background:rgba(245,158,11,.22);border-color:var(--yellow);box-shadow:0 4px 16px rgba(245,158,11,.2)}
+.ab-tr{background:rgba(34,197,94,.14);border:1.5px solid rgba(34,197,94,.5);color:#86efac}
+.ab-tr:hover{background:rgba(34,197,94,.25);border-color:var(--green);box-shadow:0 6px 20px rgba(34,197,94,.3)}
+.ab-ct{background:rgba(236,72,153,.12);border:1.5px solid rgba(236,72,153,.4);color:#f9a8d4}
+.ab-ct:hover{background:rgba(236,72,153,.22);border-color:var(--pink);box-shadow:0 4px 16px rgba(236,72,153,.2)}
+
+/* Charts */
+.chart-two{display:grid;grid-template-columns:280px 1fr;gap:16px}
+.chart-box{background:var(--bg2);border:1px solid var(--brd);border-radius:var(--r2);padding:18px}
+.chart-box h3{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:14px}
+.chart-wrap{position:relative;height:220px}
+.chart-legend{margin-top:10px;display:flex;flex-direction:column;gap:5px}
+.cl-item{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text2);font-weight:600}
+.cl-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.cl-pct{margin-left:auto;font-weight:800;color:var(--text);font-family:var(--mono);font-size:11px}
+
+/* Notice box */
+.notice{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:var(--r);padding:14px 16px;font-size:12px;color:var(--text2)}
+.notice h4{color:var(--yellow);margin-bottom:8px;font-size:13px}
+.notice ol,.notice ul{padding-left:16px;line-height:1.9}
+.notice code{background:var(--bg3);padding:1px 6px;border-radius:4px;color:var(--acc2);font-family:var(--mono);font-size:11px}
+
+/* Toast */
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(70px);
+  padding:12px 24px;border-radius:12px;font-weight:600;font-size:14px;
+  background:var(--bg4);border:1px solid var(--brd2);
+  box-shadow:var(--shadow);transition:transform .3s ease;z-index:999;
+  pointer-events:none;
+}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.warn{border-color:rgba(245,158,11,.5);color:var(--yellow)}
+.toast.err{border-color:rgba(239,68,68,.5);color:var(--red)}
+
+/* misc */
+.empty-cell{text-align:center;padding:32px;color:var(--text2);font-size:13px}
+.divider{height:1px;background:var(--brd);margin:4px 0}
+.status-new{background:rgba(124,58,237,.12);color:var(--acc2)}
+.status-done{background:rgba(34,197,94,.12);color:#86efac}
+.status-cb{background:rgba(245,158,11,.12);color:#fcd34d}
+</style>
+</head>
+<body>
+<div id="root">
+
+<!-- ═══════════════════ LOGIN ═══════════════════ -->
+<div id="screen-login">
+  <div class="login-card">
+    <div class="login-logo">
+      <span class="shark">🦈</span>
+      <h1>Sharks<em>CRM</em></h1>
+      <p>Система управления прозвоном</p>
+    </div>
+    <div class="login-field">
+      <label>Email</label>
+      <input id="li-email" type="email" placeholder="you@company.ru" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="login-field">
+      <label>Пароль</label>
+      <input id="li-pass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div id="li-err" class="login-err"></div>
+    <button class="login-btn" onclick="doLogin()">Войти →</button>
+  </div>
+</div>
+
+<!-- ═══════════════════ APP ═══════════════════ -->
+<div id="screen-app" style="display:none;flex-direction:column;height:100vh">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <span class="topbar-logo">🦈 Sharks<em>CRM</em></span>
+    <div class="spacer"></div>
+    <div class="topbar-user"><span class="dot"></span><span id="tb-user">—</span></div>
+    <button class="topbar-btn" onclick="doLogout()">Выйти</button>
+  </div>
+
+  <!-- ═══ ADMIN PANEL ═══ -->
+  <div id="admin-panel">
+    <div class="tab-bar">
+      <button class="tab-btn on" data-t="stats"    onclick="aTab('stats')">📊 Статистика</button>
+      <button class="tab-btn"    data-t="upload"   onclick="aTab('upload')">📤 Загрузить базу</button>
+      <button class="tab-btn"    data-t="add"      onclick="aTab('add')">➕ Добавить вручную</button>
+      <button class="tab-btn"    data-t="clients"  onclick="aTab('clients')">📋 База клиентов</button>
+      <button class="tab-btn"    data-t="managers" onclick="aTab('managers')">👥 Менеджеры</button>
+    </div>
+    <div class="admin-body">
+
+      <!-- STATS -->
+      <div class="tab-pane on" id="tp-stats">
+        <div class="stats-row">
+          <div class="scard" style="--c:var(--acc2)">
+            <div class="scard-lbl">Всего в базе</div>
+            <div class="scard-val" id="s-total">—</div>
+          </div>
+          <div class="scard" style="--c:var(--green)">
+            <div class="scard-lbl">Прозвонено</div>
+            <div class="scard-val" id="s-called">—</div>
+          </div>
+          <div class="scard" style="--c:var(--yellow)">
+            <div class="scard-lbl">Осталось</div>
+            <div class="scard-val" id="s-remain">—</div>
+          </div>
+          <div class="scard" style="--c:var(--cyan)">
+            <div class="scard-lbl">Прогресс</div>
+            <div class="scard-val" id="s-pct">—</div>
+          </div>
+        </div>
+
+        <div class="chart-two">
+          <div class="chart-box">
+            <h3>📊 Результаты звонков сегодня</h3>
+            <div class="chart-wrap"><canvas id="chart-pie"></canvas></div>
+            <div class="chart-legend" id="chart-legend"></div>
+          </div>
+          <div class="chart-box" style="overflow:hidden">
+            <h3>👥 Статистика менеджеров по дням</h3>
+            <div class="chart-wrap"><canvas id="chart-bar"></canvas></div>
+          </div>
+        </div>
+
+        <!-- Manager stats table like screenshot -->
+        <div class="card">
+          <div class="card-title">👥 Детальная статистика менеджеров</div>
+          <div class="mgr-table-wrap">
+            <table class="mgr-table">
+              <thead id="mgr-thead"></thead>
+              <tbody id="mgr-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- UPLOAD -->
+      <div class="tab-pane" id="tp-upload">
+        <div class="notice">
+          <h4>📋 Формат файла Excel / CSV</h4>
+          <ol>
+            <li>Первая строка — заголовки колонок</li>
+            <li>Обязательные: <code>ФИО умершего</code> (или <code>фио</code>, <code>умерший</code>)</li>
+            <li>Дополнительные: <code>Родственник</code>, <code>Телефон</code>, <code>Адрес</code>, <code>Регион</code>, <code>Отношение</code></li>
+            <li>Форматы: <code>.xlsx</code>, <code>.xls</code>, <code>.csv</code></li>
+          </ol>
+        </div>
+        <div class="upload-zone" onclick="document.getElementById('fu').click()">
+          <span class="upload-ico">📂</span>
+          <p>Нажми чтобы выбрать файл Excel или CSV</p>
+          <input type="file" id="fu" accept=".xlsx,.xls,.csv" onchange="handleFile(event)">
+          <button class="btn btn-ghost" onclick="event.stopPropagation()">Выбрать файл</button>
+        </div>
+        <div id="import-preview" style="display:none" class="import-preview">
+          <span id="import-info"></span>
+          <button class="btn btn-pri" id="import-btn">✅ Загрузить</button>
+        </div>
+      </div>
+
+      <!-- ADD MANUAL -->
+      <div class="tab-pane" id="tp-add">
+        <div class="card">
+          <div class="card-title">☠️ Умерший</div>
+          <div class="form-row c2">
+            <div class="fg"><label>ФИО умершего *</label><input id="m-dec" placeholder="Фамилия Имя Отчество"></div>
+            <div class="fg"><label>Регион</label><input id="m-reg" placeholder="Например: Донецк"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">👥 Родственники</div>
+          <div id="rels-container"></div>
+          <button class="btn btn-ghost" style="margin-top:10px" onclick="addRel()">+ Ещё родственник</button>
+        </div>
+        <div style="display:flex;justify-content:flex-end">
+          <button class="btn btn-pri" onclick="saveManual()">✅ Сохранить клиента</button>
+        </div>
+      </div>
+
+      <!-- CLIENTS -->
+      <div class="tab-pane" id="tp-clients">
+        <div class="card" style="padding:0;overflow:hidden">
+          <div style="overflow-x:auto">
+            <table class="clients-table">
+              <thead>
+                <tr>
+                  <th>Умерший</th><th>Регион</th><th>Родственники / телефон</th>
+                  <th>Результат</th><th>Комментарий</th><th>Дата</th><th></th>
+                </tr>
+              </thead>
+              <tbody id="clients-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- MANAGERS -->
+      <div class="tab-pane" id="tp-managers">
+        <div class="notice">
+          <h4>⚠️ Важно при создании менеджера</h4>
+          <ul>
+            <li>Firebase создаёт аккаунт — браузер временно переключится на него</li>
+            <li>После нажатия «Создать» — страница перезагрузится, войди снова под <b>своим</b> логином</li>
+            <li>Первого администратора создай вручную: Firebase Console → Authentication → Add user, затем Firestore → коллекция <code>users</code> → документ с ID=UID, поля: <code>name</code>, <code>email</code>, <code>role:"admin"</code></li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-title">➕ Создать менеджера</div>
+          <div class="form-row c3" style="margin-bottom:12px">
+            <div class="fg"><label>Имя</label><input id="nm-name" placeholder="Имя менеджера"></div>
+            <div class="fg"><label>Email</label><input id="nm-email" type="email" placeholder="email@company.ru"></div>
+            <div class="fg"><label>Пароль</label><input id="nm-pass" type="password" placeholder="Минимум 6 символов"></div>
+          </div>
+          <button class="btn btn-pri" onclick="createManager()">Создать менеджера</button>
+        </div>
+        <div class="card" style="padding:0;overflow:hidden">
+          <table class="clients-table">
+            <thead><tr><th>Имя</th><th>Email</th><th>Роль</th><th></th></tr></thead>
+            <tbody id="mgr-list-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- admin-body -->
+  </div><!-- admin-panel -->
+
+  <!-- ═══ MANAGER PANEL ═══ -->
+  <div id="manager-panel">
+    <div class="progress-wrap">
+      <div class="progress-counters">
+        <div class="pc"><div class="pc-val" id="p-total" style="color:var(--acc2)">—</div><div class="pc-lbl">Всего</div></div>
+        <div class="pc"><div class="pc-val" id="p-called" style="color:var(--green)">—</div><div class="pc-lbl">Прозвонено</div></div>
+        <div class="pc"><div class="pc-val" id="p-remain" style="color:var(--yellow)">—</div><div class="pc-lbl">Осталось</div></div>
+        <div class="pc"><div class="pc-val" id="p-pct" style="color:var(--cyan)">0%</div><div class="pc-lbl">Прогресс</div></div>
+      </div>
+      <div class="prog-track"><div class="prog-fill" id="p-bar" style="width:0%"></div></div>
+    </div>
+
+    <div class="call-area">
+      <div class="call-loading" id="cl-loading"><span class="spin">⏳</span>Загрузка...</div>
+      <div class="call-empty" id="cl-empty">
+        <div class="ico">🎉</div>
+        <h2>База прозвонена!</h2>
+        <p>Все клиенты обработаны. Отличная работа!</p>
+      </div>
+      <div class="call-card" id="call-card">
+        <input type="hidden" id="cc-id">
+        <div class="call-top">
+          <div class="call-name"><span class="skull">☠️</span><span id="cc-name"></span></div>
+          <div class="call-tags">
+            <span class="call-tag region" id="cc-region"></span>
+          </div>
+        </div>
+        <div class="call-rels">
+          <div class="rels-label">👥 Родственники</div>
+          <div id="cc-rels"></div>
+        </div>
+        <div class="call-comment">
+          <label>💬 Комментарий</label>
+          <textarea id="cc-comment" rows="3" placeholder="Оставьте комментарий перед действием..."></textarea>
+        </div>
+        <div class="call-actions">
+          <button class="act-btn ab-nd" onclick="act('nodial')"><span class="ico">❌</span>Не дозвон</button>
+          <button class="act-btn ab-sk" onclick="act('skip')"><span class="ico">⏭️</span>Скип</button>
+          <button class="act-btn ab-cb" onclick="act('callback')"><span class="ico">🔄</span>Перезвон</button>
+          <button class="act-btn ab-tr" onclick="act('transferred')"><span class="ico">✅</span>Передал</button>
+          <button class="act-btn ab-ct" onclick="act('cut')"><span class="ico">✂️</span>Срез</button>
+        </div>
+      </div>
+    </div>
+  </div><!-- manager-panel -->
+
+</div><!-- screen-app -->
+</div><!-- root -->
+<div id="toast" class="toast"></div>
+
+<!-- ═══════════════════════════════════════════════════
+     FIREBASE + APP LOGIC
+     ═══════════════════════════════════════════════════ -->
+<script type="module">
+/* ──────────────────────────────────────────────────
+   🔧  ВСТАВЬ СЮДА СВОИ ДАННЫЕ ИЗ FIREBASE CONSOLE
+   Firebase Console → Project Settings → Your apps → firebaseConfig
+   ────────────────────────────────────────────────── */
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged,
+         createUserWithEmailAndPassword }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getFirestore, collection, addDoc, getDocs, getDoc, setDoc, doc,
+         updateDoc, deleteDoc, query, where, orderBy, onSnapshot,
+         writeBatch, Timestamp, limit }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey:            "AIzaSyAlJ6uZkznihPse9k7B0zStSTuGF7cTYMw",
+  authDomain:        "lexuscrm.firebaseapp.com",
+  projectId:         "lexuscrm",
+  storageBucket:     "lexuscrm.firebasestorage.app",
+  messagingSenderId: "525824766011",
+  appId:             "1:525824766011:web:2efe803c2a779f18f5ec1e"
+};
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+
+/* ──────── STATE ──────── */
+let me = null;       // { uid, name, email, role }
+let importData = []; // pending rows
+let manRels = [{ name:'', phone:'', address:'', relation:'' }];
+let statsUnsub = null;
+let callUnsub  = null;
+let pieChart   = null;
+let barChart   = null;
+
+/* ──────── RESULT CONFIG ──────── */
+const RESULTS = {
+  nodial:      { label:'❌ Не дозвон',  cls:'rc-nodial',  color:'#e63946' },
+  skip:        { label:'⏭ Скип',        cls:'rc-skip',    color:'#457b9d' },
+  callback:    { label:'🔄 Перезвон',   cls:'rc-callback',color:'#f4a261' },
+  transferred: { label:'✅ Передал',    cls:'rc-passed',  color:'#52b788' },
+  cut:         { label:'✂️ Срез',       cls:'rc-pzdbl',   color:'#d00000' },
+  gotdoc:      { label:'📄 Взял документ', cls:'rc-gotdoc', color:'#e76f51' },
+};
+const RESULT_KEYS = Object.keys(RESULTS);
+
+/* ──────── AUTH ──────── */
+onAuthStateChanged(auth, async user => {
+  if (!user) { show('login'); return; }
+  const snap = await getDoc(doc(db, 'user', user.uid));
+  if (!snap.exists()) { await signOut(auth); show('login'); return; }
+  me = { uid: user.uid, ...snap.data() };
+  show('app');
+  document.getElementById('tb-user').textContent =
+    (me.role === 'admin' ? '👑 ' : '📞 ') + (me.name || me.email);
+  if (me.role === 'admin') initAdmin();
+  else initManager();
+});
+
+window.doLogin = async () => {
+  const email = v('li-email');
+  const pass  = v('li-pass');
+  el('li-err').textContent = '';
+  try { await signInWithEmailAndPassword(auth, email, pass); }
+  catch { el('li-err').textContent = 'Неверный логин или пароль'; }
+};
+window.doLogout = () => signOut(auth);
+
+/* ──────── HELPERS ──────── */
+function el(id) { return document.getElementById(id); }
+function v(id)  { return el(id).value.trim(); }
+function show(s) {
+  el('screen-login').style.display = s==='login' ? 'flex' : 'none';
+  el('screen-app').style.display   = s==='app'   ? 'flex' : 'none';
+}
+function toast(msg, type='') {
+  const t = el('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type ? ' '+type : '');
+  setTimeout(() => t.classList.remove('show'), 3200);
+}
+function fmt(dt) {
+  if (!dt) return '—';
+  const d = dt.toDate ? dt.toDate() : new Date(dt);
+  return d.toLocaleDateString('ru-RU');
+}
+
+/* ──────── ADMIN INIT ──────── */
+function initAdmin() {
+  el('admin-panel').style.display   = 'flex';
+  el('manager-panel').style.display = 'none';
+  aTab('stats');
+  renderManRels();
+}
+
+window.aTab = t => {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('on', b.dataset.t===t));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('on'));
+  el('tp-'+t).classList.add('on');
+  if (t==='stats')    loadStats();
+  if (t==='clients')  loadClients();
+  if (t==='managers') loadMgrList();
+};
+
+/* ──────── STATS ──────── */
+async function loadStats() {
+  const snap = await getDocs(collection(db, 'clients'));
+  const all  = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+  const total   = all.length;
+  const done    = all.filter(c => c.result && c.result!=='callback').length;
+  const remain  = all.filter(c => !c.result || c.result==='callback').length;
+  const pct     = total > 0 ? Math.round(done/total*100) : 0;
+
+  el('s-total').textContent = total;
+  el('s-called').textContent = done;
+  el('s-remain').textContent = remain;
+  el('s-pct').textContent   = pct + '%';
+
+  // Pie chart — today's results
+  const today = new Date(); today.setHours(0,0,0,0);
+  const todayAll = all.filter(c => c.calledAt && (c.calledAt.toDate?c.calledAt.toDate():new Date(c.calledAt)) >= today);
+  const resultCounts = {};
+  todayAll.forEach(c => { if (c.result) resultCounts[c.result] = (resultCounts[c.result]||0)+1; });
+  renderPie(resultCounts);
+
+  // Manager stats
+  await loadMgrStats(all);
+}
+
+function renderPie(counts) {
+  const keys    = Object.keys(counts).filter(k => RESULTS[k]);
+  const vals    = keys.map(k => counts[k]);
+  const colors  = keys.map(k => RESULTS[k].color);
+  const labels  = keys.map(k => RESULTS[k].label);
+  const total   = vals.reduce((a,b)=>a+b,0);
+
+  if (pieChart) pieChart.destroy();
+  const ctx = el('chart-pie');
+  if (!keys.length) { ctx.parentElement.innerHTML = '<div style="text-align:center;padding:60px;color:var(--text2)">Нет звонков сегодня</div>'; return; }
+  pieChart = new Chart(ctx, {
+    type:'doughnut',
+    data:{ labels, datasets:[{ data:vals, backgroundColor:colors, borderWidth:0, hoverOffset:8 }] },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:c=>' '+c.label+': '+c.parsed+' ('+Math.round(c.parsed/total*100)+'%)'}}
+      },
+      cutout:'58%'
+    }
+  });
+  el('chart-legend').innerHTML = keys.map((k,i)=>`
+    <div class="cl-item">
+      <div class="cl-dot" style="background:${colors[i]}"></div>
+      ${labels[i]}
+      <span class="cl-pct">${Math.round(vals[i]/total*100)}%</span>
+    </div>`).join('');
+}
+
+async function loadMgrStats(allClients) {
+  const usersSnap = await getDocs(query(collection(db,'user'), where('role','==','manager')));
+  const managers  = usersSnap.docs.map(d => ({ uid:d.id, ...d.data() }));
+
+  // Today range
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  // Build table header
+  const COLS = RESULT_KEYS;
+  const thead = el('mgr-thead');
+  thead.innerHTML = `<tr>
+    <th class="th-name">Менеджер</th>
+    <th>Всего</th>
+    <th>Удалить</th>
+    ${COLS.map(k=>`<th style="background:${RESULTS[k].color}22;color:${RESULTS[k].color}">${RESULTS[k].label}</th>`).join('')}
+  </tr>`;
+
+  // Build rows
+  const tbody = el('mgr-tbody');
+  if (!managers.length) {
+    tbody.innerHTML = '<tr><td colspan="20" class="empty-cell">Нет менеджеров</td></tr>';
+    return;
+  }
+
+  // Bar chart data
+  const barLabels = managers.map(m => m.name || m.email);
+  const barToday  = [];
+
+  tbody.innerHTML = managers.map(m => {
+    const mine      = allClients.filter(c => c.calledBy === m.uid);
+    const mineToday = mine.filter(c => {
+      if (!c.calledAt) return false;
+      const d = c.calledAt.toDate ? c.calledAt.toDate() : new Date(c.calledAt);
+      return d >= today;
+    });
+    barToday.push(mineToday.length);
+    const total = mine.length;
+
+    const cells = COLS.map(k => {
+      const cnt = mine.filter(c=>c.result===k).length;
+      const pct = total > 0 ? (cnt/total*100).toFixed(1) : '0.0';
+      return `<td class="result-cell ${RESULTS[k].cls}">${cnt > 0 ? cnt+' ('+pct+'%)' : '0 (0.0%)'}</td>`;
+    }).join('');
+
+    return `<tr>
+      <td class="td-name">${m.name || m.email}</td>
+      <td class="td-num">${total}</td>
+      <td class="td-num">0 (0.0%)</td>
+      ${cells}
+    </tr>`;
+  }).join('');
+
+  // Bar chart
+  if (barChart) barChart.destroy();
+  const bctx = el('chart-bar');
+  barChart = new Chart(bctx, {
+    type:'bar',
+    data:{
+      labels:barLabels,
+      datasets:[{
+        label:'Прозвонено сегодня',
+        data:barToday,
+        backgroundColor:'rgba(124,58,237,.65)',
+        borderRadius:6,
+        borderSkipped:false,
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+c.raw+' звонков'}}},
+      scales:{
+        x:{ticks:{color:'#8888a8',font:{family:'Montserrat',size:11}},grid:{display:false}},
+        y:{ticks:{color:'#8888a8',font:{family:'Montserrat',size:11},stepSize:1},grid:{color:'rgba(124,58,237,.08)'}}
+      }
+    }
+  });
+}
+
+/* ──────── FILE IMPORT ──────── */
+window.handleFile = e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const wb   = XLSX.read(ev.target.result, { type:'binary' });
+    const ws   = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:'' });
+    importData = rows;
+    el('import-info').textContent = `📋 Найдено строк: ${rows.length-1} | Колонки: ${rows[0].join(', ')}`;
+    el('import-preview').style.display = 'flex';
+    el('import-btn').onclick = doImport;
+  };
+  reader.readAsBinaryString(file);
+};
+
+async function doImport() {
+  const rows    = importData;
+  const headers = rows[0].map(h => String(h).toLowerCase().trim());
+  const batch   = writeBatch(db);
+  let count = 0;
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+    const get = (...keys) => { for (const k of keys) { const idx=headers.indexOf(k); if (idx>=0&&row[idx]) return String(row[idx]); } return ''; };
+    const deceased = get('фио умершего','фио','умерший','покойный','deceased') || String(row[0]||'');
+    if (!deceased) continue;
+    const ref = doc(collection(db,'clients'));
+    batch.set(ref, {
+      deceased,
+      region:   get('регион','region') || '',
+      relatives:[{
+        name:     get('родственник','фио родственника','contact','контакт') || String(row[1]||''),
+        phone:    get('телефон','тел','phone') || String(row[2]||''),
+        address:  get('адрес','address') || String(row[3]||''),
+        relation: get('отношение','кем приходится','relation') || '',
+      }],
+      status:'new', result:null, comment:'',
+      calledBy:null, calledAt:null,
+      createdAt:Timestamp.now()
+    });
+    count++;
+    if (count % 400 === 0) { await batch.commit(); /* reset batch impossible with sdk v9 modular, just commit */ }
+  }
+  await batch.commit();
+  toast('✅ Загружено ' + count + ' клиентов');
+  el('import-preview').style.display = 'none';
+  importData = [];
+}
+
+/* ──────── MANUAL ADD ──────── */
+window.addRel = () => { manRels.push({ name:'',phone:'',address:'',relation:'' }); renderManRels(); };
+window.rmRel  = i  => { manRels.splice(i,1); renderManRels(); };
+window.setRel = (i,r) => { manRels[i].relation=r; renderManRels(); };
+
+function renderManRels() {
+  const TAGS = ['Мама','Папа','Брат','Сестра','Жена','Муж','Сын','Дочь'];
+  el('rels-container').innerHTML = manRels.map((r,i) => `
+    <div class="rel-block" style="margin-bottom:10px">
+      <div class="rel-block-header">
+        <span class="rel-block-num">👤 Родственник #${i+1}</span>
+        <div class="tag-row">
+          ${TAGS.map(t=>`<button class="rtag${r.relation===t?' on':''}" onclick="setRel(${i},'${t}')">${t}</button>`).join('')}
+        </div>
+        ${i>0?`<button class="btn-rm" onclick="rmRel(${i})">✕</button>`:''}
+      </div>
+      <div class="form-row c2">
+        <div class="fg"><label>ФИО</label><input placeholder="Фамилия Имя Отчество" value="${r.name}" oninput="manRels[${i}].name=this.value"></div>
+        <div class="fg"><label>Телефон</label><input placeholder="79001112233" value="${r.phone}" oninput="manRels[${i}].phone=this.value"></div>
+      </div>
+      <div class="fg"><label>Адрес</label><input placeholder="г. Город, ул. Улица, д. 1" value="${r.address}" oninput="manRels[${i}].address=this.value"></div>
+    </div>`).join('');
+}
+
+window.saveManual = async () => {
+  const deceased = v('m-dec');
+  if (!deceased) { toast('⚠️ Введите ФИО умершего','warn'); return; }
+  await addDoc(collection(db,'clients'), {
+    deceased, region:v('m-reg'),
+    relatives:manRels.filter(r=>r.name||r.phone),
+    status:'new', result:null, comment:'',
+    calledBy:null, calledAt:null, createdAt:Timestamp.now()
+  });
+  el('m-dec').value=''; el('m-reg').value='';
+  manRels = [{ name:'',phone:'',address:'',relation:'' }];
+  renderManRels();
+  toast('✅ Клиент добавлен');
+};
+
+/* ──────── CLIENTS LIST ──────── */
+async function loadClients() {
+  const snap = await getDocs(query(collection(db,'clients'),orderBy('createdAt','desc')));
+  const rows = snap.docs.map(d=>({id:d.id,...d.data()}));
+  el('clients-tbody').innerHTML = rows.length
+    ? rows.map(c=>`<tr>
+        <td><b>${c.deceased||'—'}</b></td>
+        <td>${c.region||'—'}</td>
+        <td style="font-size:12px">${(c.relatives||[]).map(r=>`${r.name||''} <span style="color:var(--cyan);font-family:var(--mono)">${r.phone||''}</span>`).join('<br>')}</td>
+        <td>${c.result?`<span class="badge ${RESULTS[c.result]?'status-done':'status-cb'}" style="background:${(RESULTS[c.result]||{}).color||'#555'}22;color:${(RESULTS[c.result]||{}).color||'#aaa'}">${(RESULTS[c.result]||{label:c.result}).label}</span>`:'<span class="badge status-new">🆕 Новый</span>'}</td>
+        <td style="color:var(--text2);font-size:12px">${c.comment||'—'}</td>
+        <td style="color:var(--text2);font-size:12px">${fmt(c.calledAt)}</td>
+        <td><button class="btn btn-danger btn-sm" onclick="delClient('${c.id}')">🗑</button></td>
+      </tr>`).join('')
+    : '<tr><td colspan="7" class="empty-cell">База пуста</td></tr>';
+}
+
+window.delClient = async id => {
+  if (!confirm('Удалить запись?')) return;
+  await deleteDoc(doc(db,'clients',id));
+  loadClients();
+  toast('Запись удалена');
+};
+
+/* ──────── MANAGERS MANAGEMENT ──────── */
+async function loadMgrList() {
+  const snap = await getDocs(collection(db,'user'));
+  const rows = snap.docs.map(d=>({uid:d.id,...d.data()}));
+  el('mgr-list-tbody').innerHTML = rows.map(u=>`<tr>
+    <td><b>${u.name||'—'}</b></td>
+    <td style="color:var(--text2)">${u.email||'—'}</td>
+    <td><span class="badge ${u.role==='admin'?'status-cb':'status-done'}">${u.role==='admin'?'👑 Админ':'📞 Менеджер'}</span></td>
+    <td>${u.role!=='admin'?`<button class="btn btn-danger btn-sm" onclick="delMgr('${u.uid}')">Удалить</button>`:''}</td>
+  </tr>`).join('');
+}
+
+window.createManager = async () => {
+  const name  = v('nm-name');
+  const email = v('nm-email');
+  const pass  = v('nm-pass');
+  if (!name||!email||!pass) { toast('⚠️ Заполните все поля','warn'); return; }
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email, pass);
+    await setDoc(doc(db,'user',cred.user.uid), { name, email, role:'manager', createdAt:Timestamp.now() });
+    toast('✅ Менеджер создан. Войдите снова под своим аккаунтом.');
+    el('nm-name').value=''; el('nm-email').value=''; el('nm-pass').value='';
+    loadMgrList();
+  } catch(e) { toast('Ошибка: '+e.message,'err'); }
+};
+
+window.delMgr = async uid => {
+  if (!confirm('Удалить менеджера?')) return;
+  await deleteDoc(doc(db,'user',uid));
+  loadMgrList();
+};
+
+/* ──────── MANAGER PANEL ──────── */
+function initManager() {
+  el('admin-panel').style.display   = 'none';
+  el('manager-panel').style.display = 'flex';
+  subscribeStats();
+  loadNextClient();
+}
+
+function subscribeStats() {
+  if (callUnsub) callUnsub();
+  callUnsub = onSnapshot(collection(db,'clients'), snap => {
+    const all     = snap.docs.map(d=>d.data());
+    const total   = all.length;
+    const done    = all.filter(c=>c.result&&c.result!=='callback').length;
+    const remain  = all.filter(c=>!c.result||c.result==='callback').length;
+    const pct     = total>0 ? Math.round(done/total*100) : 0;
+    el('p-total').textContent  = total;
+    el('p-called').textContent = done;
+    el('p-remain').textContent = remain;
+    el('p-pct').textContent    = pct+'%';
+    el('p-bar').style.width    = pct+'%';
+  });
+}
+
+async function loadNextClient() {
+  el('cl-loading').style.display = 'block';
+  el('cl-empty').style.display   = 'none';
+  el('call-card').style.display  = 'none';
+
+  // Get new clients
+  const q1 = query(collection(db,'clients'), where('result','==',null), orderBy('createdAt'), limit(1));
+  let snap = await getDocs(q1);
+  // Fallback: callbacks
+  if (snap.empty) {
+    const q2 = query(collection(db,'clients'), where('result','==','callback'), orderBy('calledAt'), limit(1));
+    snap = await getDocs(q2);
+  }
+
+  el('cl-loading').style.display = 'none';
+  if (snap.empty) { el('cl-empty').style.display='flex'; return; }
+
+  const client = { id:snap.docs[0].id, ...snap.docs[0].data() };
+  renderCard(client);
+}
+
+function renderCard(c) {
+  el('cc-id').value = c.id;
+  el('cc-name').textContent = c.deceased || 'Не указано';
+  const rtag = el('cc-region');
+  rtag.textContent = c.region || '';
+  rtag.style.display = c.region ? 'inline-block' : 'none';
+  el('cc-comment').value = c.comment || '';
+
+  el('cc-rels').innerHTML = (c.relatives||[]).length
+    ? (c.relatives||[]).map(r=>`
+        <div class="rel-row">
+          <div class="rel-name-line">
+            <span class="rel-fname">${r.name||'—'}</span>
+            ${r.relation?`<span class="rel-relation">${r.relation}</span>`:''}
+          </div>
+          ${r.phone?`<div class="rel-phone">📞 <a href="tel:${r.phone}">${r.phone}</a></div>`:''}
+          ${r.address?`<div class="rel-addr">📍 ${r.address}</div>`:''}
+        </div>`).join('')
+    : '<div style="color:var(--text2);font-size:13px">Родственники не указаны</div>';
+
+  const card = el('call-card');
+  card.style.display = 'block';
+  card.classList.remove('leaving');
+}
+
+window.act = async result => {
+  const id = el('cc-id').value;
+  const comment = el('cc-comment').value;
+  if (!id) return;
+  await updateDoc(doc(db,'clients',id), {
+    result, status:'called', comment,
+    calledBy:me.uid, calledAt:Timestamp.now()
+  });
+  const card = el('call-card');
+  card.classList.add('leaving');
+  el('cc-comment').value = '';
+  setTimeout(() => { card.classList.remove('leaving'); loadNextClient(); }, 280);
+};
+
+</script>
+</body>
+</html>
