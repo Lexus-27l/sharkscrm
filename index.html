@@ -581,7 +581,7 @@ input[type=file]{display:none}
         </div>
         <div class="card" style="padding:0;overflow:hidden">
           <table class="clients-table">
-            <thead><tr><th>Имя</th><th>Email</th><th>Роль</th><th></th></tr></thead>
+            <thead><tr><th>Имя</th><th>Email</th><th>Роль</th><th>Назначенные базы</th><th>Действия</th></tr></thead>
             <tbody id="mgr-list-tbody"></tbody>
           </table>
         </div>
@@ -1122,12 +1122,29 @@ window.delClient = async id => {
 async function loadMgrList() {
   const snap = await getDocs(collection(db,'user'));
   const rows = snap.docs.map(d=>({uid:d.id,...d.data()}));
-  el('mgr-list-tbody').innerHTML = rows.map(u=>`<tr>
-    <td><b>${u.name||'—'}</b></td>
-    <td style="color:var(--text2)">${u.email||'—'}</td>
-    <td><span class="badge ${u.role==='admin'?'status-cb':'status-done'}">${u.role==='admin'?'👑 Админ':'📞 Менеджер'}</span></td>
-    <td>${u.role!=='admin'?`<button class="btn btn-danger btn-sm" onclick="delMgr('${u.uid}')">Удалить</button>`:''}</td>
-  </tr>`).join('');
+  // Load bases for assignment display
+  const basesSnap2 = await getDocs(collection(db,'bases'));
+  const allBasesMap = {};
+  basesSnap2.docs.forEach(d => { allBasesMap[d.id] = d.data().name; });
+
+  el('mgr-list-tbody').innerHTML = rows.map(u=>{
+    const assignedBases = (u.assignedBases||[]).map(bid => 
+      `<span style="background:rgba(124,58,237,.15);color:var(--acc2);padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600">${allBasesMap[bid]||bid}</span>`
+    ).join('');
+    return `<tr>
+      <td><b>${u.name||'—'}</b></td>
+      <td style="color:var(--text2);font-size:12px">${u.email||'—'}</td>
+      <td><span class="badge ${u.role==='admin'?'status-cb':'status-done'}">${u.role==='admin'?'👑 Админ':'📞 Менеджер'}</span></td>
+      <td style="max-width:250px"><div style="display:flex;flex-wrap:wrap;gap:4px">${assignedBases || '<span style="color:var(--text2);font-size:12px">Нет баз</span>'}</div></td>
+      <td>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-ghost btn-sm" onclick="openEditMgr('${u.uid}','${(u.name||'').replace(/'/g,"\'").replace(/"/g,'&quot;')}')">✏️ Изменить</button>
+          <button class="btn btn-pri btn-sm" onclick="openAssignBases('${u.uid}','${(u.name||'').replace(/'/g,"\'")}')">📁 Базы</button>
+          ${u.role!=='admin'?`<button class="btn btn-danger btn-sm" onclick="delMgr('${u.uid}')">🗑</button>`:''}
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
 }
 
 window.createManager = async () => {
@@ -1238,13 +1255,33 @@ async function loadNextClient() {
   el('cl-empty').style.display   = 'none';
   el('call-card').style.display  = 'none';
 
-  // Get new clients
-  const q1 = query(collection(db,'clients'), where('result','==',null), orderBy('createdAt'), limit(1));
-  let snap = await getDocs(q1);
-  // Fallback: callbacks
-  if (snap.empty) {
-    const q2 = query(collection(db,'clients'), where('result','==','callback'), orderBy('calledAt'), limit(1));
-    snap = await getDocs(q2);
+  // Get manager's assigned bases
+  const mgrDoc = await getDoc(doc(db,'user',me.uid));
+  const assignedBases = mgrDoc.exists() ? (mgrDoc.data().assignedBases || []) : [];
+
+  let snap;
+  if (assignedBases.length > 0) {
+    // Load only from assigned bases
+    const q1 = query(collection(db,'clients'), 
+      where('result','==',null), 
+      where('baseId','in', assignedBases.slice(0,10)),
+      orderBy('createdAt'), limit(1));
+    snap = await getDocs(q1);
+    if (snap.empty) {
+      const q2 = query(collection(db,'clients'), 
+        where('result','==','callback'),
+        where('baseId','in', assignedBases.slice(0,10)),
+        orderBy('calledAt'), limit(1));
+      snap = await getDocs(q2);
+    }
+  } else {
+    // No assigned bases - load all
+    const q1 = query(collection(db,'clients'), where('result','==',null), orderBy('createdAt'), limit(1));
+    snap = await getDocs(q1);
+    if (snap.empty) {
+      const q2 = query(collection(db,'clients'), where('result','==','callback'), orderBy('calledAt'), limit(1));
+      snap = await getDocs(q2);
+    }
   }
 
   el('cl-loading').style.display = 'none';
@@ -1667,5 +1704,55 @@ window.searchPoteri = () => {
 };
 
 </script>
+
+<!-- Edit Manager Modal -->
+<div id="edit-mgr-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;align-items:center;justify-content:center">
+  <div style="background:var(--bg2);border:1px solid var(--brd2);border-radius:20px;padding:28px;width:420px;max-width:90vw;box-shadow:0 24px 64px rgba(0,0,0,.5);animation:fadeUp .25s ease">
+    <div style="font-size:16px;font-weight:800;margin-bottom:20px;display:flex;align-items:center;gap:8px">
+      ✏️ Редактировать менеджера
+    </div>
+    <input type="hidden" id="edit-mgr-uid">
+    <div style="margin-bottom:14px">
+      <label>Имя</label>
+      <input id="edit-mgr-name" placeholder="Имя менеджера">
+    </div>
+    <div style="margin-bottom:14px">
+      <label>Новый пароль <span style="color:var(--text2);font-weight:400">(оставь пустым если не менять)</span></label>
+      <input id="edit-mgr-pass" type="password" placeholder="Минимум 6 символов">
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
+      <button class="btn btn-ghost" onclick="closeEditMgr()">Отмена</button>
+      <button class="btn btn-pri" onclick="saveEditMgr()">💾 Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- Assign Bases Modal -->
+<div id="assign-bases-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:501;align-items:center;justify-content:center">
+  <div style="background:var(--bg2);border:1px solid var(--brd2);border-radius:20px;padding:28px;width:500px;max-width:94vw;max-height:85vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.6);animation:fadeUp .25s ease">
+    <div style="font-size:16px;font-weight:800;margin-bottom:6px">📁 Назначить базы</div>
+    <div id="assign-mgr-name-label" style="font-size:13px;color:var(--acc2);margin-bottom:18px"></div>
+    <input type="hidden" id="assign-mgr-uid">
+    
+    <!-- Search bases -->
+    <div style="margin-bottom:12px">
+      <input id="assign-search" placeholder="🔍 Поиск базы по названию..." oninput="filterAssignBases()">
+    </div>
+
+    <!-- Select all / none -->
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <button class="btn btn-ghost btn-sm" onclick="selectAllBases(true)">✅ Выбрать все</button>
+      <button class="btn btn-ghost btn-sm" onclick="selectAllBases(false)">☐ Снять все</button>
+    </div>
+
+    <!-- Bases list with checkboxes -->
+    <div id="assign-bases-checkboxes" style="display:flex;flex-direction:column;gap:6px;max-height:350px;overflow-y:auto;padding-right:4px"></div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--brd)">
+      <button class="btn btn-ghost" onclick="closeAssignBases()">Отмена</button>
+      <button class="btn btn-pri" onclick="saveAssignBases()">💾 Сохранить</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
