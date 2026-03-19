@@ -548,6 +548,49 @@ input[type=file]{display:none}
       <div class="prog-track"><div class="prog-fill" id="p-bar" style="width:0%"></div></div>
     </div>
 
+    <!-- Manager mini stats bar -->
+    <div id="mgr-mini-stats" style="background:var(--bg2);border-bottom:1px solid var(--brd);padding:10px 20px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div id="mgr-avatar-wrap" style="position:relative;cursor:pointer" onclick="document.getElementById('mgr-avatar-input').click()">
+          <div id="mgr-avatar-circle" style="width:38px;height:38px;border-radius:50%;background:var(--acc);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;overflow:hidden;border:2px solid var(--brd2)">
+            <span id="mgr-avatar-initials">?</span>
+            <img id="mgr-avatar-img" style="display:none;width:100%;height:100%;object-fit:cover">
+          </div>
+          <div style="position:absolute;bottom:-2px;right:-2px;width:14px;height:14px;background:var(--acc3);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px">📷</div>
+        </div>
+        <input type="file" id="mgr-avatar-input" accept="image/*" style="display:none" onchange="uploadMgrAvatar(event)">
+        <div>
+          <div id="mgr-name-display" style="font-size:13px;font-weight:700;color:var(--text)"></div>
+          <div style="font-size:10px;color:var(--text2)">Менеджер</div>
+        </div>
+      </div>
+      <div style="width:1px;height:32px;background:var(--brd);margin:0 4px"></div>
+      <!-- Today stats -->
+      <div style="display:flex;gap:16px;flex:1">
+        <div style="text-align:center">
+          <div id="ms-today" style="font-size:18px;font-weight:900;font-family:var(--mono);color:var(--green)">0</div>
+          <div style="font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Сегодня</div>
+        </div>
+        <div style="text-align:center">
+          <div id="ms-transferred" style="font-size:18px;font-weight:900;font-family:var(--mono);color:var(--acc2)">0</div>
+          <div style="font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Передач</div>
+        </div>
+        <div style="text-align:center">
+          <div id="ms-nodial" style="font-size:18px;font-weight:900;font-family:var(--mono);color:var(--red)">0</div>
+          <div style="font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Не дозвон</div>
+        </div>
+        <div style="text-align:center">
+          <div id="ms-ao" style="font-size:18px;font-weight:900;font-family:var(--mono);color:var(--cyan)">0</div>
+          <div style="font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">АО</div>
+        </div>
+      </div>
+      <!-- Top передач -->
+      <div id="ms-top-wrap" style="display:flex;align-items:center;gap:6px">
+        <div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-right:4px">Топ 🏆</div>
+        <div id="ms-top-list" style="display:flex;gap:4px"></div>
+      </div>
+    </div>
+
     <div class="call-area">
       <div class="call-loading" id="cl-loading"><span class="spin">⏳</span>Загрузка...</div>
       <div class="call-empty" id="cl-empty">
@@ -856,8 +899,11 @@ window.handleFile = e => {
 async function doImport() {
   const rows    = importData;
   const headers = rows[0].map(h => String(h).toLowerCase().trim());
+  // Load existing deceased names to check duplicates
+  const existingSnap = await getDocs(collection(db,'clients'));
+  const existingNames = new Set(existingSnap.docs.map(d => (d.data().deceased||'').toLowerCase().trim()));
   const batch   = writeBatch(db);
-  let count = 0;
+  let count = 0; let skipped = 0;
   for (let i = 1; i < rows.length; i++) {
     const row = rows[i];
     const get = (...keys) => { for (const k of keys) { const idx=headers.indexOf(k); if (idx>=0&&row[idx]) return String(row[idx]); } return ''; };
@@ -881,13 +927,18 @@ async function doImport() {
     if (count % 400 === 0) { await batch.commit(); /* reset batch impossible with sdk v9 modular, just commit */ }
   }
   await batch.commit();
-  toast('✅ Загружено ' + count + ' клиентов');
+  const msg = skipped > 0 ? '✅ Загружено '+count+' | ⚠️ Пропущено дублей: '+skipped : '✅ Загружено '+count+' клиентов';
+  toast(msg);
   el('import-preview').style.display = 'none';
   importData = [];
 }
 
 /* ──────── MANUAL ADD ──────── */
-window.addRel = () => { manRels.push({ name:'',phone:'',address:'',relation:'',dob:'',passport:'',snils:'' }); renderManRels(); };
+window.addRel = () => { 
+  if (manRels.length >= 6) { toast('⚠️ Максимум 6 родственников','warn'); return; }
+  manRels.push({ name:'',phone:'',address:'',relation:'',dob:'',passport:'',snils:'' }); 
+  renderManRels(); 
+};
 window.rmRel  = i  => { manRels.splice(i,1); renderManRels(); };
 window.setRel = (i,r) => { manRels[i].relation=r; renderManRels(); };
 window.updRel = (i,field,val) => { manRels[i][field]=val; };
@@ -919,6 +970,9 @@ function renderManRels() {
 window.saveManual = async () => {
   const deceased = v('m-dec');
   if (!deceased) { toast('⚠️ Введите ФИО умершего','warn'); return; }
+  // Check duplicate
+  const dupQ = await getDocs(query(collection(db,'clients'), where('deceased','==',deceased)));
+  if (!dupQ.empty) { toast('⚠️ Клиент "'+deceased+'" уже есть в базе!','warn'); return; }
   await addDoc(collection(db,'clients'), {
     deceased, region:v('m-reg'),
     relatives:manRels.filter(r=>r.name||r.phone||r.passport||r.snils).map(r=>({...r})),
@@ -991,8 +1045,67 @@ window.delMgr = async uid => {
 function initManager() {
   el('admin-panel').style.display   = 'none';
   el('manager-panel').style.display = 'flex';
+  // Set name and avatar
+  el('mgr-name-display').textContent = me.name || me.email;
+  const initials = (me.name||'?').charAt(0).toUpperCase();
+  el('mgr-avatar-initials').textContent = initials;
+  // Load saved avatar
+  const savedAvatar = localStorage.getItem('avatar_' + me.uid);
+  if (savedAvatar) {
+    el('mgr-avatar-img').src = savedAvatar;
+    el('mgr-avatar-img').style.display = 'block';
+    el('mgr-avatar-initials').style.display = 'none';
+  }
   subscribeStats();
   loadNextClient();
+  loadMgrMiniStats();
+}
+
+window.uploadMgrAvatar = (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const data = ev.target.result;
+    localStorage.setItem('avatar_' + me.uid, data);
+    el('mgr-avatar-img').src = data;
+    el('mgr-avatar-img').style.display = 'block';
+    el('mgr-avatar-initials').style.display = 'none';
+    toast('✅ Аватарка сохранена!');
+  };
+  reader.readAsDataURL(file);
+};
+
+async function loadMgrMiniStats() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const snap = await getDocs(collection(db,'clients'));
+  const all = snap.docs.map(d => d.data());
+  const mine = all.filter(c => c.calledBy === me.uid);
+  const mineToday = mine.filter(c => {
+    if (!c.calledAt) return false;
+    const d = c.calledAt.toDate ? c.calledAt.toDate() : new Date(c.calledAt);
+    return d >= today;
+  });
+  el('ms-today').textContent = mineToday.length;
+  el('ms-transferred').textContent = mine.filter(c=>c.result==='transferred').length;
+  el('ms-nodial').textContent = mine.filter(c=>c.result==='nodial').length;
+  el('ms-ao').textContent = mine.filter(c=>c.result==='ao').length;
+
+  // Top managers by transferred
+  const usersSnap = await getDocs(query(collection(db,'user'), where('role','==','manager')));
+  const managers = usersSnap.docs.map(d=>({uid:d.id,...d.data()}));
+  const topList = managers.map(m => ({
+    name: m.name || m.email,
+    count: all.filter(c=>c.calledBy===m.uid&&c.result==='transferred').length
+  })).sort((a,b)=>b.count-a.count).slice(0,3);
+
+  el('ms-top-list').innerHTML = topList.map((m,i) => 
+    `<div style="display:flex;align-items:center;gap:4px;background:var(--bg3);border-radius:8px;padding:4px 8px;font-size:11px;font-weight:700">
+      <span>${['🥇','🥈','🥉'][i]}</span>
+      <span style="color:var(--text)">${m.name.split(' ')[0]}</span>
+      <span style="color:var(--acc2)">${m.count}</span>
+    </div>`
+  ).join('');
 }
 
 function subscribeStats() {
