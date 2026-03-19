@@ -263,7 +263,7 @@ input[type=file]{display:none}
 .call-empty h2{font-size:22px;font-weight:900;margin-bottom:8px}
 .call-empty p{color:var(--text2)}
 
-.call-card{width:100%;max-width:680px;animation:fadeUp .3s ease;display:none}
+.call-card{width:100%;max-width:900px;animation:fadeUp .3s ease;display:none}
 .call-card.leaving{animation:cardOut .3s ease forwards}
 
 .call-top{
@@ -283,7 +283,7 @@ input[type=file]{display:none}
   padding:16px 22px;
 }
 .rels-label{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px}
-.rel-row{background:var(--bg3);border:1px solid var(--brd);border-radius:var(--r);padding:12px 14px;margin-bottom:8px}
+.rel-row{background:var(--bg3);border:1px solid var(--brd);border-radius:var(--r);padding:10px 12px;margin-bottom:7px}
 .rel-row:last-child{margin-bottom:0}
 .rel-name-line{display:flex;align-items:center;gap:8px;margin-bottom:5px}
 .rel-fname{font-weight:700;font-size:14px}
@@ -656,20 +656,53 @@ input[type=file]{display:none}
       </div>
       <div class="call-card" id="call-card">
         <input type="hidden" id="cc-id">
-        <div class="call-top">
-          <div class="call-name"><span class="skull">☠️</span><span id="cc-name"></span></div>
-          <div class="call-tags">
-            <span class="call-tag region" id="cc-region"></span>
-            <span class="call-tag" id="cc-dob" style="color:var(--yellow);border-color:rgba(245,158,11,.35);background:rgba(245,158,11,.08)"></span>
+        <!-- 2-column layout -->
+        <div style="display:grid;grid-template-columns:260px 1fr;gap:10px;margin-bottom:10px">
+          <!-- LEFT: deceased info -->
+          <div style="background:var(--bg2);border:1px solid var(--brd2);border-radius:var(--r2);padding:16px;display:flex;flex-direction:column;gap:10px">
+            <!-- Name -->
+            <div>
+              <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">☠️ Умерший</div>
+              <div id="cc-name" style="font-size:16px;font-weight:900;color:var(--text);line-height:1.3"></div>
+            </div>
+            <!-- DOB -->
+            <div id="cc-dob-wrap" style="display:none">
+              <div style="font-size:10px;color:var(--text2);margin-bottom:2px">Дата рождения</div>
+              <div id="cc-dob" style="font-size:13px;font-weight:700;color:var(--yellow)"></div>
+            </div>
+            <!-- Zona status -->
+            <div id="cc-zona-wrap" style="display:none;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:8px">
+              <div style="font-size:10px;color:var(--text2);margin-bottom:4px">📋 Данные из базы</div>
+              <div id="cc-zona-status" style="font-size:12px;font-weight:700;color:#fca5a5"></div>
+              <div id="cc-zona-death" style="font-size:11px;color:var(--text2);margin-top:2px"></div>
+            </div>
+            <!-- Region -->
+            <div id="cc-region-wrap" style="display:none">
+              <div style="font-size:10px;color:var(--text2);margin-bottom:2px">📍 Адрес</div>
+              <div id="cc-region" style="font-size:11px;color:var(--acc2);line-height:1.4"></div>
+            </div>
+            <!-- Search buttons -->
+            <div style="display:flex;flex-direction:column;gap:5px;margin-top:auto">
+              <button onclick="searchZona()" style="padding:6px 10px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:8px;color:#fca5a5;font-size:11px;font-weight:700;font-family:var(--font);cursor:pointer;text-align:left">
+                🔍 Найти на zona.media
+              </button>
+              <button onclick="searchPoteri()" style="padding:6px 10px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);border-radius:8px;color:#93c5fd;font-size:11px;font-weight:700;font-family:var(--font);cursor:pointer;text-align:left">
+                🔍 Найти на poteru.net
+              </button>
+            </div>
+          </div>
+
+          <!-- RIGHT: relatives -->
+          <div style="background:var(--bg2);border:1px solid var(--brd2);border-radius:var(--r2);overflow:hidden">
+            <div style="padding:10px 14px;border-bottom:1px solid var(--brd);font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">👥 Родственники</div>
+            <div id="cc-rels" style="padding:10px;max-height:380px;overflow-y:auto"></div>
           </div>
         </div>
-        <div class="call-rels">
-          <div class="rels-label">👥 Родственники</div>
-          <div id="cc-rels"></div>
-        </div>
-        <div class="call-comment">
+
+        <!-- Comment + Actions -->
+        <div style="background:var(--bg2);border:1px solid var(--brd2);border-radius:var(--r2);padding:12px 14px;margin-bottom:10px">
           <label>💬 Комментарий</label>
-          <textarea id="cc-comment" rows="3" placeholder="Оставьте комментарий перед действием..."></textarea>
+          <textarea id="cc-comment" rows="2" placeholder="Оставьте комментарий перед действием..." style="margin-top:6px"></textarea>
         </div>
         <div class="call-actions">
           <button class="act-btn ab-nd" onclick="act('nodial')"><span class="ico">❌</span>Не дозвон</button>
@@ -1224,14 +1257,23 @@ async function loadNextClient() {
 function renderCard(c) {
   el('cc-id').value = c.id;
   el('cc-name').textContent = c.deceased || 'Не указано';
-  const rtag = el('cc-region');
-  rtag.textContent = c.region || '';
-  rtag.style.display = c.region ? 'inline-block' : 'none';
-  const dobtag = el('cc-dob');
-  if (dobtag) {
-    dobtag.textContent = c.dob ? '🎂 ' + c.dob : '';
-    dobtag.style.display = c.dob ? 'inline-block' : 'none';
+  // Region
+  const regionEl = el('cc-region');
+  const regionWrap = el('cc-region-wrap');
+  if (regionEl && regionWrap) {
+    regionEl.textContent = c.region || '';
+    regionWrap.style.display = c.region ? 'block' : 'none';
   }
+  // DOB of deceased
+  const dobEl = el('cc-dob');
+  const dobWrap = el('cc-dob-wrap');
+  if (dobEl && dobWrap) {
+    dobEl.textContent = c.dob ? '🎂 ' + c.dob : '';
+    dobWrap.style.display = c.dob ? 'block' : 'none';
+  }
+  // Hide zona info initially
+  const zonaWrap = el('cc-zona-wrap');
+  if (zonaWrap) zonaWrap.style.display = 'none';
   el('cc-comment').value = c.comment || '';
 
   el('cc-rels').innerHTML = (c.relatives||[]).length
@@ -1606,6 +1648,22 @@ window.deleteBase = async (baseId, baseName) => {
   
   toast('✅ База "' + baseName + '" удалена');
   loadBases();
+};
+
+
+/* ──────── ZONA / POTERI SEARCH ──────── */
+window.searchZona = () => {
+  const name = el('cc-name').textContent.trim();
+  if (!name) return;
+  const url = 'https://200.zona.media/?q=' + encodeURIComponent(name);
+  window.open(url, '_blank');
+};
+
+window.searchPoteri = () => {
+  const name = el('cc-name').textContent.trim();
+  if (!name) return;
+  const url = 'https://poteru.net/search?q=' + encodeURIComponent(name);
+  window.open(url, '_blank');
 };
 
 </script>
