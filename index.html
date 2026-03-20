@@ -1343,86 +1343,96 @@ async function loadNextClient() {
   el('cl-empty').style.display   = 'none';
   el('call-card').style.display  = 'none';
 
-  // Get manager assigned bases
-  const mgrDoc = await getDoc(doc(db,'user',me.uid));
-  const mgrData = mgrDoc.exists() ? mgrDoc.data() : {};
-  const assignedBases = mgrData.assignedBases || [];
-
-  // Get all bases, filter enabled ones (disabled !== true)
-  const basesSnap = await getDocs(collection(db,'bases'));
-  const basesMap = {};
-  basesSnap.docs.forEach(d => { basesMap[d.id] = d.data(); });
-  const enabledBases = Object.entries(basesMap)
-    .filter(([id, b]) => b.disabled !== true)
-    .map(([id]) => id);
-
-  // Which bases this manager works with
-  let targetBases = assignedBases.length > 0
-    ? assignedBases.filter(id => enabledBases.includes(id))
-    : enabledBases;
-
-  if (!targetBases.length) {
-    el('cl-loading').style.display = 'none';
-    el('cl-empty').style.display = 'flex';
-    return;
-  }
-
-  // Fetch candidates in chunks of 10 (Firestore in-limit)
+  const LOCK_MS = 25 * 60 * 1000; // 25 minutes
   const now = Date.now();
-  const LOCK_MIN = 25 * 60 * 1000;
-  let candidates = [];
 
-  const chunks = [];
-  for (let i = 0; i < targetBases.length; i += 10) chunks.push(targetBases.slice(i, i+10));
+  try {
+    // 1. Get manager's assigned bases
+    const mgrDoc = await getDoc(doc(db,'user', me.uid));
+    const mgrData = mgrDoc.exists() ? mgrDoc.data() : {};
+    const assignedBases = mgrData.assignedBases || [];
 
-  for (const chunk of chunks) {
-    const snap = await getDocs(query(collection(db,'clients'),
+    // 2. Get all bases, find enabled ones (JS-side filter — no index needed)
+    const basesSnap = await getDocs(collection(db,'bases'));
+    const basesMap = {};
+    basesSnap.docs.forEach(d => { basesMap[d.id] = d.data(); });
+    const enabledBases = Object.keys(basesMap).filter(id => basesMap[id].disabled !== true);
+
+    // 3. Which bases apply to this manager
+    const targetSet = new Set(
+      assignedBases.length > 0
+        ? assignedBases.filter(id => enabledBases.includes(id))
+        : enabledBases
+    );
+
+    if (!targetSet.size) {
+      el('cl-loading').style.display = 'none';
+      el('cl-empty').style.display = 'flex';
+      return;
+    }
+
+    // 4. Load all unprocessed clients (simple query, no compound index needed)
+    const allSnap = await getDocs(query(
+      collection(db,'clients'),
       where('result','==',null),
-      where('baseId','in', chunk),
-      limit(80)));
-    snap.docs.forEach(d => {
+      limit(300)
+    ));
+
+    // 5. Filter in JS: right base + not locked by someone else
+    let candidates = [];
+    allSnap.docs.forEach(d => {
       const data = d.data();
-      // skip if locked by another manager recently
+      if (!targetSet.has(data.baseId)) return; // wrong base
       if (data.lockedBy && data.lockedBy !== me.uid) {
-        const lockedAt = data.lockedAt ? (data.lockedAt.toMillis ? data.lockedAt.toMillis() : Number(data.lockedAt)) : 0;
-        if (now - lockedAt < TEN_MIN) return;
+        const lockedAt = data.lockedAt
+          ? (data.lockedAt.toMillis ? data.lockedAt.toMillis() : Number(data.lockedAt))
+          : 0;
+        if (now - lockedAt < LOCK_MS) return; // locked by another manager
       }
       candidates.push({ id: d.id, ...data });
     });
-  }
 
-  // If no new clients, try callbacks
-  if (!candidates.length) {
-    for (const chunk of chunks) {
-      const snap = await getDocs(query(collection(db,'clients'),
+    // 6. If no new clients — try callbacks
+    if (!candidates.length) {
+      const cbSnap = await getDocs(query(
+        collection(db,'clients'),
         where('result','==','callback'),
-        where('baseId','in', chunk),
-        limit(40)));
-      snap.docs.forEach(d => {
+        limit(200)
+      ));
+      cbSnap.docs.forEach(d => {
         const data = d.data();
+        if (!targetSet.has(data.baseId)) return;
         if (data.lockedBy && data.lockedBy !== me.uid) {
-          const lockedAt = data.lockedAt ? (data.lockedAt.toMillis ? data.lockedAt.toMillis() : Number(data.lockedAt)) : 0;
-          if (now - lockedAt < TEN_MIN) return;
+          const lockedAt = data.lockedAt
+            ? (data.lockedAt.toMillis ? data.lockedAt.toMillis() : Number(data.lockedAt))
+            : 0;
+          if (now - lockedAt < LOCK_MS) return;
         }
         candidates.push({ id: d.id, ...data });
       });
     }
+
+    el('cl-loading').style.display = 'none';
+
+    if (!candidates.length) { el('cl-empty').style.display='flex'; return; }
+
+    // 7. Random pick across all eligible clients
+    const pick = candidates[Math.floor(Math.random() * candidates.length)];
+
+    // 8. Lock for this manager
+    await updateDoc(doc(db,'clients', pick.id), {
+      lockedBy: me.uid,
+      lockedAt: Timestamp.now()
+    });
+
+    renderCard(pick);
+
+  } catch(err) {
+    console.error('loadNextClient error:', err);
+    el('cl-loading').style.display = 'none';
+    el('cl-empty').style.display = 'flex';
+    el('cl-empty').innerHTML = '<div class="ico">⚠️</div><h2>Ошибка загрузки</h2><p style="color:var(--text2)">' + err.message + '</p><button class="btn btn-ghost" style="margin-top:16px" onclick="loadNextClient()">🔄 Попробовать снова</button>';
   }
-
-  el('cl-loading').style.display = 'none';
-
-  if (!candidates.length) { el('cl-empty').style.display='flex'; return; }
-
-  // RANDOM pick from candidates (ensures distribution across bases)
-  const pick = candidates[Math.floor(Math.random() * candidates.length)];
-
-  // Lock this client for this manager
-  await updateDoc(doc(db,'clients', pick.id), {
-    lockedBy: me.uid,
-    lockedAt: Timestamp.now()
-  });
-
-  renderCard(pick);
 }
 
 function renderCard(c) {
