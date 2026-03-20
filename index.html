@@ -30,7 +30,7 @@
   --teal:    #14b8a6;
   --text:    #e2e2f0;
   --text2:   #8888a8;
-  --text3:   #5555778;
+  --text3:   #555577;
   --brd:     rgba(124,58,237,.15);
   --brd2:    rgba(124,58,237,.3);
   --r:       12px;
@@ -39,6 +39,73 @@
   --mono:    'JetBrains Mono', monospace;
   --shadow:  0 8px 32px rgba(0,0,0,.45);
 }
+
+/* ── THEMES ── */
+body.theme-teal {
+  --bg:#07131a;--bg2:#0d1f28;--bg3:#122633;--bg4:#173040;--bg5:#1d3a4d;
+  --acc:#0d9488;--acc2:#2dd4bf;--acc3:#0f766e;
+  --brd:rgba(13,148,136,.15);--brd2:rgba(13,148,136,.3);
+}
+body.theme-rose {
+  --bg:#140b0e;--bg2:#1e1014;--bg3:#28141a;--bg4:#321820;--bg5:#3c1c26;
+  --acc:#e11d48;--acc2:#fb7185;--acc3:#be123c;
+  --brd:rgba(225,29,72,.15);--brd2:rgba(225,29,72,.3);
+}
+body.theme-amber {
+  --bg:#120f04;--bg2:#1c1708;--bg3:#261f0c;--bg4:#302710;--bg5:#3a2f14;
+  --acc:#d97706;--acc2:#fbbf24;--acc3:#b45309;
+  --brd:rgba(217,119,6,.15);--brd2:rgba(217,119,6,.3);
+}
+body.theme-sky {
+  --bg:#04101a;--bg2:#081826;--bg3:#0c2132;--bg4:#102a3e;--bg5:#14334a;
+  --acc:#0369a1;--acc2:#38bdf8;--acc3:#0284c7;
+  --brd:rgba(3,105,161,.15);--brd2:rgba(3,105,161,.3);
+}
+body.theme-emerald {
+  --bg:#061310;--bg2:#0a1f1a;--bg3:#0f2b24;--bg4:#14372e;--bg5:#194338;
+  --acc:#059669;--acc2:#34d399;--acc3:#047857;
+  --brd:rgba(5,150,105,.15);--brd2:rgba(5,150,105,.3);
+}
+body.theme-indigo {
+  --bg:#06070f;--bg2:#0d0e1c;--bg3:#121529;--bg4:#171c36;--bg5:#1c2343;
+  --acc:#4338ca;--acc2:#818cf8;--acc3:#3730a3;
+  --brd:rgba(67,56,202,.15);--brd2:rgba(67,56,202,.3);
+}
+body.theme-fuchsia {
+  --bg:#120614;--bg2:#1c0a1e;--bg3:#260e28;--bg4:#301232;--bg5:#3a163c;
+  --acc:#a21caf;--acc2:#e879f9;--acc3:#86198f;
+  --brd:rgba(162,28,175,.15);--brd2:rgba(162,28,175,.3);
+}
+body.theme-orange {
+  --bg:#140a04;--bg2:#1e1008;--bg3:#28160c;--bg4:#321c10;--bg5:#3c2214;
+  --acc:#ea580c;--acc2:#fb923c;--acc3:#c2410c;
+  --brd:rgba(234,88,12,.15);--brd2:rgba(234,88,12,.3);
+}
+
+/* ── THEME PICKER BUTTON ── */
+.theme-btn {
+  width:22px;height:22px;border-radius:50%;border:2px solid transparent;
+  cursor:pointer;transition:all .2s;flex-shrink:0;
+}
+.theme-btn:hover{transform:scale(1.2);border-color:rgba(255,255,255,.6)}
+.theme-btn.active{border-color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.3)}
+#theme-picker-panel{
+  position:fixed;bottom:70px;right:16px;z-index:999;
+  background:var(--bg2);border:1px solid var(--brd2);border-radius:16px;
+  padding:16px;width:280px;
+  box-shadow:0 16px 48px rgba(0,0,0,.6);
+  display:none;animation:fadeUp .2s ease;
+}
+#theme-picker-panel.open{display:block}
+.theme-fab{
+  position:fixed;bottom:16px;right:16px;z-index:999;
+  width:46px;height:46px;border-radius:50%;border:none;
+  background:linear-gradient(135deg,var(--acc),var(--acc3));
+  color:#fff;font-size:20px;cursor:pointer;
+  box-shadow:0 4px 16px rgba(0,0,0,.4);transition:all .2s;
+  display:none;
+}
+.theme-fab:hover{transform:scale(1.1)}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;overflow:hidden}
 button{cursor:pointer;font-family:var(--font)}
@@ -732,6 +799,24 @@ input[type=file]{display:none}
 </div><!-- root -->
 <div id="toast" class="toast"></div>
 
+<!-- ── THEME PICKER FAB ── -->
+<button class="theme-fab" id="theme-fab" onclick="toggleThemePicker()" title="Сменить тему">🎨</button>
+<div id="theme-picker-panel">
+  <div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px">🎨 Цветовая тема</div>
+  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+    <button class="theme-btn" data-theme="" style="background:linear-gradient(135deg,#7c3aed,#4f46e5)" title="Фиолетовый (по умолч.)"></button>
+    <button class="theme-btn" data-theme="teal" style="background:linear-gradient(135deg,#0d9488,#0f766e)" title="Бирюзовый"></button>
+    <button class="theme-btn" data-theme="rose" style="background:linear-gradient(135deg,#e11d48,#be123c)" title="Розовый/Красный"></button>
+    <button class="theme-btn" data-theme="amber" style="background:linear-gradient(135deg,#d97706,#b45309)" title="Янтарный"></button>
+    <button class="theme-btn" data-theme="sky" style="background:linear-gradient(135deg,#0369a1,#0284c7)" title="Небесный"></button>
+    <button class="theme-btn" data-theme="emerald" style="background:linear-gradient(135deg,#059669,#047857)" title="Изумрудный"></button>
+    <button class="theme-btn" data-theme="indigo" style="background:linear-gradient(135deg,#4338ca,#3730a3)" title="Индиго"></button>
+    <button class="theme-btn" data-theme="fuchsia" style="background:linear-gradient(135deg,#a21caf,#86198f)" title="Фуксия"></button>
+    <button class="theme-btn" data-theme="orange" style="background:linear-gradient(135deg,#ea580c,#c2410c)" title="Оранжевый"></button>
+  </div>
+  <div style="font-size:11px;color:var(--text2)">Тема сохраняется лично для тебя</div>
+</div>
+
 <!-- ═══════════════════════════════════════════════════
      FIREBASE + APP LOGIC
      ═══════════════════════════════════════════════════ -->
@@ -742,7 +827,7 @@ input[type=file]{display:none}
    ────────────────────────────────────────────────── */
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged,
-         createUserWithEmailAndPassword }
+         createUserWithEmailAndPassword, browserLocalPersistence, setPersistence }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getFirestore, collection, addDoc, getDocs, getDoc, setDoc, doc,
          updateDoc, deleteDoc, query, where, orderBy, onSnapshot,
@@ -761,6 +846,9 @@ const firebaseConfig = {
 const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db   = getFirestore(app);
+
+// Постоянная сессия — не вылетает при перезагрузке
+setPersistence(auth, browserLocalPersistence).catch(console.error);
 
 /* ──────── STATE ──────── */
 let me = null;       // { uid, name, email, role }
@@ -1255,40 +1343,86 @@ async function loadNextClient() {
   el('cl-empty').style.display   = 'none';
   el('call-card').style.display  = 'none';
 
-  // Get manager's assigned bases
+  // Get manager assigned bases
   const mgrDoc = await getDoc(doc(db,'user',me.uid));
-  const assignedBases = mgrDoc.exists() ? (mgrDoc.data().assignedBases || []) : [];
+  const mgrData = mgrDoc.exists() ? mgrDoc.data() : {};
+  const assignedBases = mgrData.assignedBases || [];
 
-  let snap;
-  if (assignedBases.length > 0) {
-    // Load only from assigned bases
-    const q1 = query(collection(db,'clients'), 
-      where('result','==',null), 
-      where('baseId','in', assignedBases.slice(0,10)),
-      orderBy('createdAt'), limit(1));
-    snap = await getDocs(q1);
-    if (snap.empty) {
-      const q2 = query(collection(db,'clients'), 
+  // Get all bases, filter enabled ones (disabled !== true)
+  const basesSnap = await getDocs(collection(db,'bases'));
+  const basesMap = {};
+  basesSnap.docs.forEach(d => { basesMap[d.id] = d.data(); });
+  const enabledBases = Object.entries(basesMap)
+    .filter(([id, b]) => b.disabled !== true)
+    .map(([id]) => id);
+
+  // Which bases this manager works with
+  let targetBases = assignedBases.length > 0
+    ? assignedBases.filter(id => enabledBases.includes(id))
+    : enabledBases;
+
+  if (!targetBases.length) {
+    el('cl-loading').style.display = 'none';
+    el('cl-empty').style.display = 'flex';
+    return;
+  }
+
+  // Fetch candidates in chunks of 10 (Firestore in-limit)
+  const now = Date.now();
+  const LOCK_MIN = 25 * 60 * 1000;
+  let candidates = [];
+
+  const chunks = [];
+  for (let i = 0; i < targetBases.length; i += 10) chunks.push(targetBases.slice(i, i+10));
+
+  for (const chunk of chunks) {
+    const snap = await getDocs(query(collection(db,'clients'),
+      where('result','==',null),
+      where('baseId','in', chunk),
+      limit(80)));
+    snap.docs.forEach(d => {
+      const data = d.data();
+      // skip if locked by another manager recently
+      if (data.lockedBy && data.lockedBy !== me.uid) {
+        const lockedAt = data.lockedAt ? (data.lockedAt.toMillis ? data.lockedAt.toMillis() : Number(data.lockedAt)) : 0;
+        if (now - lockedAt < TEN_MIN) return;
+      }
+      candidates.push({ id: d.id, ...data });
+    });
+  }
+
+  // If no new clients, try callbacks
+  if (!candidates.length) {
+    for (const chunk of chunks) {
+      const snap = await getDocs(query(collection(db,'clients'),
         where('result','==','callback'),
-        where('baseId','in', assignedBases.slice(0,10)),
-        orderBy('calledAt'), limit(1));
-      snap = await getDocs(q2);
-    }
-  } else {
-    // No assigned bases - load all
-    const q1 = query(collection(db,'clients'), where('result','==',null), orderBy('createdAt'), limit(1));
-    snap = await getDocs(q1);
-    if (snap.empty) {
-      const q2 = query(collection(db,'clients'), where('result','==','callback'), orderBy('calledAt'), limit(1));
-      snap = await getDocs(q2);
+        where('baseId','in', chunk),
+        limit(40)));
+      snap.docs.forEach(d => {
+        const data = d.data();
+        if (data.lockedBy && data.lockedBy !== me.uid) {
+          const lockedAt = data.lockedAt ? (data.lockedAt.toMillis ? data.lockedAt.toMillis() : Number(data.lockedAt)) : 0;
+          if (now - lockedAt < TEN_MIN) return;
+        }
+        candidates.push({ id: d.id, ...data });
+      });
     }
   }
 
   el('cl-loading').style.display = 'none';
-  if (snap.empty) { el('cl-empty').style.display='flex'; return; }
 
-  const client = { id:snap.docs[0].id, ...snap.docs[0].data() };
-  renderCard(client);
+  if (!candidates.length) { el('cl-empty').style.display='flex'; return; }
+
+  // RANDOM pick from candidates (ensures distribution across bases)
+  const pick = candidates[Math.floor(Math.random() * candidates.length)];
+
+  // Lock this client for this manager
+  await updateDoc(doc(db,'clients', pick.id), {
+    lockedBy: me.uid,
+    lockedAt: Timestamp.now()
+  });
+
+  renderCard(pick);
 }
 
 function renderCard(c) {
@@ -1320,13 +1454,15 @@ function renderCard(c) {
             <span class="rel-fname">${r.name||'—'}</span>
             ${r.relation?`<span class="rel-relation">${r.relation}</span>`:''}
           </div>
-          ${r.phone ? r.phone.split(',').map(p => p.trim()).filter(Boolean).map(p => 
-            `<div class="rel-phone">📞 <a href="tel:${p}" onclick="event.stopPropagation()">${p}</a></div>`
-          ).join('') : ''}
+          ${r.phone ? r.phone.split(',').map(p => p.trim()).filter(Boolean).map(p => {
+            const op = getOperator(p);
+            const opBadge = op ? `<span style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:6px;background:${op.bg};color:${op.col}">${op.name}</span>` : '';
+            return `<div class="rel-phone">📞 <a href="tel:${p}" onclick="event.stopPropagation()">${p}</a>${opBadge}</div>`;
+          }).join('') : ''}
           ${r.dob?`<div class="rel-addr">🎂 ${r.dob}</div>`:''}
-          ${r.passport?`<div class="rel-addr">🪪 Паспорт: ${r.passport}</div>`:''}
-          ${r.snils?`<div class="rel-addr">📋 СНИЛС: ${r.snils}</div>`:''}
-          ${r.address?`<div class="rel-addr">📍 ${r.address}</div>`:''}
+          ${r.passport?`<div class="rel-addr">🪪 <b style="color:var(--text);font-weight:800">Паспорт: ${r.passport}</b></div>`:''}
+          ${r.snils?`<div class="rel-addr">📋 <b style="color:var(--text);font-weight:800">СНИЛС: ${r.snils}</b></div>`:''}
+          ${r.address?`<div class="rel-addr">📍 <b style="color:var(--text);font-weight:700">${r.address}</b></div>`:''}
         </div>`).join('')
     : '<div style="color:var(--text2);font-size:13px">Родственники не указаны</div>';
 
@@ -1590,15 +1726,34 @@ function renderBases(bases) {
   el('bases-list').innerHTML = `
     <table class="clients-table">
       <thead><tr>
-        <th>Название</th><th>Дата</th><th>Клиентов</th><th>Прозвонено</th><th>Осталось</th><th>Прогресс</th><th></th>
+        <th>Вкл/Выкл</th><th>Название</th><th>Дата</th><th>Клиентов</th><th>Прозвонено</th><th>Осталось</th><th>Прогресс</th><th></th>
       </tr></thead>
       <tbody>${bases.map(b => {
         const total = b.total || 0;
         const called = b.calledCount || 0;
         const remain = total - called;
         const pct = total > 0 ? Math.round(called/total*100) : 0;
-        return `<tr>
-          <td><b style="color:var(--acc2)">${b.name}</b></td>
+        const isOn = b.disabled !== true;
+        const safeName = b.name.replace(/'/g,'').replace(/"/g,'');
+        return `<tr style="opacity:${isOn?'1':'0.5'}">
+          <td style="text-align:center">
+            <label style="display:inline-flex;align-items:center;cursor:pointer;gap:0">
+              <input type="checkbox" ${isOn?'checked':''} onchange="toggleBase('${b.id}',this.checked)"
+                style="appearance:none;width:38px;height:20px;background:${isOn?'var(--green)':'var(--bg4)'};
+                border-radius:10px;border:1px solid ${isOn?'var(--green)':'var(--brd2)'};
+                position:relative;cursor:pointer;transition:all .25s;outline:none">
+              <style>
+                input[type=checkbox]:checked::after,input[type=checkbox]::after{
+                  content:'';position:absolute;top:2px;width:14px;height:14px;border-radius:50%;
+                  background:#fff;transition:left .2s;
+                }
+                input[type=checkbox]::after{left:2px}
+                input[type=checkbox]:checked::after{left:20px}
+              </style>
+            </label>
+            <div style="font-size:9px;font-weight:700;margin-top:2px;color:${isOn?'var(--green)':'var(--text2)'}">${isOn?'ВКЛ':'ВЫКЛ'}</div>
+          </td>
+          <td><b style="color:${isOn?'var(--acc2)':'var(--text2)'}">${b.name}</b></td>
           <td style="color:var(--text2);font-size:12px">${fmt(b.createdAt)}</td>
           <td class="num" style="color:var(--text)">${total}</td>
           <td class="num" style="color:var(--green)">${called}</td>
@@ -1613,8 +1768,8 @@ function renderBases(bases) {
           </td>
           <td>
             <div style="display:flex;gap:6px">
-              <button class="btn btn-ghost btn-sm" onclick="exportBase('${b.id}','${b.name.replace(/'/g,'')}')" title="Выгрузить">📥 Выгрузить</button>
-              <button class="btn btn-danger btn-sm" onclick="deleteBase('${b.id}','${b.name.replace(/'/g,'')}')" title="Удалить">🗑</button>
+              <button class="btn btn-ghost btn-sm" onclick="exportBase('${b.id}','${safeName}')" title="Выгрузить">📥 Выгрузить</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteBase('${b.id}','${safeName}')" title="Удалить">🗑</button>
             </div>
           </td>
         </tr>`;
@@ -1624,6 +1779,16 @@ function renderBases(bases) {
   // Load called counts async
   loadBaseStats(bases);
 }
+
+window.toggleBase = async (baseId, enabled) => {
+  try {
+    await updateDoc(doc(db,'bases',baseId), { disabled: !enabled });
+    toast(enabled ? '✅ База включена — менеджеры могут звонить' : '⏸ База выключена — менеджеры её пропускают');
+    loadBases();
+  } catch(e) {
+    toast('Ошибка: ' + e.message, 'err');
+  }
+};
 
 async function loadBaseStats(bases) {
   const clientsSnap = await getDocs(collection(db,'clients'));
@@ -1703,6 +1868,149 @@ window.searchPoteri = () => {
   window.open(url, '_blank');
 };
 
+/* ──────── OPERATOR DETECTION ──────── */
+function getOperator(phone) {
+  // Normalize: remove spaces, dashes, +7, 8
+  const n = phone.replace(/\D/g,'');
+  if (n.length < 10) return null;
+  const p = n.slice(-10); // last 10 digits (without country code)
+  const code3 = parseInt(p.slice(0,3));
+  const code4 = parseInt(p.slice(0,4));
+  const code5 = parseInt(p.slice(0,5));
+
+  const OPS = [
+    // МТС
+    { name:'МТС', bg:'#e4002b22', col:'#ff6b6b', ranges:[
+      [910,910],[911,911],[912,912],[913,913],[914,914],[915,915],[916,916],
+      [917,917],[918,918],[919,919],[980,980],[981,981],[982,982],[983,983],
+      [984,984],[985,985],[936,936],[939,939]
+    ]},
+    // Билайн
+    { name:'Билайн', bg:'#ffd70022', col:'#ffd700', ranges:[
+      [903,903],[905,905],[906,906],[909,909],[951,951],[953,953],[960,960],
+      [961,961],[962,962],[963,963],[964,964],[965,965],[966,966],[967,967],
+      [968,968],[969,969]
+    ]},
+    // МегаФон
+    { name:'МегаФон', bg:'#00c85322', col:'#00c853', ranges:[
+      [920,920],[921,921],[922,922],[923,923],[924,924],[925,925],[926,926],
+      [927,927],[928,928],[929,929],[930,930],[931,931],[932,932],[933,933],
+      [934,934],[937,937],[938,938],[950,950],[952,952]
+    ]},
+    // Теле2
+    { name:'Теле2', bg:'#00b8d922', col:'#00b8d9', ranges:[
+      [900,900],[901,901],[902,902],[904,904],[908,908],[950,950],
+      [951,951],[952,952],[953,953],[958,958]
+    ]},
+    // Ростелеком/MVNO
+    { name:'Ростелеком', bg:'#7b2fff22', col:'#b388ff', ranges:[
+      [800,800],[804,804]
+    ]},
+  ];
+
+  // More precise prefix matching
+  const PREFIXES = {
+    // МТС
+    '910':'МТС','911':'МТС','912':'МТС','913':'МТС','914':'МТС','915':'МТС',
+    '916':'МТС','917':'МТС','918':'МТС','919':'МТС','980':'МТС','981':'МТС',
+    '982':'МТС','983':'МТС','984':'МТС','985':'МТС','986':'МТС','939':'МТС','936':'МТС',
+    // Билайн
+    '903':'Билайн','905':'Билайн','906':'Билайн','909':'Билайн','960':'Билайн',
+    '961':'Билайн','962':'Билайн','963':'Билайн','964':'Билайн','965':'Билайн',
+    '966':'Билайн','967':'Билайн','968':'Билайн','969':'Билайн','953':'Билайн','951':'Билайн',
+    // МегаФон
+    '920':'МегаФон','921':'МегаФон','922':'МегаФон','923':'МегаФон','924':'МегаФон',
+    '925':'МегаФон','926':'МегаФон','927':'МегаФон','928':'МегаФон','929':'МегаФон',
+    '930':'МегаФон','931':'МегаФон','932':'МегаФон','933':'МегаФон','934':'МегаФон',
+    '937':'МегаФон','938':'МегаФон','950':'МегаФон','952':'МегаФон',
+    // Теле2
+    '900':'Теле2','901':'Теле2','902':'Теле2','904':'Теле2','908':'Теле2','958':'Теле2',
+    // Yota
+    '955':'Yota','999':'Yota',
+    // MVNO/другие
+    '945':'СберМобайл','948':'СберМобайл',
+    '947':'Тинькофф Мобайл',
+    '907':'Виртуальный'
+  };
+
+  const OP_COLORS = {
+    'МТС':      {bg:'#e4002b22',col:'#ff6b6b'},
+    'Билайн':   {bg:'#ffd70022',col:'#ffd700'},
+    'МегаФон':  {bg:'#00c85322',col:'#4ade80'},
+    'Теле2':    {bg:'#00b8d922',col:'#38bdf8'},
+    'Yota':     {bg:'#8b5cf622',col:'#c4b5fd'},
+    'СберМобайл':{bg:'#22c55e22',col:'#86efac'},
+    'Тинькофф Мобайл':{bg:'#facc1522',col:'#facc15'},
+    'Виртуальный':{bg:'#6b728022',col:'#9ca3af'},
+  };
+
+  const prefix = p.slice(0,3);
+  const opName = PREFIXES[prefix];
+  if (opName) {
+    const colors = OP_COLORS[opName] || {bg:'#ffffff18',col:'#fff'};
+    return { name: opName, ...colors };
+  }
+  return null;
+}
+
+</script>
+
+<!-- ── THEME PICKER LOGIC ── -->
+<script>
+/* Apply saved theme immediately on load */
+(function() {
+  const saved = localStorage.getItem('crm_theme') || '';
+  if (saved) document.body.classList.add('theme-' + saved);
+  // Mark active button when panel opens
+})();
+
+function toggleThemePicker() {
+  const panel = document.getElementById('theme-picker-panel');
+  panel.classList.toggle('open');
+  // Mark active
+  const saved = localStorage.getItem('crm_theme') || '';
+  document.querySelectorAll('.theme-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.theme === saved);
+  });
+}
+
+// Close picker on outside click
+document.addEventListener('click', function(e) {
+  const panel = document.getElementById('theme-picker-panel');
+  const fab   = document.getElementById('theme-fab');
+  if (panel && !panel.contains(e.target) && e.target !== fab) {
+    panel.classList.remove('open');
+  }
+});
+
+document.querySelectorAll('.theme-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    const theme = this.dataset.theme;
+    const saved = localStorage.getItem('crm_theme') || '';
+    // Remove old theme class
+    if (saved) document.body.classList.remove('theme-' + saved);
+    // Apply new
+    if (theme) {
+      document.body.classList.add('theme-' + theme);
+      localStorage.setItem('crm_theme', theme);
+    } else {
+      localStorage.removeItem('crm_theme');
+    }
+    // Update active
+    document.querySelectorAll('.theme-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.theme === theme);
+    });
+  });
+});
+
+/* Show FAB only when logged in (after app screen appears) */
+const fabObserver = new MutationObserver(() => {
+  const appVisible = document.getElementById('screen-app') &&
+    document.getElementById('screen-app').style.display !== 'none';
+  const fab = document.getElementById('theme-fab');
+  if (fab) fab.style.display = appVisible ? 'flex' : 'none';
+});
+fabObserver.observe(document.body, { childList: true, subtree: true, attributes: true });
 </script>
 
 <!-- Edit Manager Modal -->
