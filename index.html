@@ -118,6 +118,11 @@ a{color:var(--cyan)}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--brd2);border-radius:3px}
 
+/* Toggle switch */
+input[type=checkbox].toggle{appearance:none;-webkit-appearance:none;width:38px;height:20px;border-radius:10px;position:relative;cursor:pointer;transition:background .25s;outline:none;flex-shrink:0}
+input[type=checkbox].toggle::after{content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:left .2s}
+input[type=checkbox].toggle:checked::after{left:20px}
+
 /* ============================================================
    ANIMATIONS
    ============================================================ */
@@ -301,7 +306,9 @@ input[type=file]{display:none}
 .rc-nonliq{background:#3a0ca3;color:#fff}
 .rc-first{background:#48cae4;color:#003049}
 .rc-transfer{background:#f3722c;color:#fff}
+.rc-wrongop{background:#8b5cf6;color:#fff}
 .rc-recallb{background:#f8961e;color:#fff}
+.rc-wrongop{background:#8b5cf6;color:#fff}
 
 /* Clients table */
 .clients-table{width:100%;border-collapse:collapse;font-size:13px}
@@ -492,9 +499,19 @@ input[type=file]{display:none}
           </div>
         </div>
 
+        <!-- Period tabs -->
+        <div style="display:flex;gap:8px;margin-bottom:4px;flex-wrap:wrap;align-items:center">
+          <div style="display:flex;gap:4px;background:var(--bg3);border:1px solid var(--brd);border-radius:10px;padding:4px">
+            <button id="period-today" onclick="setPeriod('today')" class="btn btn-sm" style="border-radius:7px;background:var(--acc);color:#fff;border:none">Сегодня</button>
+            <button id="period-week" onclick="setPeriod('week')" class="btn btn-sm btn-ghost" style="border-radius:7px">Эта неделя</button>
+            <button id="period-prevweek" onclick="setPeriod('prevweek')" class="btn btn-sm btn-ghost" style="border-radius:7px">Прошлая неделя</button>
+          </div>
+          <span id="period-label" style="font-size:12px;color:var(--text2)"></span>
+        </div>
+
         <div class="chart-two">
           <div class="chart-box">
-            <h3>📊 Результаты звонков сегодня</h3>
+            <h3 id="pie-title">📊 Результаты звонков сегодня</h3>
             <div class="chart-wrap"><canvas id="chart-pie"></canvas></div>
             <div class="chart-legend" id="chart-legend"></div>
           </div>
@@ -506,7 +523,7 @@ input[type=file]{display:none}
 
         <!-- Manager stats table like screenshot -->
         <div class="card">
-          <div class="card-title">👥 Детальная статистика менеджеров</div>
+          <div class="card-title" id="mgr-table-title">👥 Детальная статистика менеджеров</div>
           <div class="mgr-table-wrap">
             <table class="mgr-table">
               <thead id="mgr-thead"></thead>
@@ -612,13 +629,51 @@ input[type=file]{display:none}
 
       <!-- CLIENTS -->
       <div class="tab-pane" id="tp-clients">
-        <div class="card" style="padding:0;overflow:hidden">
+        <div class="card" style="margin-bottom:0;border-radius:var(--r2) var(--r2) 0 0">
+          <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+            <!-- Search -->
+            <div style="flex:2;min-width:200px;position:relative">
+              <label>🔍 Поиск</label>
+              <span style="position:absolute;left:11px;bottom:10px;color:var(--text2);font-size:13px;pointer-events:none">🔍</span>
+              <input id="clients-search" placeholder="Умерший, родственник, телефон..." 
+                oninput="filterClients()" style="padding-left:34px">
+            </div>
+            <!-- Filter by city -->
+            <div style="flex:1;min-width:160px">
+              <label>📍 Город / Регион</label>
+              <select id="clients-filter-city" onchange="filterClients()" style="width:100%">
+                <option value="">Все города</option>
+              </select>
+            </div>
+            <!-- Filter by manager -->
+            <div style="flex:1;min-width:160px">
+              <label>👤 Менеджер</label>
+              <select id="clients-filter-mgr" onchange="filterClients()" style="width:100%">
+                <option value="">Все менеджеры</option>
+              </select>
+            </div>
+            <!-- Filter by result -->
+            <div style="flex:1;min-width:140px">
+              <label>📋 Результат</label>
+              <select id="clients-filter-result" onchange="filterClients()" style="width:100%">
+                <option value="">Все результаты</option>
+                <option value="__new__">🆕 Новый</option>
+              </select>
+            </div>
+            <div style="display:flex;gap:6px;align-items:flex-end">
+              <button class="btn btn-ghost btn-sm" onclick="clearClientFilters()">✕ Сбросить</button>
+              <button class="btn btn-ghost btn-sm" onclick="loadClients()">🔄</button>
+            </div>
+            <span id="clients-count" style="font-size:12px;color:var(--text2);align-self:center"></span>
+          </div>
+        </div>
+        <div class="card" style="padding:0;overflow:hidden;border-radius:0 0 var(--r2) var(--r2);border-top:none">
           <div style="overflow-x:auto">
             <table class="clients-table">
               <thead>
                 <tr>
                   <th>Умерший</th><th>Регион</th><th>Родственники / телефон</th>
-                  <th>Результат</th><th>Комментарий</th><th>Дата</th><th></th>
+                  <th>Результат</th><th>Менеджер</th><th>Комментарий</th><th>Дата</th><th></th>
                 </tr>
               </thead>
               <tbody id="clients-tbody"></tbody>
@@ -646,9 +701,17 @@ input[type=file]{display:none}
           </div>
           <button class="btn btn-pri" onclick="createManager()">Создать менеджера</button>
         </div>
-        <div class="card" style="padding:0;overflow:hidden">
+        <div class="card" style="padding:12px 16px 0">
+          <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px">
+            <div style="flex:1;position:relative">
+              <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text2)">🔍</span>
+              <input id="mgr-search" placeholder="Поиск по имени или email..." oninput="filterMgrList()" style="padding-left:32px">
+            </div>
+          </div>
+        </div>
+        <div class="card" style="padding:0;overflow:hidden;border-top:none;border-radius:0 0 var(--r2) var(--r2)">
           <table class="clients-table">
-            <thead><tr><th>Имя</th><th>Email</th><th>Роль</th><th>Назначенные базы</th><th>Действия</th></tr></thead>
+            <thead><tr><th>Имя</th><th>Email</th><th>Роль</th><th>Действия</th></tr></thead>
             <tbody id="mgr-list-tbody"></tbody>
           </table>
         </div>
@@ -659,56 +722,98 @@ input[type=file]{display:none}
 
   <!-- ═══ MANAGER PANEL ═══ -->
   <div id="manager-panel">
-    <div class="progress-wrap">
-      <div class="progress-counters">
-        <div class="pc"><div class="pc-val" id="p-total" style="color:var(--acc2)">—</div><div class="pc-lbl">Всего</div></div>
-        <div class="pc"><div class="pc-val" id="p-called" style="color:var(--green)">—</div><div class="pc-lbl">Прозвонено</div></div>
-        <div class="pc"><div class="pc-val" id="p-remain" style="color:var(--yellow)">—</div><div class="pc-lbl">Осталось</div></div>
-        <div class="pc"><div class="pc-val" id="p-pct" style="color:var(--cyan)">0%</div><div class="pc-lbl">Прогресс</div></div>
-      </div>
-      <div class="prog-track"><div class="prog-fill" id="p-bar" style="width:0%"></div></div>
-    </div>
-
-    <!-- Manager mini stats bar -->
-    <div id="mgr-mini-stats" style="background:var(--bg2);border-bottom:1px solid var(--brd);padding:10px 20px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-      <div style="display:flex;align-items:center;gap:8px">
+    <!-- Top header bar: avatar + global counters -->
+    <div style="background:var(--bg2);border-bottom:1px solid var(--brd);padding:10px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+      <!-- Avatar -->
+      <div style="display:flex;align-items:center;gap:10px;min-width:160px">
         <div id="mgr-avatar-wrap" style="position:relative;cursor:pointer" onclick="document.getElementById('mgr-avatar-input').click()">
-          <div id="mgr-avatar-circle" style="width:38px;height:38px;border-radius:50%;background:var(--acc);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;overflow:hidden;border:2px solid var(--brd2)">
+          <div id="mgr-avatar-circle" style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--acc),var(--acc3));display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:#fff;overflow:hidden;border:2px solid var(--brd2)">
             <span id="mgr-avatar-initials">?</span>
             <img id="mgr-avatar-img" style="display:none;width:100%;height:100%;object-fit:cover">
           </div>
-          <div style="position:absolute;bottom:-2px;right:-2px;width:14px;height:14px;background:var(--acc3);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px">📷</div>
+          <div style="position:absolute;bottom:-1px;right:-1px;width:14px;height:14px;background:var(--acc3);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px">📷</div>
         </div>
         <input type="file" id="mgr-avatar-input" accept="image/*" style="display:none" onchange="uploadMgrAvatar(event)">
         <div>
-          <div id="mgr-name-display" style="font-size:13px;font-weight:700;color:var(--text)"></div>
-          <div style="font-size:10px;color:var(--text2)">Менеджер</div>
+          <div id="mgr-name-display" style="font-size:14px;font-weight:800;color:var(--text)"></div>
+          <div style="font-size:10px;color:var(--green);font-weight:600;display:flex;align-items:center;gap:4px">
+            <span style="width:6px;height:6px;background:var(--green);border-radius:50%;display:inline-block"></span>Онлайн
+          </div>
         </div>
       </div>
-      <div style="width:1px;height:32px;background:var(--brd);margin:0 4px"></div>
-      <!-- Today stats -->
-      <div style="display:flex;gap:16px;flex:1">
-        <div style="text-align:center">
-          <div id="ms-today" style="font-size:18px;font-weight:900;font-family:var(--mono);color:var(--green)">0</div>
-          <div style="font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Сегодня</div>
+      <div style="width:1px;height:36px;background:var(--brd);flex-shrink:0"></div>
+      <!-- Global counters -->
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <div style="background:var(--bg3);border:1px solid var(--brd);border-radius:12px;padding:8px 16px;text-align:center;min-width:80px">
+          <div id="p-total" style="font-size:22px;font-weight:900;font-family:var(--mono);color:var(--acc2)">—</div>
+          <div style="font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-top:2px">Всего в базах</div>
         </div>
-        <div style="text-align:center">
-          <div id="ms-transferred" style="font-size:18px;font-weight:900;font-family:var(--mono);color:var(--acc2)">0</div>
-          <div style="font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Передач</div>
+        <div style="background:var(--bg3);border:1px solid var(--brd);border-radius:12px;padding:8px 16px;text-align:center;min-width:80px">
+          <div id="p-called" style="font-size:22px;font-weight:900;font-family:var(--mono);color:var(--green)">—</div>
+          <div style="font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-top:2px">Прозвонено</div>
         </div>
-        <div style="text-align:center">
-          <div id="ms-nodial" style="font-size:18px;font-weight:900;font-family:var(--mono);color:var(--red)">0</div>
-          <div style="font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Не дозвон</div>
+        <div style="background:var(--bg3);border:1px solid var(--brd);border-radius:12px;padding:8px 16px;text-align:center;min-width:80px">
+          <div id="p-remain" style="font-size:22px;font-weight:900;font-family:var(--mono);color:var(--yellow)">—</div>
+          <div style="font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-top:2px">Осталось</div>
         </div>
-        <div style="text-align:center">
-          <div id="ms-ao" style="font-size:18px;font-weight:900;font-family:var(--mono);color:var(--cyan)">0</div>
-          <div style="font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">АО</div>
+        <div style="background:var(--bg3);border:1px solid rgba(20,184,166,.3);border-radius:12px;padding:8px 16px;text-align:center;min-width:80px">
+          <div id="p-pct" style="font-size:22px;font-weight:900;font-family:var(--mono);color:var(--cyan)">0%</div>
+          <div style="font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-top:2px">Прогресс</div>
+        </div>
+        <!-- Active bases counter -->
+        <div style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.25);border-radius:12px;padding:8px 16px;text-align:center;min-width:80px">
+          <div id="p-active-bases" style="font-size:22px;font-weight:900;font-family:var(--mono);color:var(--green)">—</div>
+          <div style="font-size:9px;color:var(--green);text-transform:uppercase;letter-spacing:.5px;margin-top:2px">🟢 Баз активно</div>
         </div>
       </div>
-      <!-- Top передач -->
-      <div id="ms-top-wrap" style="display:flex;align-items:center;gap:6px">
-        <div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-right:4px">Топ 🏆</div>
+      <div style="width:1px;height:36px;background:var(--brd);flex-shrink:0"></div>
+      <!-- Progress bar -->
+      <div style="flex:1;min-width:120px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <span style="font-size:10px;color:var(--text2)">Общий прогресс</span>
+          <span id="p-pct2" style="font-size:10px;color:var(--cyan);font-weight:700">0%</span>
+        </div>
+        <div class="prog-track"><div class="prog-fill" id="p-bar" style="width:0%"></div></div>
+      </div>
+      <!-- Top -->
+      <div id="ms-top-wrap" style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+        <div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-right:2px">🏆 Топ</div>
         <div id="ms-top-list" style="display:flex;gap:4px"></div>
+      </div>
+    </div>
+
+    <!-- My today stats + daily chart -->
+    <div id="mgr-mini-stats" style="background:var(--bg2);border-bottom:1px solid var(--brd);padding:12px 20px;display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
+      <!-- Today result cards -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-right:4px;align-self:center">Мои сегодня:</div>
+        <div style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:10px;padding:6px 14px;text-align:center">
+          <div id="ms-today" style="font-size:20px;font-weight:900;font-family:var(--mono);color:var(--green)">0</div>
+          <div style="font-size:9px;color:var(--green);text-transform:uppercase;letter-spacing:.4px">Всего</div>
+        </div>
+        <div style="background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.3);border-radius:10px;padding:6px 14px;text-align:center">
+          <div id="ms-transferred" style="font-size:20px;font-weight:900;font-family:var(--mono);color:var(--acc2)">0</div>
+          <div style="font-size:9px;color:var(--acc2);text-transform:uppercase;letter-spacing:.4px">Передал</div>
+        </div>
+        <div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:6px 14px;text-align:center">
+          <div id="ms-nodial" style="font-size:20px;font-weight:900;font-family:var(--mono);color:var(--red)">0</div>
+          <div style="font-size:9px;color:var(--red);text-transform:uppercase;letter-spacing:.4px">Не дозвон</div>
+        </div>
+        <div style="background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.3);border-radius:10px;padding:6px 14px;text-align:center">
+          <div id="ms-ao" style="font-size:20px;font-weight:900;font-family:var(--mono);color:var(--cyan)">0</div>
+          <div style="font-size:9px;color:var(--cyan);text-transform:uppercase;letter-spacing:.4px">АО</div>
+        </div>
+        <div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:10px;padding:6px 14px;text-align:center">
+          <div id="ms-skip" style="font-size:20px;font-weight:900;font-family:var(--mono);color:var(--yellow)">0</div>
+          <div style="font-size:9px;color:var(--yellow);text-transform:uppercase;letter-spacing:.4px">Скип</div>
+        </div>
+      </div>
+      <!-- 7-day chart -->
+      <div style="flex:1;min-width:260px;max-width:520px">
+        <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">📈 Прозвоны за 7 дней</div>
+        <div style="position:relative;height:72px" id="mgr-daily-chart-wrap">
+          <canvas id="mgr-daily-chart" height="72"></canvas>
+        </div>
       </div>
     </div>
 
@@ -771,13 +876,14 @@ input[type=file]{display:none}
           <label>💬 Комментарий</label>
           <textarea id="cc-comment" rows="2" placeholder="Оставьте комментарий перед действием..." style="margin-top:6px"></textarea>
         </div>
-        <div class="call-actions">
+        <div class="call-actions" style="grid-template-columns:repeat(7,1fr)">
           <button class="act-btn ab-nd" onclick="act('nodial')"><span class="ico">❌</span>Не дозвон</button>
           <button class="act-btn ab-sk" onclick="act('skip')"><span class="ico">⏭️</span>Скип</button>
           <button class="act-btn ab-cb" onclick="act('callback')"><span class="ico">🔄</span>Перезвон</button>
           <button class="act-btn ab-tr" onclick="act('transferred')"><span class="ico">✅</span>Передал</button>
           <button class="act-btn ab-ct" onclick="act('cut')"><span class="ico">✂️</span>Срез</button>
           <button class="act-btn" style="background:rgba(0,180,216,.12);border:1.5px solid rgba(0,180,216,.4);color:#90e0ef" onclick="act('ao')"><span class="ico">🎯</span>АО</button>
+          <button class="act-btn" style="background:rgba(139,92,246,.12);border:1.5px solid rgba(139,92,246,.4);color:#c4b5fd" onclick="act('wrongop')"><span class="ico">📵</span>Не тот оператор</button>
         </div>
       </div>
     </div>
@@ -866,7 +972,8 @@ const RESULTS = {
   callback:    { label:'🔄 Перезвон',   cls:'rc-callback',color:'#f4a261' },
   transferred: { label:'✅ Передал',    cls:'rc-passed',  color:'#52b788' },
   cut:         { label:'✂️ Срез',       cls:'rc-pzdbl',   color:'#d00000' },
-  ao:          { label:'🎯 АО',             cls:'rc-ao',     color:'#00b4d8' },
+  ao:          { label:'🎯 АО',         cls:'rc-ao',      color:'#00b4d8' },
+  wrongop:     { label:'📵 Не тот оператор', cls:'rc-wrongop', color:'#8b5cf6' },
 };
 const RESULT_KEYS = Object.keys(RESULTS);
 
@@ -939,12 +1046,69 @@ window.aTab = t => {
 };
 
 /* ──────── STATS ──────── */
+let currentPeriod = 'today';
+let allClientsForStats = [];
+
+window.setPeriod = async (period) => {
+  currentPeriod = period;
+  // Update button styles
+  ['today','week','prevweek'].forEach(p => {
+    const btn = el('period-' + p);
+    if (!btn) return;
+    btn.style.background = p === period ? 'var(--acc)' : 'transparent';
+    btn.style.color = p === period ? '#fff' : 'var(--text2)';
+    btn.style.border = 'none';
+  });
+  // Update label
+  const lbl = el('period-label');
+  const now = new Date();
+  if (period === 'today') {
+    if (lbl) lbl.textContent = now.toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long'});
+  } else if (period === 'week') {
+    const mon = getWeekStart(now, 0);
+    const sun = new Date(mon); sun.setDate(sun.getDate()+6);
+    if (lbl) lbl.textContent = mon.toLocaleDateString('ru-RU',{day:'numeric',month:'short'}) + ' — ' + sun.toLocaleDateString('ru-RU',{day:'numeric',month:'short'});
+  } else {
+    const mon = getWeekStart(now, -1);
+    const sun = new Date(mon); sun.setDate(sun.getDate()+6);
+    if (lbl) lbl.textContent = 'Пред. неделя: ' + mon.toLocaleDateString('ru-RU',{day:'numeric',month:'short'}) + ' — ' + sun.toLocaleDateString('ru-RU',{day:'numeric',month:'short'});
+  }
+  renderStatsByPeriod(allClientsForStats, period);
+};
+
+function getWeekStart(date, offset=0) {
+  // offset=0 → current week Mon, offset=-1 → prev week Mon
+  const d = new Date(date);
+  const day = d.getDay(); // 0=Sun
+  const diff = (day === 0 ? -6 : 1 - day) + offset * 7;
+  d.setDate(d.getDate() + diff);
+  d.setHours(0,0,0,0);
+  return d;
+}
+
+function getPeriodRange(period) {
+  const now = new Date();
+  if (period === 'today') {
+    const start = new Date(now); start.setHours(0,0,0,0);
+    const end = new Date(now); end.setHours(23,59,59,999);
+    return { start, end };
+  } else if (period === 'week') {
+    const start = getWeekStart(now, 0);
+    const end = new Date(start); end.setDate(end.getDate()+7);
+    return { start, end };
+  } else { // prevweek
+    const start = getWeekStart(now, -1);
+    const end = new Date(start); end.setDate(end.getDate()+7);
+    return { start, end };
+  }
+}
+
 async function loadStats() {
   const snap = await getDocs(collection(db, 'clients'));
-  const all  = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-  const total   = all.length;
-  const done    = all.filter(c => c.result && c.result!=='callback').length;
-  const remain  = all.filter(c => !c.result || c.result==='callback').length;
+  allClientsForStats = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+  const total   = allClientsForStats.length;
+  const done    = allClientsForStats.filter(c => c.result && c.result!=='callback').length;
+  const remain  = allClientsForStats.filter(c => !c.result || c.result==='callback').length;
   const pct     = total > 0 ? Math.round(done/total*100) : 0;
 
   el('s-total').textContent = total;
@@ -952,124 +1116,26 @@ async function loadStats() {
   el('s-remain').textContent = remain;
   el('s-pct').textContent   = pct + '%';
 
-  // Pie chart — today's results
-  const today = new Date(); today.setHours(0,0,0,0);
-  const todayAll = all.filter(c => c.calledAt && (c.calledAt.toDate?c.calledAt.toDate():new Date(c.calledAt)) >= today);
+  setPeriod(currentPeriod);
+  await loadMgrStats(allClientsForStats);
+}
+
+function renderStatsByPeriod(all, period) {
+  const { start, end } = getPeriodRange(period);
+  const periodClients = all.filter(c => {
+    if (!c.calledAt) return false;
+    const d = c.calledAt.toDate ? c.calledAt.toDate() : new Date(c.calledAt);
+    return d >= start && d <= end;
+  });
+
+  const titles = { today:'сегодня', week:'эту неделю', prevweek:'прошлую неделю' };
+  if (el('pie-title')) el('pie-title').textContent = '📊 Результаты за ' + (titles[period]||period);
+
   const resultCounts = {};
-  todayAll.forEach(c => { if (c.result) resultCounts[c.result] = (resultCounts[c.result]||0)+1; });
+  periodClients.forEach(c => { if (c.result) resultCounts[c.result] = (resultCounts[c.result]||0)+1; });
   renderPie(resultCounts);
-
-  // Manager stats
-  await loadMgrStats(all);
 }
 
-function renderPie(counts) {
-  const keys    = Object.keys(counts).filter(k => RESULTS[k]);
-  const vals    = keys.map(k => counts[k]);
-  const colors  = keys.map(k => RESULTS[k].color);
-  const labels  = keys.map(k => RESULTS[k].label);
-  const total   = vals.reduce((a,b)=>a+b,0);
-
-  if (pieChart) pieChart.destroy();
-  const ctx = el('chart-pie');
-  if (!keys.length) { ctx.parentElement.innerHTML = '<div style="text-align:center;padding:60px;color:var(--text2)">Нет звонков сегодня</div>'; return; }
-  pieChart = new Chart(ctx, {
-    type:'doughnut',
-    data:{ labels, datasets:[{ data:vals, backgroundColor:colors, borderWidth:0, hoverOffset:8 }] },
-    options:{
-      responsive:true,maintainAspectRatio:false,
-      plugins:{
-        legend:{display:false},
-        tooltip:{callbacks:{label:c=>' '+c.label+': '+c.parsed+' ('+Math.round(c.parsed/total*100)+'%)'}}
-      },
-      cutout:'58%'
-    }
-  });
-  el('chart-legend').innerHTML = keys.map((k,i)=>`
-    <div class="cl-item">
-      <div class="cl-dot" style="background:${colors[i]}"></div>
-      ${labels[i]}
-      <span class="cl-pct">${Math.round(vals[i]/total*100)}%</span>
-    </div>`).join('');
-}
-
-async function loadMgrStats(allClients) {
-  const usersSnap = await getDocs(query(collection(db,'user'), where('role','==','manager')));
-  const managers  = usersSnap.docs.map(d => ({ uid:d.id, ...d.data() }));
-
-  // Today range
-  const today = new Date(); today.setHours(0,0,0,0);
-
-  // Build table header
-  const COLS = RESULT_KEYS;
-  const thead = el('mgr-thead');
-  thead.innerHTML = `<tr>
-    <th class="th-name">Менеджер</th>
-    <th>Всего</th>
-    <th>Удалить</th>
-    ${COLS.map(k=>`<th style="background:${RESULTS[k].color}22;color:${RESULTS[k].color}">${RESULTS[k].label}</th>`).join('')}
-  </tr>`;
-
-  // Build rows
-  const tbody = el('mgr-tbody');
-  if (!managers.length) {
-    tbody.innerHTML = '<tr><td colspan="20" class="empty-cell">Нет менеджеров</td></tr>';
-    return;
-  }
-
-  // Bar chart data
-  const barLabels = managers.map(m => m.name || m.email);
-  const barToday  = [];
-
-  tbody.innerHTML = managers.map(m => {
-    const mine      = allClients.filter(c => c.calledBy === m.uid);
-    const mineToday = mine.filter(c => {
-      if (!c.calledAt) return false;
-      const d = c.calledAt.toDate ? c.calledAt.toDate() : new Date(c.calledAt);
-      return d >= today;
-    });
-    barToday.push(mineToday.length);
-    const total = mine.length;
-
-    const cells = COLS.map(k => {
-      const cnt = mine.filter(c=>c.result===k).length;
-      const pct = total > 0 ? (cnt/total*100).toFixed(1) : '0.0';
-      return `<td class="result-cell ${RESULTS[k].cls}">${cnt > 0 ? cnt+' ('+pct+'%)' : '0 (0.0%)'}</td>`;
-    }).join('');
-
-    return `<tr>
-      <td class="td-name">${m.name || m.email}</td>
-      <td class="td-num">${total}</td>
-      <td class="td-num">0 (0.0%)</td>
-      ${cells}
-    </tr>`;
-  }).join('');
-
-  // Bar chart
-  if (barChart) barChart.destroy();
-  const bctx = el('chart-bar');
-  barChart = new Chart(bctx, {
-    type:'bar',
-    data:{
-      labels:barLabels,
-      datasets:[{
-        label:'Прозвонено сегодня',
-        data:barToday,
-        backgroundColor:'rgba(124,58,237,.65)',
-        borderRadius:6,
-        borderSkipped:false,
-      }]
-    },
-    options:{
-      responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+c.raw+' звонков'}}},
-      scales:{
-        x:{ticks:{color:'#8888a8',font:{family:'Montserrat',size:11}},grid:{display:false}},
-        y:{ticks:{color:'#8888a8',font:{family:'Montserrat',size:11},stepSize:1},grid:{color:'rgba(124,58,237,.08)'}}
-      }
-    }
-  });
-}
 
 /* ──────── FILE IMPORT ──────── */
 window.handleFile = e => {
@@ -1183,20 +1249,124 @@ window.saveManual = async () => {
 };
 
 /* ──────── CLIENTS LIST ──────── */
+let allClientsCache = [];
+let managersNameMap = {};
+
 async function loadClients() {
-  const snap = await getDocs(query(collection(db,'clients'),orderBy('createdAt','desc')));
-  const rows = snap.docs.map(d=>({id:d.id,...d.data()}));
+  el('clients-tbody').innerHTML = '<tr><td colspan="8" class="empty-cell">⏳ Загрузка...</td></tr>';
+  
+  // Load managers
+  const usersSnap = await getDocs(collection(db,'user'));
+  managersNameMap = {};
+  usersSnap.docs.forEach(d => { managersNameMap[d.id] = d.data().name || d.data().email || d.id; });
+
+  const snap = await getDocs(query(collection(db,'clients'), orderBy('createdAt','desc')));
+  allClientsCache = snap.docs.map(d=>({id:d.id,...d.data()}));
+
+  // Populate city filter
+  const citySet = new Set();
+  allClientsCache.forEach(c => {
+    if (c.region) {
+      // Extract first meaningful part as city
+      const city = c.region.split(',')[0].trim().toUpperCase();
+      if (city) citySet.add(city);
+    }
+  });
+  const cityEl = el('clients-filter-city');
+  if (cityEl) {
+    const cur = cityEl.value;
+    cityEl.innerHTML = '<option value="">Все города</option>' +
+      Array.from(citySet).sort().map(c => `<option value="${c}" ${c===cur?'selected':''}>${c}</option>`).join('');
+  }
+
+  // Populate manager filter
+  const mgrEl = el('clients-filter-mgr');
+  if (mgrEl) {
+    const cur = mgrEl.value;
+    const mgrs = Object.entries(managersNameMap);
+    mgrEl.innerHTML = '<option value="">Все менеджеры</option>' +
+      mgrs.map(([uid, name]) => `<option value="${uid}" ${uid===cur?'selected':''}>${name}</option>`).join('');
+  }
+
+  // Populate result filter
+  const resEl = el('clients-filter-result');
+  if (resEl && resEl.options.length <= 2) {
+    RESULT_KEYS.forEach(k => {
+      const opt = document.createElement('option');
+      opt.value = k; opt.textContent = RESULTS[k].label;
+      resEl.appendChild(opt);
+    });
+  }
+
+  renderClientsTable(allClientsCache);
+}
+
+window.clearClientFilters = () => {
+  if (el('clients-search')) el('clients-search').value = '';
+  if (el('clients-filter-city')) el('clients-filter-city').value = '';
+  if (el('clients-filter-mgr')) el('clients-filter-mgr').value = '';
+  if (el('clients-filter-result')) el('clients-filter-result').value = '';
+  renderClientsTable(allClientsCache);
+};
+
+window.filterClients = () => {
+  const q      = (el('clients-search') ? el('clients-search').value : '').toLowerCase().trim();
+  const city   = el('clients-filter-city') ? el('clients-filter-city').value : '';
+  const mgrUid = el('clients-filter-mgr') ? el('clients-filter-mgr').value : '';
+  const result = el('clients-filter-result') ? el('clients-filter-result').value : '';
+
+  const filtered = allClientsCache.filter(c => {
+    // Text search
+    if (q) {
+      const inDeceased = (c.deceased||'').toLowerCase().includes(q);
+      const inRegion   = (c.region||'').toLowerCase().includes(q);
+      const inRel      = (c.relatives||[]).some(r =>
+        (r.name||'').toLowerCase().includes(q) ||
+        (r.phone||'').replace(/\D/g,'').includes(q.replace(/\D/g,''))
+      );
+      if (!inDeceased && !inRegion && !inRel) return false;
+    }
+    // City filter
+    if (city) {
+      const cRegion = (c.region||'').split(',')[0].trim().toUpperCase();
+      if (cRegion !== city) return false;
+    }
+    // Manager filter
+    if (mgrUid) {
+      if (c.calledBy !== mgrUid) return false;
+    }
+    // Result filter
+    if (result) {
+      if (result === '__new__') { if (c.result) return false; }
+      else { if (c.result !== result) return false; }
+    }
+    return true;
+  });
+
+  renderClientsTable(filtered);
+};
+
+function renderClientsTable(rows) {
+  const countEl = el('clients-count');
+  if (countEl) countEl.textContent = rows.length + ' записей';
   el('clients-tbody').innerHTML = rows.length
-    ? rows.map(c=>`<tr>
-        <td><b>${c.deceased||'—'}</b></td>
-        <td>${c.region||'—'}</td>
-        <td style="font-size:12px">${(c.relatives||[]).map(r=>`${r.name||''} <span style="color:var(--cyan);font-family:var(--mono)">${r.phone||''}</span>`).join('<br>')}</td>
-        <td>${c.result?`<span class="badge ${RESULTS[c.result]?'status-done':'status-cb'}" style="background:${(RESULTS[c.result]||{}).color||'#555'}22;color:${(RESULTS[c.result]||{}).color||'#aaa'}">${(RESULTS[c.result]||{label:c.result}).label}</span>`:'<span class="badge status-new">🆕 Новый</span>'}</td>
-        <td style="color:var(--text2);font-size:12px">${c.comment||'—'}</td>
-        <td style="color:var(--text2);font-size:12px">${fmt(c.calledAt)}</td>
-        <td><button class="btn btn-danger btn-sm" onclick="delClient('${c.id}')">🗑</button></td>
-      </tr>`).join('')
-    : '<tr><td colspan="7" class="empty-cell">База пуста</td></tr>';
+    ? rows.map(c => {
+        const mgrName = c.calledBy ? (managersNameMap[c.calledBy] || '—') : '—';
+        const mgrBadge = c.calledBy
+          ? `<span style="font-size:11px;font-weight:700;color:var(--acc2);background:rgba(124,58,237,.12);padding:2px 8px;border-radius:20px">${mgrName}</span>`
+          : '<span style="color:var(--text2);font-size:11px">—</span>';
+        return `<tr>
+          <td><b>${c.deceased||'—'}</b></td>
+          <td style="font-size:12px">${c.region||'—'}</td>
+          <td style="font-size:12px">${(c.relatives||[]).map(r=>`${r.name||''} <span style="color:var(--cyan);font-family:var(--mono)">${r.phone||''}</span>`).join('<br>')}</td>
+          <td>${c.result?`<span class="badge" style="background:${(RESULTS[c.result]||{}).color||'#555'}22;color:${(RESULTS[c.result]||{}).color||'#aaa'}">${(RESULTS[c.result]||{label:c.result}).label}</span>`:'<span class="badge status-new">🆕 Новый</span>'}</td>
+          <td>${mgrBadge}</td>
+          <td style="color:var(--text2);font-size:12px;max-width:160px">${c.comment||'—'}</td>
+          <td style="color:var(--text2);font-size:12px">${fmt(c.calledAt)}</td>
+          <td><button class="btn btn-danger btn-sm" onclick="delClient('${c.id}')">🗑</button></td>
+        </tr>`;
+      }).join('')
+    : '<tr><td colspan="8" class="empty-cell">Ничего не найдено</td></tr>';
 }
 
 window.delClient = async id => {
@@ -1207,32 +1377,36 @@ window.delClient = async id => {
 };
 
 /* ──────── MANAGERS MANAGEMENT ──────── */
-async function loadMgrList() {
-  const snap = await getDocs(collection(db,'user'));
-  const rows = snap.docs.map(d=>({uid:d.id,...d.data()}));
-  // Load bases for assignment display
-  const basesSnap2 = await getDocs(collection(db,'bases'));
-  const allBasesMap = {};
-  basesSnap2.docs.forEach(d => { allBasesMap[d.id] = d.data().name; });
+let allMgrCache = [];
 
-  el('mgr-list-tbody').innerHTML = rows.map(u=>{
-    const assignedBases = (u.assignedBases||[]).map(bid => 
-      `<span style="background:rgba(124,58,237,.15);color:var(--acc2);padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600">${allBasesMap[bid]||bid}</span>`
-    ).join('');
-    return `<tr>
-      <td><b>${u.name||'—'}</b></td>
-      <td style="color:var(--text2);font-size:12px">${u.email||'—'}</td>
-      <td><span class="badge ${u.role==='admin'?'status-cb':'status-done'}">${u.role==='admin'?'👑 Админ':'📞 Менеджер'}</span></td>
-      <td style="max-width:250px"><div style="display:flex;flex-wrap:wrap;gap:4px">${assignedBases || '<span style="color:var(--text2);font-size:12px">Нет баз</span>'}</div></td>
-      <td>
-        <div style="display:flex;gap:6px">
-          <button class="btn btn-ghost btn-sm" onclick="openEditMgr('${u.uid}','${(u.name||'').replace(/'/g,"\'").replace(/"/g,'&quot;')}')">✏️ Изменить</button>
-          <button class="btn btn-pri btn-sm" onclick="openAssignBases('${u.uid}','${(u.name||'').replace(/'/g,"\'")}')">📁 Базы</button>
-          ${u.role!=='admin'?`<button class="btn btn-danger btn-sm" onclick="delMgr('${u.uid}')">🗑</button>`:''}
-        </div>
-      </td>
-    </tr>`;
-  }).join('');
+async function loadMgrList() {
+  // Parallel fetch for speed
+  const [usersSnap] = await Promise.all([getDocs(collection(db,'user'))]);
+  allMgrCache = usersSnap.docs.map(d=>({uid:d.id,...d.data()}));
+  renderMgrList(allMgrCache);
+}
+
+window.filterMgrList = () => {
+  const q = (el('mgr-search') ? el('mgr-search').value : '').toLowerCase().trim();
+  if (!q) { renderMgrList(allMgrCache); return; }
+  renderMgrList(allMgrCache.filter(u =>
+    (u.name||'').toLowerCase().includes(q) ||
+    (u.email||'').toLowerCase().includes(q)
+  ));
+};
+
+function renderMgrList(rows) {
+  el('mgr-list-tbody').innerHTML = rows.map(u => `<tr>
+    <td><b>${u.name||'—'}</b></td>
+    <td style="color:var(--text2);font-size:12px">${u.email||'—'}</td>
+    <td><span class="badge" style="background:${u.role==='admin'?'rgba(245,158,11,.15)':'rgba(34,197,94,.12)'};color:${u.role==='admin'?'var(--yellow)':'var(--green)'}">${u.role==='admin'?'👑 Админ':'📞 Менеджер'}</span></td>
+    <td>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-ghost btn-sm" onclick="openEditMgr('${u.uid}','${(u.name||'').replace(/'/g,"\'").replace(/"/g,"&quot;")}')">✏️ Изменить</button>
+        ${u.role!=='admin'?`<button class="btn btn-danger btn-sm" onclick="delMgr('${u.uid}')">🗑</button>`:''}
+      </div>
+    </td>
+  </tr>`).join('');
 }
 
 window.createManager = async () => {
@@ -1253,6 +1427,36 @@ window.delMgr = async uid => {
   if (!confirm('Удалить менеджера?')) return;
   await deleteDoc(doc(db,'user',uid));
   loadMgrList();
+};
+
+window.openEditMgr = (uid, name) => {
+  el('edit-mgr-uid').value = uid;
+  el('edit-mgr-name').value = name || '';
+  el('edit-mgr-pass').value = '';
+  el('edit-mgr-modal').style.display = 'flex';
+};
+
+window.closeEditMgr = () => {
+  el('edit-mgr-modal').style.display = 'none';
+};
+
+window.saveEditMgr = async () => {
+  const uid  = el('edit-mgr-uid').value;
+  const name = el('edit-mgr-name').value.trim();
+  const pass = el('edit-mgr-pass').value;
+  if (!name) { toast('⚠️ Введите имя','warn'); return; }
+  try {
+    await updateDoc(doc(db,'user', uid), { name });
+    toast('✅ Имя сохранено: ' + name);
+    closeEditMgr();
+    loadMgrList();
+    // If editing self, update display
+    if (me && me.uid === uid) {
+      me.name = name;
+      const nd = el('mgr-name-display');
+      if (nd) nd.textContent = name;
+    }
+  } catch(e) { toast('Ошибка: ' + e.message, 'err'); }
 };
 
 /* ──────── MANAGER PANEL ──────── */
@@ -1290,20 +1494,118 @@ window.uploadMgrAvatar = (e) => {
   reader.readAsDataURL(file);
 };
 
+let mgrDailyChart = null;
+
+// Money stickers for the chart (shown on top of bars)
+const MONEY_STICKERS = ['💵','💰','🤑','💸','🏆','⭐','🔥','💎','🎯','📈'];
+
 async function loadMgrMiniStats() {
-  const today = new Date(); today.setHours(0,0,0,0);
+  const now = new Date();
+  const today = new Date(now); today.setHours(0,0,0,0);
   const snap = await getDocs(collection(db,'clients'));
   const all = snap.docs.map(d => d.data());
   const mine = all.filter(c => c.calledBy === me.uid);
+
+  // Today
   const mineToday = mine.filter(c => {
     if (!c.calledAt) return false;
     const d = c.calledAt.toDate ? c.calledAt.toDate() : new Date(c.calledAt);
     return d >= today;
   });
   el('ms-today').textContent = mineToday.length;
-  el('ms-transferred').textContent = mine.filter(c=>c.result==='transferred').length;
-  el('ms-nodial').textContent = mine.filter(c=>c.result==='nodial').length;
-  el('ms-ao').textContent = mine.filter(c=>c.result==='ao').length;
+  el('ms-transferred').textContent = mineToday.filter(c=>c.result==='transferred').length;
+  el('ms-nodial').textContent = mineToday.filter(c=>c.result==='nodial').length;
+  el('ms-ao').textContent = mineToday.filter(c=>c.result==='ao').length;
+  if (el('ms-skip')) el('ms-skip').textContent = mineToday.filter(c=>c.result==='skip').length;
+
+  // 7-day data
+  const days = [];
+  const labels = [];
+  const counts = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    d.setHours(0,0,0,0);
+    const next = new Date(d); next.setDate(next.getDate()+1);
+    const cnt = mine.filter(c => {
+      if (!c.calledAt) return false;
+      const cd = c.calledAt.toDate ? c.calledAt.toDate() : new Date(c.calledAt);
+      return cd >= d && cd < next;
+    }).length;
+    days.push(d);
+    labels.push(d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit'}));
+    counts.push(cnt);
+  }
+
+  // Draw chart
+  const ctx = el('mgr-daily-chart');
+  if (ctx) {
+    if (mgrDailyChart) mgrDailyChart.destroy();
+    const maxVal = Math.max(...counts, 1);
+    // gradient
+    const grad = ctx.getContext('2d').createLinearGradient(0,0,0,72);
+    grad.addColorStop(0,'rgba(124,58,237,.7)');
+    grad.addColorStop(1,'rgba(79,70,229,.05)');
+    mgrDailyChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          data: counts,
+          backgroundColor: counts.map((v,i) => i===6
+            ? 'rgba(34,197,94,.85)'   // today = green
+            : 'rgba(124,58,237,.55)'),
+          borderRadius: 6,
+          borderSkipped: false,
+          borderColor: counts.map((v,i) => i===6 ? 'rgba(34,197,94,1)' : 'rgba(124,58,237,.8)'),
+          borderWidth: 1.5,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        animation: { duration: 600, easing: 'easeOutQuart' },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: c => ' ' + c.raw + ' звонков',
+              title: c => c[0].label
+            },
+            backgroundColor: 'rgba(16,16,30,.95)',
+            borderColor: 'rgba(124,58,237,.4)',
+            borderWidth: 1,
+          }
+        },
+        scales: {
+          x: {
+            ticks: { color: '#8888a8', font: { family: 'Montserrat', size: 10 } },
+            grid: { display: false }
+          },
+          y: {
+            display: false,
+            min: 0,
+            max: maxVal + 2,
+          }
+        }
+      },
+      plugins: [{
+        // Draw sticker emoji on top of each bar
+        id: 'stickers',
+        afterDatasetsDraw(chart) {
+          const { ctx, data, scales: { x, y } } = chart;
+          data.datasets[0].data.forEach((val, i) => {
+            if (!val) return;
+            const xPos = x.getPixelForValue(i);
+            const yPos = y.getPixelForValue(val);
+            const sticker = MONEY_STICKERS[i % MONEY_STICKERS.length];
+            ctx.font = '14px serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(sticker, xPos, yPos - 4);
+          });
+        }
+      }]
+    });
+  }
 
   // Top managers by transferred
   const usersSnap = await getDocs(query(collection(db,'user'), where('role','==','manager')));
@@ -1314,27 +1616,37 @@ async function loadMgrMiniStats() {
   })).sort((a,b)=>b.count-a.count).slice(0,3);
 
   el('ms-top-list').innerHTML = topList.map((m,i) => 
-    `<div style="display:flex;align-items:center;gap:4px;background:var(--bg3);border-radius:8px;padding:4px 8px;font-size:11px;font-weight:700">
+    `<div style="display:flex;align-items:center;gap:4px;background:var(--bg3);border:1px solid var(--brd);border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700">
       <span>${['🥇','🥈','🥉'][i]}</span>
-      <span style="color:var(--text)">${m.name.split(' ')[0]}</span>
-      <span style="color:var(--acc2)">${m.count}</span>
+      <span style="color:var(--text)">${(m.name||'').split(' ')[0]}</span>
+      <span style="color:var(--acc2);font-family:var(--mono)">${m.count}</span>
     </div>`
   ).join('');
 }
 
 function subscribeStats() {
   if (callUnsub) callUnsub();
-  callUnsub = onSnapshot(collection(db,'clients'), snap => {
+  callUnsub = onSnapshot(collection(db,'clients'), async snap => {
     const all     = snap.docs.map(d=>d.data());
-    const total   = all.length;
-    const done    = all.filter(c=>c.result&&c.result!=='callback').length;
-    const remain  = all.filter(c=>!c.result||c.result==='callback').length;
+
+    // Only count clients from ENABLED bases
+    const basesSnap = await getDocs(collection(db,'bases'));
+    const enabledBaseIds = new Set(basesSnap.docs.filter(d=>d.data().disabled!==true).map(d=>d.id));
+    const activeCount = enabledBaseIds.size;
+
+    const active  = all.filter(c => enabledBaseIds.has(c.baseId));
+    const total   = active.length;
+    const done    = active.filter(c=>c.result&&c.result!=='callback').length;
+    const remain  = active.filter(c=>!c.result||c.result==='callback').length;
     const pct     = total>0 ? Math.round(done/total*100) : 0;
+
     el('p-total').textContent  = total;
     el('p-called').textContent = done;
     el('p-remain').textContent = remain;
     el('p-pct').textContent    = pct+'%';
+    if (el('p-pct2')) el('p-pct2').textContent = pct+'%';
     el('p-bar').style.width    = pct+'%';
+    if (el('p-active-bases')) el('p-active-bases').textContent = activeCount;
   });
 }
 
@@ -1718,8 +2030,21 @@ let allBases = [];
 
 async function loadBases() {
   el('bases-list').innerHTML = '<div class="empty-cell">⏳ Загрузка...</div>';
-  const snap = await getDocs(query(collection(db,'bases'), orderBy('createdAt','desc')));
-  allBases = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  // Parallel: fetch bases + clients at same time
+  const [basesSnap, clientsSnap] = await Promise.all([
+    getDocs(query(collection(db,'bases'), orderBy('createdAt','desc'))),
+    getDocs(collection(db,'clients'))
+  ]);
+  allBases = basesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+  // Pre-compute calledCount right away (no second fetch needed)
+  const clients = clientsSnap.docs.map(d => d.data());
+  if (!allClientsForStats || allClientsForStats.length === 0) {
+    allClientsForStats = clientsSnap.docs.map(d=>({id:d.id,...d.data()}));
+  }
+  allBases.forEach(b => {
+    const bClients = clients.filter(c => c.baseId === b.id);
+    b.calledCount = bClients.filter(c => c.result && c.result !== 'callback').length;
+  });
   renderBases(allBases);
 }
 
@@ -1747,19 +2072,12 @@ function renderBases(bases) {
         const safeName = b.name.replace(/'/g,'').replace(/"/g,'');
         return `<tr style="opacity:${isOn?'1':'0.5'}">
           <td style="text-align:center">
-            <label style="display:inline-flex;align-items:center;cursor:pointer;gap:0">
+            <label style="display:inline-flex;align-items:center;cursor:pointer">
               <input type="checkbox" ${isOn?'checked':''} onchange="toggleBase('${b.id}',this.checked)"
-                style="appearance:none;width:38px;height:20px;background:${isOn?'var(--green)':'var(--bg4)'};
-                border-radius:10px;border:1px solid ${isOn?'var(--green)':'var(--brd2)'};
-                position:relative;cursor:pointer;transition:all .25s;outline:none">
-              <style>
-                input[type=checkbox]:checked::after,input[type=checkbox]::after{
-                  content:'';position:absolute;top:2px;width:14px;height:14px;border-radius:50%;
-                  background:#fff;transition:left .2s;
-                }
-                input[type=checkbox]::after{left:2px}
-                input[type=checkbox]:checked::after{left:20px}
-              </style>
+                style="appearance:none;-webkit-appearance:none;width:38px;height:20px;
+                background:${isOn?'var(--green)':'var(--bg4)'};border-radius:10px;
+                border:1px solid ${isOn?'var(--green)':'var(--brd2)'};
+                position:relative;cursor:pointer;transition:background .25s;outline:none">
             </label>
             <div style="font-size:9px;font-weight:700;margin-top:2px;color:${isOn?'var(--green)':'var(--text2)'}">${isOn?'ВКЛ':'ВЫКЛ'}</div>
           </td>
@@ -1777,7 +2095,8 @@ function renderBases(bases) {
             </div>
           </td>
           <td>
-            <div style="display:flex;gap:6px">
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <button class="btn btn-ghost btn-sm" onclick="showBaseStats('${b.id}','${safeName}')" title="Статистика">📊 Статистика</button>
               <button class="btn btn-ghost btn-sm" onclick="exportBase('${b.id}','${safeName}')" title="Выгрузить">📥 Выгрузить</button>
               <button class="btn btn-danger btn-sm" onclick="deleteBase('${b.id}','${safeName}')" title="Удалить">🗑</button>
             </div>
@@ -1785,25 +2104,102 @@ function renderBases(bases) {
         </tr>`;
       }).join('')}</tbody>
     </table>`;
-  
-  // Load called counts async
   loadBaseStats(bases);
 }
 
 window.toggleBase = async (baseId, enabled) => {
+  // Optimistic update: change local cache immediately, no full reload
+  const base = allBases.find(b => b.id === baseId);
+  if (base) {
+    base.disabled = !enabled;
+    renderBases(allBases); // re-render with cached stats (no Firestore call)
+  }
   try {
     await updateDoc(doc(db,'bases',baseId), { disabled: !enabled });
-    toast(enabled ? '✅ База включена — менеджеры могут звонить' : '⏸ База выключена — менеджеры её пропускают');
-    loadBases();
+    toast(enabled ? '✅ База включена — менеджеры звонят' : '⏸ База выключена');
+    // Reload stats in background without blocking UI
+    loadBaseStats(allBases);
   } catch(e) {
+    // Revert on error
+    if (base) base.disabled = enabled;
+    renderBases(allBases);
     toast('Ошибка: ' + e.message, 'err');
   }
 };
 
+window.showBaseStats = async (baseId, baseName) => {
+  const modal = el('base-stats-modal');
+  const title = el('bsm-title');
+  const body  = el('bsm-body');
+  title.textContent = '📊 ' + baseName;
+  body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2)">⏳ Загрузка...</div>';
+  modal.style.display = 'flex';
+
+  const snap = await getDocs(query(collection(db,'clients'), where('baseId','==',baseId)));
+  const clients = snap.docs.map(d => d.data());
+  const total = clients.length;
+  const resultCounts = {};
+  RESULT_KEYS.forEach(k => { resultCounts[k] = clients.filter(c => c.result === k).length; });
+  const fresh = clients.filter(c => !c.result).length;
+  const callbacks = clients.filter(c => c.result === 'callback').length;
+
+  // Manager breakdown
+  const usersSnap = await getDocs(query(collection(db,'user'), where('role','==','manager')));
+  const mgrs = usersSnap.docs.map(d => ({uid:d.id,...d.data()}));
+  const mgrRows = mgrs.map(m => {
+    const mine = clients.filter(c => c.calledBy === m.uid);
+    if (!mine.length) return '';
+    return `<tr>
+      <td style="font-weight:700">${m.name||m.email}</td>
+      <td style="color:var(--green);font-family:var(--mono)">${mine.length}</td>
+      ${RESULT_KEYS.map(k => {
+        const cnt = mine.filter(c=>c.result===k).length;
+        return `<td style="color:${RESULTS[k].color};font-family:var(--mono)">${cnt}</td>`;
+      }).join('')}
+    </tr>`;
+  }).join('');
+
+  body.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px">
+      <div style="background:var(--bg3);border-radius:12px;padding:14px;text-align:center">
+        <div style="font-size:26px;font-weight:900;font-family:var(--mono);color:var(--acc2)">${total}</div>
+        <div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-top:4px">Всего</div>
+      </div>
+      <div style="background:var(--bg3);border-radius:12px;padding:14px;text-align:center">
+        <div style="font-size:26px;font-weight:900;font-family:var(--mono);color:var(--text2)">${fresh}</div>
+        <div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-top:4px">🆕 Новых</div>
+      </div>
+      ${RESULT_KEYS.map(k => `
+      <div style="background:${RESULTS[k].color}18;border:1px solid ${RESULTS[k].color}44;border-radius:12px;padding:14px;text-align:center">
+        <div style="font-size:26px;font-weight:900;font-family:var(--mono);color:${RESULTS[k].color}">${resultCounts[k]}</div>
+        <div style="font-size:10px;color:${RESULTS[k].color};text-transform:uppercase;letter-spacing:.5px;margin-top:4px">${RESULTS[k].label}</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:2px">${total>0?Math.round(resultCounts[k]/total*100):0}%</div>
+      </div>`).join('')}
+    </div>
+    ${mgrRows ? `
+    <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">👥 По менеджерам</div>
+    <div style="overflow-x:auto">
+    <table class="clients-table" style="font-size:12px">
+      <thead><tr>
+        <th>Менеджер</th><th style="color:var(--green)">Всего</th>
+        ${RESULT_KEYS.map(k=>`<th style="color:${RESULTS[k].color}">${RESULTS[k].label}</th>`).join('')}
+      </tr></thead>
+      <tbody>${mgrRows}</tbody>
+    </table></div>` : ''}
+  `;
+};
+
+window.closeBaseStatsModal = () => { document.getElementById('base-stats-modal').style.display='none'; };
+
 async function loadBaseStats(bases) {
-  const clientsSnap = await getDocs(collection(db,'clients'));
-  const clients = clientsSnap.docs.map(d => ({id:d.id,...d.data()}));
-  
+  // Use cached clients if available for speed, otherwise fetch
+  let clients;
+  if (allClientsForStats && allClientsForStats.length > 0) {
+    clients = allClientsForStats;
+  } else {
+    const clientsSnap = await getDocs(collection(db,'clients'));
+    clients = clientsSnap.docs.map(d => ({id:d.id,...d.data()}));
+  }
   bases.forEach(b => {
     const bClients = clients.filter(c => c.baseId === b.id);
     const called = bClients.filter(c => c.result && c.result !== 'callback').length;
@@ -1964,6 +2360,17 @@ function getOperator(phone) {
 }
 
 </script>
+
+<!-- Base Stats Modal -->
+<div id="base-stats-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:600;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)closeBaseStatsModal()">
+  <div style="background:var(--bg2);border:1px solid var(--brd2);border-radius:20px;padding:28px;width:min(900px,95vw);max-height:85vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.6);animation:fadeUp .25s ease">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div id="bsm-title" style="font-size:17px;font-weight:800"></div>
+      <button onclick="closeBaseStatsModal()" style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);color:#fca5a5;font-size:18px;cursor:pointer;line-height:1;width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700">✕</button>
+    </div>
+    <div id="bsm-body"></div>
+  </div>
+</div>
 
 <!-- ── THEME PICKER LOGIC ── -->
 <script>
