@@ -951,7 +951,7 @@ import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged,
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getFirestore, collection, addDoc, getDocs, getDoc, setDoc, doc,
          updateDoc, deleteDoc, query, where, orderBy, onSnapshot,
-         writeBatch, Timestamp, limit }
+         writeBatch, Timestamp, limit, runTransaction }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -1789,22 +1789,21 @@ async function loadNextClient() {
   el('cl-empty').style.display   = 'none';
   el('call-card').style.display  = 'none';
 
-  const LOCK_MS = 25 * 60 * 1000; // 25 minutes
+  const LOCK_MS = 25 * 60 * 1000;
   const now = Date.now();
 
   try {
-    // 1. Get manager's assigned bases
+    // 1. Get manager assigned bases
     const mgrDoc = await getDoc(doc(db,'user', me.uid));
     const mgrData = mgrDoc.exists() ? mgrDoc.data() : {};
     const assignedBases = mgrData.assignedBases || [];
 
-    // 2. Get all bases, find enabled ones (JS-side filter — no index needed)
+    // 2. Get enabled bases
     const basesSnap = await getDocs(collection(db,'bases'));
     const basesMap = {};
     basesSnap.docs.forEach(d => { basesMap[d.id] = d.data(); });
     const enabledBases = Object.keys(basesMap).filter(id => basesMap[id].disabled !== true);
 
-    // 3. Which bases apply to this manager
     const targetSet = new Set(
       assignedBases.length > 0
         ? assignedBases.filter(id => enabledBases.includes(id))
@@ -1832,61 +1831,107 @@ async function loadNextClient() {
       return;
     }
 
-    // 4. Load all unprocessed clients (simple query, no compound index needed)
+    // 3. Load candidates — exclude ANYONE who has been locked or has a result
     const allSnap = await getDocs(query(
       collection(db,'clients'),
       where('result','==',null),
-      limit(300)
+      limit(500)
     ));
 
-    // 5. Filter in JS: right base + not locked by someone else
     let candidates = [];
     allSnap.docs.forEach(d => {
       const data = d.data();
-      if (!targetSet.has(data.baseId)) return; // wrong base
-      if (data.lockedBy && data.lockedBy !== me.uid) {
+      if (!targetSet.has(data.baseId)) return;
+
+      // Skip if locked by ANYONE (including self from previous session)
+      if (data.lockedBy) {
+        // Allow re-use only if lock expired AND it was our own lock
         const lockedAt = data.lockedAt
           ? (data.lockedAt.toMillis ? data.lockedAt.toMillis() : Number(data.lockedAt))
           : 0;
-        if (now - lockedAt < LOCK_MS) return; // locked by another manager
+        const isExpired = now - lockedAt >= LOCK_MS;
+        const isOurs = data.lockedBy === me.uid;
+        if (!isExpired && !isOurs) return; // locked by someone else and still fresh
+        if (!isExpired && isOurs) return;  // we already have it open — skip duplicates
       }
+
       candidates.push({ id: d.id, ...data });
     });
 
-    // 6. If no new clients — try callbacks
+    // 4. If no new — try callbacks (same strict locking rules)
     if (!candidates.length) {
       const cbSnap = await getDocs(query(
         collection(db,'clients'),
         where('result','==','callback'),
-        limit(200)
+        limit(300)
       ));
       cbSnap.docs.forEach(d => {
         const data = d.data();
         if (!targetSet.has(data.baseId)) return;
-        if (data.lockedBy && data.lockedBy !== me.uid) {
+        if (data.lockedBy) {
           const lockedAt = data.lockedAt
             ? (data.lockedAt.toMillis ? data.lockedAt.toMillis() : Number(data.lockedAt))
             : 0;
-          if (now - lockedAt < LOCK_MS) return;
+          const isExpired = now - lockedAt >= LOCK_MS;
+          const isOurs = data.lockedBy === me.uid;
+          if (!isExpired && !isOurs) return;
+          if (!isExpired && isOurs) return;
         }
         candidates.push({ id: d.id, ...data });
       });
     }
 
+    if (!candidates.length) {
+      el('cl-loading').style.display = 'none';
+      el('cl-empty').style.display = 'flex';
+      return;
+    }
+
+    // 5. Pick random candidate and ATOMICALLY claim it via transaction
+    // Shuffle candidates list and try each one until we successfully lock one
+    // This prevents race condition: two managers trying to lock the same client
+    const shuffled = candidates.sort(() => Math.random() - 0.5);
+    let claimed = null;
+
+    for (const candidate of shuffled) {
+      try {
+        await runTransaction(db, async (transaction) => {
+          const ref = doc(db, 'clients', candidate.id);
+          const fresh = await transaction.get(ref);
+          if (!fresh.exists()) throw new Error('deleted');
+          const freshData = fresh.data();
+
+          // Double-check: still unlocked or expired?
+          if (freshData.lockedBy && freshData.lockedBy !== me.uid) {
+            const lockedAt = freshData.lockedAt
+              ? (freshData.lockedAt.toMillis ? freshData.lockedAt.toMillis() : Number(freshData.lockedAt))
+              : 0;
+            if (now - lockedAt < LOCK_MS) throw new Error('taken');
+          }
+          // Also skip if result was set while we were loading
+          if (freshData.result && freshData.result !== 'callback') throw new Error('done');
+
+          // Claim it!
+          transaction.update(ref, { lockedBy: me.uid, lockedAt: Timestamp.now() });
+          claimed = { id: candidate.id, ...freshData };
+        });
+        break; // Successfully claimed — stop trying
+      } catch (e) {
+        if (e.message === 'taken' || e.message === 'done' || e.message === 'deleted') {
+          continue; // Try next candidate
+        }
+        throw e; // Real error
+      }
+    }
+
     el('cl-loading').style.display = 'none';
 
-    if (!candidates.length) { el('cl-empty').style.display='flex'; return; }
+    if (!claimed) {
+      el('cl-empty').style.display = 'flex';
+      return;
+    }
 
-    // 7. Random pick across all eligible clients
-    const pick = candidates[Math.floor(Math.random() * candidates.length)];
-
-    // 8. Lock for this manager
-    await updateDoc(doc(db,'clients', pick.id), {
-      lockedBy: me.uid,
-      lockedAt: Timestamp.now()
-    });
-
-    renderCard(pick);
+    renderCard(claimed);
 
   } catch(err) {
     console.error('loadNextClient error:', err);
