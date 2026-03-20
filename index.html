@@ -722,103 +722,62 @@ input[type=file]{display:none}
 
   <!-- ═══ MANAGER PANEL ═══ -->
   <div id="manager-panel">
-    <!-- Top header bar: avatar + global counters -->
-    <div style="background:var(--bg2);border-bottom:1px solid var(--brd);padding:10px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+    <!-- Slim top bar: avatar + name + progress only -->
+    <div style="background:var(--bg2);border-bottom:1px solid var(--brd);padding:8px 20px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;min-height:52px">
       <!-- Avatar -->
-      <div style="display:flex;align-items:center;gap:10px;min-width:160px">
+      <div style="display:flex;align-items:center;gap:8px">
         <div id="mgr-avatar-wrap" style="position:relative;cursor:pointer" onclick="document.getElementById('mgr-avatar-input').click()">
-          <div id="mgr-avatar-circle" style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--acc),var(--acc3));display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:#fff;overflow:hidden;border:2px solid var(--brd2)">
+          <div id="mgr-avatar-circle" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--acc),var(--acc3));display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;overflow:hidden;border:2px solid var(--brd2)">
             <span id="mgr-avatar-initials">?</span>
             <img id="mgr-avatar-img" style="display:none;width:100%;height:100%;object-fit:cover">
           </div>
-          <div style="position:absolute;bottom:-1px;right:-1px;width:14px;height:14px;background:var(--acc3);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px">📷</div>
+          <div style="position:absolute;bottom:-1px;right:-1px;width:12px;height:12px;background:var(--green);border-radius:50%;border:2px solid var(--bg2)"></div>
         </div>
         <input type="file" id="mgr-avatar-input" accept="image/*" style="display:none" onchange="uploadMgrAvatar(event)">
         <div>
-          <div id="mgr-name-display" style="font-size:14px;font-weight:800;color:var(--text)"></div>
-          <div style="font-size:10px;color:var(--green);font-weight:600;display:flex;align-items:center;gap:4px">
-            <span style="width:6px;height:6px;background:var(--green);border-radius:50%;display:inline-block"></span>Онлайн
-          </div>
+          <div id="mgr-name-display" style="font-size:13px;font-weight:800;color:var(--text)"></div>
+          <div style="font-size:9px;color:var(--green);font-weight:600">Онлайн</div>
         </div>
       </div>
-      <div style="width:1px;height:36px;background:var(--brd);flex-shrink:0"></div>
-      <!-- Global counters -->
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <div style="background:var(--bg3);border:1px solid var(--brd);border-radius:12px;padding:8px 16px;text-align:center;min-width:80px">
-          <div id="p-total" style="font-size:22px;font-weight:900;font-family:var(--mono);color:var(--acc2)">—</div>
-          <div style="font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-top:2px">Всего в базах</div>
+      <div style="width:1px;height:28px;background:var(--brd);flex-shrink:0"></div>
+      <!-- Compact counters -->
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <div style="text-align:center;padding:4px 10px;background:var(--bg3);border-radius:8px;border:1px solid var(--brd)">
+          <div id="p-total" style="font-size:16px;font-weight:900;font-family:var(--mono);color:var(--acc2)">—</div>
+          <div style="font-size:8px;color:var(--text2);text-transform:uppercase;letter-spacing:.4px">Всего</div>
         </div>
-        <div style="background:var(--bg3);border:1px solid var(--brd);border-radius:12px;padding:8px 16px;text-align:center;min-width:80px">
-          <div id="p-called" style="font-size:22px;font-weight:900;font-family:var(--mono);color:var(--green)">—</div>
-          <div style="font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-top:2px">Прозвонено</div>
+        <div style="text-align:center;padding:4px 10px;background:var(--bg3);border-radius:8px;border:1px solid var(--brd)">
+          <div id="p-called" style="font-size:16px;font-weight:900;font-family:var(--mono);color:var(--green)">—</div>
+          <div style="font-size:8px;color:var(--text2);text-transform:uppercase;letter-spacing:.4px">Прозвон.</div>
         </div>
-        <div style="background:var(--bg3);border:1px solid var(--brd);border-radius:12px;padding:8px 16px;text-align:center;min-width:80px">
-          <div id="p-remain" style="font-size:22px;font-weight:900;font-family:var(--mono);color:var(--yellow)">—</div>
-          <div style="font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-top:2px">Осталось</div>
+        <div style="text-align:center;padding:4px 10px;background:var(--bg3);border-radius:8px;border:1px solid var(--brd)">
+          <div id="p-remain" style="font-size:16px;font-weight:900;font-family:var(--mono);color:var(--yellow)">—</div>
+          <div style="font-size:8px;color:var(--text2);text-transform:uppercase;letter-spacing:.4px">Осталось</div>
         </div>
-        <div style="background:var(--bg3);border:1px solid rgba(20,184,166,.3);border-radius:12px;padding:8px 16px;text-align:center;min-width:80px">
-          <div id="p-pct" style="font-size:22px;font-weight:900;font-family:var(--mono);color:var(--cyan)">0%</div>
-          <div style="font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-top:2px">Прогресс</div>
-        </div>
-        <!-- Active bases counter -->
-        <div style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.25);border-radius:12px;padding:8px 16px;text-align:center;min-width:80px">
-          <div id="p-active-bases" style="font-size:22px;font-weight:900;font-family:var(--mono);color:var(--green)">—</div>
-          <div style="font-size:9px;color:var(--green);text-transform:uppercase;letter-spacing:.5px;margin-top:2px">🟢 Баз активно</div>
+        <div style="text-align:center;padding:4px 10px;background:rgba(34,197,94,.08);border-radius:8px;border:1px solid rgba(34,197,94,.25)">
+          <div id="p-active-bases" style="font-size:16px;font-weight:900;font-family:var(--mono);color:var(--green)">—</div>
+          <div style="font-size:8px;color:var(--green);text-transform:uppercase;letter-spacing:.4px">🟢 Баз</div>
         </div>
       </div>
-      <div style="width:1px;height:36px;background:var(--brd);flex-shrink:0"></div>
-      <!-- Progress bar -->
-      <div style="flex:1;min-width:120px">
-        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-          <span style="font-size:10px;color:var(--text2)">Общий прогресс</span>
-          <span id="p-pct2" style="font-size:10px;color:var(--cyan);font-weight:700">0%</span>
+      <!-- Progress bar compact -->
+      <div style="flex:1;min-width:100px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+          <span style="font-size:9px;color:var(--text2)">Прогресс</span>
+          <span id="p-pct" style="font-size:9px;color:var(--cyan);font-weight:700">0%</span>
+          <span id="p-pct2" style="display:none">0%</span>
         </div>
         <div class="prog-track"><div class="prog-fill" id="p-bar" style="width:0%"></div></div>
       </div>
       <!-- Top -->
-      <div id="ms-top-wrap" style="display:flex;align-items:center;gap:6px;flex-shrink:0">
-        <div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-right:2px">🏆 Топ</div>
+      <div id="ms-top-wrap" style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+        <span style="font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.4px">🏆</span>
         <div id="ms-top-list" style="display:flex;gap:4px"></div>
       </div>
     </div>
 
-    <!-- My today stats + daily chart -->
-    <div id="mgr-mini-stats" style="background:var(--bg2);border-bottom:1px solid var(--brd);padding:12px 20px;display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
-      <!-- Today result cards -->
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-        <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-right:4px;align-self:center">Мои сегодня:</div>
-        <div style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:10px;padding:6px 14px;text-align:center">
-          <div id="ms-today" style="font-size:20px;font-weight:900;font-family:var(--mono);color:var(--green)">0</div>
-          <div style="font-size:9px;color:var(--green);text-transform:uppercase;letter-spacing:.4px">Всего</div>
-        </div>
-        <div style="background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.3);border-radius:10px;padding:6px 14px;text-align:center">
-          <div id="ms-transferred" style="font-size:20px;font-weight:900;font-family:var(--mono);color:var(--acc2)">0</div>
-          <div style="font-size:9px;color:var(--acc2);text-transform:uppercase;letter-spacing:.4px">Передал</div>
-        </div>
-        <div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:6px 14px;text-align:center">
-          <div id="ms-nodial" style="font-size:20px;font-weight:900;font-family:var(--mono);color:var(--red)">0</div>
-          <div style="font-size:9px;color:var(--red);text-transform:uppercase;letter-spacing:.4px">Не дозвон</div>
-        </div>
-        <div style="background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.3);border-radius:10px;padding:6px 14px;text-align:center">
-          <div id="ms-ao" style="font-size:20px;font-weight:900;font-family:var(--mono);color:var(--cyan)">0</div>
-          <div style="font-size:9px;color:var(--cyan);text-transform:uppercase;letter-spacing:.4px">АО</div>
-        </div>
-        <div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:10px;padding:6px 14px;text-align:center">
-          <div id="ms-skip" style="font-size:20px;font-weight:900;font-family:var(--mono);color:var(--yellow)">0</div>
-          <div style="font-size:9px;color:var(--yellow);text-transform:uppercase;letter-spacing:.4px">Скип</div>
-        </div>
-      </div>
-      <!-- 7-day chart -->
-      <div style="flex:1;min-width:260px;max-width:520px">
-        <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">📈 Прозвоны за 7 дней</div>
-        <div style="position:relative;height:72px" id="mgr-daily-chart-wrap">
-          <canvas id="mgr-daily-chart" height="72"></canvas>
-        </div>
-      </div>
-    </div>
-
-    <!-- Callback queue sidebar -->
+    <!-- Main area + right sidebar -->
     <div style="display:flex;flex:1;overflow:hidden">
+      <div class="call-area" id="main-call-area" style="flex:1">
       <div class="call-area" id="main-call-area" style="flex:1">
       <div class="call-loading" id="cl-loading"><span class="spin">⏳</span>Загрузка...</div>
       <div class="call-empty" id="cl-empty">
@@ -886,12 +845,28 @@ input[type=file]{display:none}
           <button class="act-btn" style="background:rgba(139,92,246,.12);border:1.5px solid rgba(139,92,246,.4);color:#c4b5fd" onclick="act('wrongop')"><span class="ico">📵</span>Не тот оператор</button>
         </div>
       </div>
-    </div>
+      </div>
       </div><!-- main-call-area -->
-      <!-- Callback sidebar -->
-      <div id="callback-sidebar" style="width:260px;min-width:260px;background:var(--bg2);border-left:1px solid var(--brd);display:flex;flex-direction:column;overflow:hidden">
-        <div style="padding:12px 14px;border-bottom:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between">
-          <span style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">🔄 Перезвоны</span>
+      <!-- Right sidebar: callbacks + my stats + chart -->
+      <div id="callback-sidebar" style="width:270px;min-width:270px;background:var(--bg2);border-left:1px solid var(--brd);display:flex;flex-direction:column;overflow:hidden">
+
+        <!-- Stats button -->
+        <div style="padding:10px 12px;border-bottom:1px solid var(--brd)">
+          <button onclick="openMgrStatsModal()" style="width:100%;padding:10px;background:linear-gradient(135deg,rgba(124,58,237,.2),rgba(79,70,229,.15));border:1px solid var(--brd2);border-radius:10px;color:var(--acc2);font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s">
+            📊 Моя статистика
+          </button>
+          <!-- Hidden counters updated in background -->
+          <span id="ms-today" style="display:none">0</span>
+          <span id="ms-transferred" style="display:none">0</span>
+          <span id="ms-nodial" style="display:none">0</span>
+          <span id="ms-ao" style="display:none">0</span>
+          <span id="ms-skip" style="display:none">0</span>
+          <canvas id="mgr-daily-chart" style="display:none"></canvas>
+        </div>
+
+        <!-- Callbacks -->
+        <div style="padding:10px 12px;border-bottom:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">🔄 Перезвоны</span>
           <span id="cb-count" style="background:var(--acc);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px">0</span>
         </div>
         <div id="cb-list" style="flex:1;overflow-y:auto;padding:8px">
@@ -2488,6 +2463,52 @@ function getOperator(phone) {
       <button onclick="closeBaseStatsModal()" style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);color:#fca5a5;font-size:18px;cursor:pointer;line-height:1;width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700">✕</button>
     </div>
     <div id="bsm-body"></div>
+  </div>
+</div>
+
+<!-- Manager Stats Modal -->
+<div id="mgr-stats-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:700;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)closeMgrStatsModal()">
+  <div style="background:var(--bg2);border:1px solid var(--brd2);border-radius:20px;padding:28px;width:min(700px,95vw);max-height:88vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.6);animation:fadeUp .25s ease">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div style="font-size:17px;font-weight:800">📊 Моя статистика</div>
+      <button onclick="closeMgrStatsModal()" style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);color:#fca5a5;font-size:18px;cursor:pointer;width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700">✕</button>
+    </div>
+    <!-- Period tabs -->
+    <div style="display:flex;gap:4px;background:var(--bg3);border:1px solid var(--brd);border-radius:10px;padding:4px;margin-bottom:20px;width:fit-content">
+      <button id="msp-today" onclick="setMgrStatsPeriod('today')" style="padding:7px 18px;border-radius:7px;border:none;background:var(--acc);color:#fff;font-weight:700;font-size:12px;font-family:var(--font);cursor:pointer">Сегодня</button>
+      <button id="msp-week" onclick="setMgrStatsPeriod('week')" style="padding:7px 18px;border-radius:7px;border:none;background:transparent;color:var(--text2);font-weight:700;font-size:12px;font-family:var(--font);cursor:pointer">Эта неделя</button>
+      <button id="msp-prevweek" onclick="setMgrStatsPeriod('prevweek')" style="padding:7px 18px;border-radius:7px;border:none;background:transparent;color:var(--text2);font-weight:700;font-size:12px;font-family:var(--font);cursor:pointer">Прошлая неделя</button>
+    </div>
+    <div id="mgr-stats-body">
+      <div style="text-align:center;padding:40px;color:var(--text2)">⏳ Загрузка...</div>
+    </div>
+    <!-- 7-day chart -->
+    <div style="margin-top:20px">
+      <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">📈 Прозвоны за 7 дней</div>
+      <div style="position:relative;height:120px">
+        <canvas id="mgr-stats-chart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Manager Stats Modal -->
+<div id="mgr-stats-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:700;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)closeMgrStatsModal()">
+  <div style="background:var(--bg2);border:1px solid var(--brd2);border-radius:20px;padding:28px;width:min(700px,95vw);max-height:88vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.6);animation:fadeUp .25s ease">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div style="font-size:17px;font-weight:800">📊 Моя статистика</div>
+      <button onclick="closeMgrStatsModal()" style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);color:#fca5a5;font-size:18px;cursor:pointer;width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700">✕</button>
+    </div>
+    <div style="display:flex;gap:4px;background:var(--bg3);border:1px solid var(--brd);border-radius:10px;padding:4px;margin-bottom:20px;width:fit-content">
+      <button id="msp-today" onclick="setMgrStatsPeriod('today')" style="padding:7px 18px;border-radius:7px;border:none;background:var(--acc);color:#fff;font-weight:700;font-size:12px;font-family:var(--font);cursor:pointer">Сегодня</button>
+      <button id="msp-week" onclick="setMgrStatsPeriod('week')" style="padding:7px 18px;border-radius:7px;border:none;background:transparent;color:var(--text2);font-weight:700;font-size:12px;font-family:var(--font);cursor:pointer">Эта неделя</button>
+      <button id="msp-prevweek" onclick="setMgrStatsPeriod('prevweek')" style="padding:7px 18px;border-radius:7px;border:none;background:transparent;color:var(--text2);font-weight:700;font-size:12px;font-family:var(--font);cursor:pointer">Прошлая неделя</button>
+    </div>
+    <div id="mgr-stats-body"><div style="text-align:center;padding:40px;color:var(--text2)">⏳ Загрузка...</div></div>
+    <div style="margin-top:20px">
+      <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">📈 Прозвоны за 7 дней</div>
+      <div style="position:relative;height:130px"><canvas id="mgr-stats-chart"></canvas></div>
+    </div>
   </div>
 </div>
 
