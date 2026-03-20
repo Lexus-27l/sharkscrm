@@ -1074,6 +1074,7 @@ window.setPeriod = async (period) => {
     if (lbl) lbl.textContent = 'Пред. неделя: ' + mon.toLocaleDateString('ru-RU',{day:'numeric',month:'short'}) + ' — ' + sun.toLocaleDateString('ru-RU',{day:'numeric',month:'short'});
   }
   renderStatsByPeriod(allClientsForStats, period);
+  if (allClientsForStats.length) loadMgrStats(allClientsForStats);
 };
 
 function getWeekStart(date, offset=0) {
@@ -1136,6 +1137,124 @@ function renderStatsByPeriod(all, period) {
   renderPie(resultCounts);
 }
 
+
+function renderPie(counts) {
+  const keys   = Object.keys(counts).filter(k => RESULTS[k]);
+  const vals   = keys.map(k => counts[k]);
+  const colors = keys.map(k => RESULTS[k].color);
+  const labels = keys.map(k => RESULTS[k].label);
+  const total  = vals.reduce((a,b)=>a+b,0);
+
+  if (pieChart) pieChart.destroy();
+  const ctx = el('chart-pie');
+  if (!ctx) return;
+  if (!keys.length) {
+    ctx.parentElement.innerHTML = '<div style="text-align:center;padding:60px;color:var(--text2)">Нет звонков за этот период</div>';
+    return;
+  }
+  // Restore canvas if it was replaced
+  if (!ctx.getContext) {
+    const newCanvas = document.createElement('canvas');
+    newCanvas.id = 'chart-pie';
+    ctx.parentElement.appendChild(newCanvas);
+  }
+  pieChart = new Chart(el('chart-pie'), {
+    type:'doughnut',
+    data:{ labels, datasets:[{ data:vals, backgroundColor:colors, borderWidth:0, hoverOffset:8 }] },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:c=>' '+c.label+': '+c.parsed+' ('+Math.round(c.parsed/total*100)+'%)'}}
+      },
+      cutout:'58%'
+    }
+  });
+  el('chart-legend').innerHTML = keys.map((k,i)=>`
+    <div class="cl-item">
+      <div class="cl-dot" style="background:${colors[i]}"></div>
+      ${labels[i]}
+      <span class="cl-pct">${Math.round(vals[i]/total*100)}%</span>
+    </div>`).join('');
+}
+
+async function loadMgrStats(allClients) {
+  const usersSnap = await getDocs(query(collection(db,'user'), where('role','==','manager')));
+  const managers  = usersSnap.docs.map(d => ({ uid:d.id, ...d.data() }));
+
+  const { start, end } = getPeriodRange(currentPeriod);
+
+  // Build table header
+  const COLS = RESULT_KEYS;
+  const thead = el('mgr-thead');
+  if (!thead) return;
+  thead.innerHTML = `<tr>
+    <th class="th-name">Менеджер</th>
+    <th>Всего</th>
+    <th>Удалить</th>
+    ${COLS.map(k=>`<th style="background:${RESULTS[k].color}22;color:${RESULTS[k].color}">${RESULTS[k].label}</th>`).join('')}
+  </tr>`;
+
+  const tbody = el('mgr-tbody');
+  if (!managers.length) {
+    tbody.innerHTML = '<tr><td colspan="20" class="empty-cell">Нет менеджеров</td></tr>';
+    return;
+  }
+
+  // Bar chart — per manager for period
+  const barLabels = managers.map(m => m.name || m.email);
+  const barCounts = [];
+
+  tbody.innerHTML = managers.map(m => {
+    const mine = allClients.filter(c => c.calledBy === m.uid);
+    const periodMine = mine.filter(c => {
+      if (!c.calledAt) return false;
+      const d = c.calledAt.toDate ? c.calledAt.toDate() : new Date(c.calledAt);
+      return d >= start && d <= end;
+    });
+    barCounts.push(periodMine.length);
+    const total = mine.length;
+
+    const cells = COLS.map(k => {
+      const cnt = mine.filter(c=>c.result===k).length;
+      const pct = total > 0 ? (cnt/total*100).toFixed(1) : '0.0';
+      return `<td class="result-cell ${RESULTS[k].cls}">${cnt > 0 ? cnt+' ('+pct+'%)' : '0 (0.0%)'}</td>`;
+    }).join('');
+
+    return `<tr>
+      <td class="td-name">${m.name || m.email}</td>
+      <td class="td-num">${total}</td>
+      <td class="td-num">0 (0.0%)</td>
+      ${cells}
+    </tr>`;
+  }).join('');
+
+  // Bar chart
+  if (barChart) barChart.destroy();
+  const bctx = el('chart-bar');
+  if (!bctx) return;
+  barChart = new Chart(bctx, {
+    type:'bar',
+    data:{
+      labels: barLabels,
+      datasets:[{
+        label:'Прозвонено за период',
+        data: barCounts,
+        backgroundColor:'rgba(124,58,237,.65)',
+        borderRadius:6,
+        borderSkipped:false,
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}, tooltip:{callbacks:{label:c=>' '+c.raw+' звонков'}}},
+      scales:{
+        x:{ticks:{color:'#8888a8',font:{family:'Montserrat',size:11}},grid:{display:false}},
+        y:{ticks:{color:'#8888a8',font:{family:'Montserrat',size:11},stepSize:1},grid:{color:'rgba(124,58,237,.08)'}}
+      }
+    }
+  });
+}
 
 /* ──────── FILE IMPORT ──────── */
 window.handleFile = e => {
