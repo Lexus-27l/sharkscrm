@@ -1606,11 +1606,17 @@ async function initManager() {
     el('mgr-avatar-img').style.display = 'block';
     el('mgr-avatar-initials').style.display = 'none';
   }
-  // Load ALL data ONCE, then reuse cache everywhere — saves 80% of reads
-  await loadSharedCache();
-  subscribeStats();      // uses cache, no extra reads
-  loadMgrMiniStats();    // uses cache, no extra reads
-  loadNextClient();      // uses cache for bases check
+  // Load bases (small) + user doc for assignedBases
+  const [mgrDoc, basesSnap] = await Promise.all([
+    getDoc(doc(db,'user', me.uid)),
+    getDocs(collection(db,'bases'))
+  ]);
+  _cacheBases = basesSnap.docs.map(d => ({id:d.id,...d.data()}));
+  me.assignedBases = mgrDoc.exists() ? (mgrDoc.data().assignedBases || []) : [];
+  _cacheLoaded = true;
+  subscribeStats();
+  loadMgrMiniStats();
+  loadNextClient();
 }
 
 window.uploadMgrAvatar = (e) => {
@@ -1634,23 +1640,33 @@ let mgrDailyChart = null;
 const MONEY_STICKERS = ['💵','💰','🤑','💸','🏆','⭐','🔥','💎','🎯','📈'];
 
 async function loadMgrMiniStats() {
+  // Fetch only MY calls from today — targeted query, minimal reads
   const now = new Date();
   const today = new Date(now); today.setHours(0,0,0,0);
-  // Use cache — no extra Firestore read
-  const all = _cacheClients || [];
-  const mine = all.filter(c => c.calledBy === me.uid);
+  const todayTS = Timestamp.fromDate(today);
 
-  // Today
-  const mineToday = mine.filter(c => {
-    if (!c.calledAt) return false;
-    const d = c.calledAt.toDate ? c.calledAt.toDate() : new Date(c.calledAt);
-    return d >= today;
-  });
+  // Small targeted query: only my calls, only today
+  const mySnap = await getDocs(query(
+    collection(db,'clients'),
+    where('calledBy','==', me.uid),
+    where('calledAt','>=', todayTS),
+    limit(200)
+  ));
+  const mineToday = mySnap.docs.map(d => d.data());
+
   el('ms-today').textContent = mineToday.length;
   el('ms-transferred').textContent = mineToday.filter(c=>c.result==='transferred').length;
   el('ms-nodial').textContent = mineToday.filter(c=>c.result==='nodial').length;
   el('ms-ao').textContent = mineToday.filter(c=>c.result==='ao').length;
   if (el('ms-skip')) el('ms-skip').textContent = mineToday.filter(c=>c.result==='skip').length;
+
+  // Store for chart
+  const all7days = await getDocs(query(
+    collection(db,'clients'),
+    where('calledBy','==', me.uid),
+    limit(500)
+  ));
+  const mine = all7days.docs.map(d => d.data());
 
   // 7-day data
   const days = [];
@@ -1758,50 +1774,35 @@ async function loadMgrMiniStats() {
   ).join('');
 }
 
-// Global cache — shared between all functions, loaded ONCE
-let _cacheClients = null;
+// Minimal cache — only bases (small), no clients cache
+let _cacheClients = null; // not used for loadNextClient anymore
 let _cacheBases   = null;
 let _cacheLoaded  = false;
 let _statsInterval = null;
 
+// Local counters — updated after each act(), no Firestore read needed
+let _localStats = { total:0, called:0, remain:0, todayMine:0, transferred:0, nodial:0, ao:0, skip:0 };
+
 async function loadSharedCache() {
-  // Load clients + bases in ONE parallel call
-  const [clientsSnap, basesSnap] = await Promise.all([
-    getDocs(collection(db,'clients')),
-    getDocs(collection(db,'bases'))
-  ]);
-  _cacheClients = clientsSnap.docs.map(d => ({id:d.id,...d.data()}));
-  _cacheBases   = basesSnap.docs.map(d => ({id:d.id,...d.data()}));
-  _cacheLoaded  = true;
-  return { clients: _cacheClients, bases: _cacheBases };
+  // Only load bases — small collection
+  const basesSnap = await getDocs(collection(db,'bases'));
+  _cacheBases = basesSnap.docs.map(d => ({id:d.id,...d.data()}));
+  _cacheLoaded = true;
 }
 
 function subscribeStats() {
-  // NO onSnapshot — kills quota. Use polling every 90 seconds instead.
-  if (_statsInterval) clearInterval(_statsInterval);
-  updateStatsFromCache();
-  _statsInterval = setInterval(async () => {
-    await loadSharedCache();
-    updateStatsFromCache();
-  }, 90000); // refresh every 90 sec
+  // Show active bases count from cache
+  updateStatsDisplay();
+}
+
+function updateStatsDisplay() {
+  const activeCount = _cacheBases ? _cacheBases.filter(b=>b.disabled!==true).length : 0;
+  if (el('p-active-bases')) el('p-active-bases').textContent = activeCount;
+  // Other counters updated by act() or periodically
 }
 
 function updateStatsFromCache() {
-  if (!_cacheClients || !_cacheBases) return;
-  const enabledBaseIds = new Set(_cacheBases.filter(b=>b.disabled!==true).map(b=>b.id));
-  const activeCount = enabledBaseIds.size;
-  const active  = _cacheClients.filter(c => enabledBaseIds.has(c.baseId));
-  const total   = active.length;
-  const done    = active.filter(c=>c.result&&c.result!=='callback').length;
-  const remain  = active.filter(c=>!c.result||c.result==='callback').length;
-  const pct     = total>0 ? Math.round(done/total*100) : 0;
-  el('p-total').textContent  = total;
-  el('p-called').textContent = done;
-  el('p-remain').textContent = remain;
-  el('p-pct').textContent    = pct+'%';
-  if (el('p-pct2')) el('p-pct2').textContent = pct+'%';
-  el('p-bar').style.width    = pct+'%';
-  if (el('p-active-bases')) el('p-active-bases').textContent = activeCount;
+  updateStatsDisplay();
 }
 
 async function loadNextClient() {
@@ -1811,24 +1812,19 @@ async function loadNextClient() {
 
   const LOCK_MS = 25 * 60 * 1000;
   const now = Date.now();
+  const nowTS = Timestamp.now();
 
   try {
-    // 1. Get manager assigned bases (1 read — only user doc, small)
-    const mgrDoc = await getDoc(doc(db,'user', me.uid));
-    const mgrData = mgrDoc.exists() ? mgrDoc.data() : {};
-    const assignedBases = mgrData.assignedBases || [];
-
-    // 2. Use cached bases — no extra read
+    // Use cached data — loaded once at login, no extra reads
+    const assignedBases = me.assignedBases || [];
     const basesData = _cacheBases || [];
     const enabledBases = basesData.filter(b => b.disabled !== true).map(b => b.id);
 
-    const targetSet = new Set(
-      assignedBases.length > 0
-        ? assignedBases.filter(id => enabledBases.includes(id))
-        : enabledBases
-    );
+    const targetBases = assignedBases.length > 0
+      ? assignedBases.filter(id => enabledBases.includes(id))
+      : enabledBases;
 
-    if (!targetSet.size) {
+    if (!targetBases.length) {
       el('cl-loading').style.display = 'none';
       const emptyEl = el('cl-empty');
       emptyEl.innerHTML = `
@@ -1849,98 +1845,110 @@ async function loadNextClient() {
       return;
     }
 
-    // 3. Use cache for candidates — no extra Firestore read
-    // Refresh cache if it's older than 5 minutes
-    if (!_cacheLoaded) await loadSharedCache();
+    // Randomly pick a base to try first — spreads load across bases
+    const shuffledBases = [...targetBases].sort(() => Math.random() - 0.5);
 
-    let candidates = [];
-    (_cacheClients||[]).forEach(data => {
-      if (!data.id) return;
-      if (data.result && data.result !== 'callback') return; // already processed
-      if (!targetSet.has(data.baseId)) return;
+    let claimed = null;
 
-      // Skip if locked by ANYONE (including self from previous session)
-      if (data.lockedBy) {
-        // Allow re-use only if lock expired AND it was our own lock
-        const lockedAt = data.lockedAt
-          ? (data.lockedAt.toMillis ? data.lockedAt.toMillis() : Number(data.lockedAt))
-          : 0;
-        const isExpired = now - lockedAt >= LOCK_MS;
-        const isOurs = data.lockedBy === me.uid;
-        if (!isExpired && !isOurs) return; // locked by someone else and still fresh
-        if (!isExpired && isOurs) return;  // we already have it open — skip duplicates
-      }
+    for (const baseId of shuffledBases) {
+      if (claimed) break;
 
-      candidates.push({ id: d.id, ...data });
-    });
+      // Read ONLY 5 clients from this base with result=null — minimal reads!
+      const snap = await getDocs(query(
+        collection(db,'clients'),
+        where('baseId','==', baseId),
+        where('result','==', null),
+        limit(15)
+      ));
 
-    // 4. If no new — try callbacks from cache
-    if (!candidates.length) {
-      (_cacheClients||[]).forEach(data => {
-        if (data.result !== 'callback') return;
-        if (!targetSet.has(data.baseId)) return;
-        if (data.lockedBy) {
+      if (snap.empty) continue;
+
+      // Shuffle so different managers get different clients
+      const docs = snap.docs.sort(() => Math.random() - 0.5);
+
+      for (const d of docs) {
+        const data = d.data();
+
+        // Skip if locked by someone else recently
+        if (data.lockedBy && data.lockedBy !== me.uid) {
           const lockedAt = data.lockedAt
             ? (data.lockedAt.toMillis ? data.lockedAt.toMillis() : Number(data.lockedAt))
             : 0;
-          const isExpired = now - lockedAt >= LOCK_MS;
-          const isOurs = data.lockedBy === me.uid;
-          if (!isExpired && !isOurs) return;
-          if (!isExpired && isOurs) return;
+          if (now - lockedAt < LOCK_MS) continue;
         }
-        if (data.id) candidates.push({ ...data });
-      });
+
+        // Skip if we already have it open
+        if (data.lockedBy === me.uid) {
+          const lockedAt = data.lockedAt
+            ? (data.lockedAt.toMillis ? data.lockedAt.toMillis() : Number(data.lockedAt))
+            : 0;
+          if (now - lockedAt < LOCK_MS) continue;
+        }
+
+        // Try to atomically claim this client
+        try {
+          await runTransaction(db, async (tx) => {
+            const ref = doc(db, 'clients', d.id);
+            const fresh = await tx.get(ref);
+            if (!fresh.exists()) throw new Error('gone');
+            const fd = fresh.data();
+            // Already taken by someone else?
+            if (fd.result && fd.result !== 'callback') throw new Error('done');
+            if (fd.lockedBy && fd.lockedBy !== me.uid) {
+              const lat = fd.lockedAt ? (fd.lockedAt.toMillis ? fd.lockedAt.toMillis() : Number(fd.lockedAt)) : 0;
+              if (now - lat < LOCK_MS) throw new Error('taken');
+            }
+            if (fd.lockedBy === me.uid) {
+              const lat = fd.lockedAt ? (fd.lockedAt.toMillis ? fd.lockedAt.toMillis() : Number(fd.lockedAt)) : 0;
+              if (now - lat < LOCK_MS) throw new Error('ours');
+            }
+            tx.update(ref, { lockedBy: me.uid, lockedAt: nowTS });
+            claimed = { id: d.id, ...fd };
+          });
+          if (claimed) break;
+        } catch(e) {
+          if (['gone','done','taken','ours'].includes(e.message)) continue;
+          throw e;
+        }
+      }
     }
 
-    if (!candidates.length) {
-      // Cache might be stale — do one fresh fetch to confirm
-      await loadSharedCache();
-      updateStatsFromCache();
-      el('cl-loading').style.display = 'none';
-      el('cl-empty').style.display = 'flex';
-      return;
-    }
-
-    // 5. Pick random candidate and ATOMICALLY claim it via transaction
-    // Shuffle candidates list and try each one until we successfully lock one
-    // This prevents race condition: two managers trying to lock the same client
-    const shuffled = candidates.sort(() => Math.random() - 0.5);
-    let claimed = null;
-
-    for (const candidate of shuffled) {
-      try {
-        await runTransaction(db, async (transaction) => {
-          const ref = doc(db, 'clients', candidate.id);
-          const fresh = await transaction.get(ref);
-          if (!fresh.exists()) throw new Error('deleted');
-          const freshData = fresh.data();
-
-          // Double-check: still unlocked or expired?
-          if (freshData.lockedBy && freshData.lockedBy !== me.uid) {
-            const lockedAt = freshData.lockedAt
-              ? (freshData.lockedAt.toMillis ? freshData.lockedAt.toMillis() : Number(freshData.lockedAt))
-              : 0;
-            if (now - lockedAt < LOCK_MS) throw new Error('taken');
+    // If no new clients, try callbacks
+    if (!claimed) {
+      for (const baseId of shuffledBases) {
+        if (claimed) break;
+        const snap = await getDocs(query(
+          collection(db,'clients'),
+          where('baseId','==', baseId),
+          where('result','==','callback'),
+          limit(10)
+        ));
+        const docs = snap.docs.sort(() => Math.random() - 0.5);
+        for (const d of docs) {
+          const data = d.data();
+          if (data.lockedBy && data.lockedBy !== me.uid) {
+            const lat = data.lockedAt ? (data.lockedAt.toMillis ? data.lockedAt.toMillis() : Number(data.lockedAt)) : 0;
+            if (now - lat < LOCK_MS) continue;
           }
-          // Also skip if result was set while we were loading
-          if (freshData.result && freshData.result !== 'callback') throw new Error('done');
-
-          // Claim it!
-          const lockTime = Timestamp.now();
-          transaction.update(ref, { lockedBy: me.uid, lockedAt: lockTime });
-          claimed = { id: candidate.id, ...freshData, lockedBy: me.uid, lockedAt: lockTime };
-          // Update local cache
-          if (_cacheClients) {
-            const ci = _cacheClients.findIndex(c => c.id === candidate.id);
-            if (ci >= 0) { _cacheClients[ci].lockedBy = me.uid; _cacheClients[ci].lockedAt = lockTime; }
+          try {
+            await runTransaction(db, async (tx) => {
+              const ref = doc(db,'clients', d.id);
+              const fresh = await tx.get(ref);
+              if (!fresh.exists()) throw new Error('gone');
+              const fd = fresh.data();
+              if (fd.lockedBy && fd.lockedBy !== me.uid) {
+                const lat = fd.lockedAt ? (fd.lockedAt.toMillis ? fd.lockedAt.toMillis() : Number(fd.lockedAt)) : 0;
+                if (now - lat < LOCK_MS) throw new Error('taken');
+              }
+              tx.update(ref, { lockedBy: me.uid, lockedAt: nowTS });
+              claimed = { id: d.id, ...fd };
+            });
+            if (claimed) break;
+          } catch(e) {
+            if (['gone','taken'].includes(e.message)) continue;
+            throw e;
           }
-        });
-        break; // Successfully claimed — stop trying
-      } catch (e) {
-        if (e.message === 'taken' || e.message === 'done' || e.message === 'deleted') {
-          continue; // Try next candidate
         }
-        throw e; // Real error
       }
     }
 
@@ -1960,6 +1968,7 @@ async function loadNextClient() {
     el('cl-empty').innerHTML = '<div class="ico">⚠️</div><h2>Ошибка загрузки</h2><p style="color:var(--text2)">' + err.message + '</p><button class="btn btn-ghost" style="margin-top:16px" onclick="loadNextClient()">🔄 Попробовать снова</button>';
   }
 }
+
 
 function renderCard(c) {
   el('cc-id').value = c.id;
@@ -2012,38 +2021,24 @@ window.act = async result => {
   const comment = el('cc-comment').value;
   if (!id) return;
 
-  const now = Timestamp.now();
+  // 1 write — that's it
   await updateDoc(doc(db,'clients',id), {
     result, status:'called', comment,
-    calledBy:me.uid, calledAt:now
+    calledBy: me.uid, calledAt: Timestamp.now()
   });
 
-  // Update local cache immediately — no re-fetch needed
-  if (_cacheClients) {
-    const cached = _cacheClients.find(c => c.id === id);
-    if (cached) {
-      cached.result = result;
-      cached.calledBy = me.uid;
-      cached.calledAt = now;
-      cached.comment = comment;
-      cached.lockedBy = me.uid;
+  // Update counters locally — no reads needed
+  const msToday = el('ms-today');
+  if (msToday && result !== 'callback') {
+    const cur = parseInt(msToday.textContent)||0;
+    msToday.textContent = cur + 1;
+    // Update specific counter
+    const map = { transferred:'ms-transferred', nodial:'ms-nodial', ao:'ms-ao', skip:'ms-skip' };
+    if (map[result]) {
+      const el2 = el(map[result]);
+      if (el2) el2.textContent = (parseInt(el2.textContent)||0) + 1;
     }
   }
-  updateStatsFromCache();
-
-  // Update mini stats counters directly
-  const todayStart = new Date(); todayStart.setHours(0,0,0,0);
-  const mine = (_cacheClients||[]).filter(c=>c.calledBy===me.uid);
-  const mineToday = mine.filter(c=>{
-    if(!c.calledAt) return false;
-    const d=c.calledAt.toDate?c.calledAt.toDate():new Date(c.calledAt);
-    return d>=todayStart;
-  });
-  if(el('ms-today')) el('ms-today').textContent = mineToday.length;
-  if(el('ms-transferred')) el('ms-transferred').textContent = mineToday.filter(c=>c.result==='transferred').length;
-  if(el('ms-nodial')) el('ms-nodial').textContent = mineToday.filter(c=>c.result==='nodial').length;
-  if(el('ms-ao')) el('ms-ao').textContent = mineToday.filter(c=>c.result==='ao').length;
-  if(el('ms-skip')) el('ms-skip').textContent = mineToday.filter(c=>c.result==='skip').length;
 
   if (result === 'callback') addToCallbackQueue(id);
 
