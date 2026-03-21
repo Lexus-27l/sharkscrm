@@ -1120,28 +1120,49 @@ function getPeriodRange(period) {
 }
 
 async function loadStats() {
-  const snap = await getDocs(collection(db, 'clients'));
-  allClientsForStats = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-  const total   = allClientsForStats.length;
-  const done    = allClientsForStats.filter(c => c.result && c.result!=='callback').length;
-  const remain  = allClientsForStats.filter(c => !c.result || c.result==='callback').length;
-  const pct     = total > 0 ? Math.round(done/total*100) : 0;
+  // Two parallel queries: called + not called — avoid reading full collection fields
+  // Use bases data for totals when possible
+  const basesSnap = await getDocs(collection(db,'bases'));
+  const bases = basesSnap.docs.map(d=>d.data());
+  const total = bases.reduce((s,b) => s + (b.total||0), 0);
+
+  // Only fetch clients that have a result (for pie chart) — much smaller set
+  const calledSnap = await getDocs(query(
+    collection(db,'clients'),
+    where('result','!=', null)
+  ));
+  allClientsForStats = calledSnap.docs.map(d => ({ id:d.id, ...d.data() }));
+
+  const done   = allClientsForStats.filter(c => c.result !== 'callback').length;
+  const remain = total - done;
+  const pct    = total > 0 ? Math.round(done/total*100) : 0;
 
   el('s-total').textContent = total;
   el('s-called').textContent = done;
-  el('s-remain').textContent = remain;
+  el('s-remain').textContent = Math.max(0, remain);
   el('s-pct').textContent   = pct + '%';
 
   setPeriod(currentPeriod);
   await loadMgrStats(allClientsForStats);
 }
 
+function toMs(calledAt) {
+  if (!calledAt) return 0;
+  if (typeof calledAt.toMillis === 'function') return calledAt.toMillis();
+  if (typeof calledAt.toDate === 'function') return calledAt.toDate().getTime();
+  if (calledAt.seconds) return calledAt.seconds * 1000;
+  return new Date(calledAt).getTime();
+}
+
 function renderStatsByPeriod(all, period) {
   const { start, end } = getPeriodRange(period);
+  const startMs = start.getTime();
+  const endMs   = end.getTime();
+
   const periodClients = all.filter(c => {
     if (!c.calledAt) return false;
-    const d = c.calledAt.toDate ? c.calledAt.toDate() : new Date(c.calledAt);
-    return d >= start && d <= end;
+    const ms = toMs(c.calledAt);
+    return ms >= startMs && ms <= endMs;
   });
 
   const titles = { today:'сегодня', week:'эту неделю', prevweek:'прошлую неделю' };
@@ -1222,10 +1243,11 @@ async function loadMgrStats(allClients) {
 
   tbody.innerHTML = managers.map(m => {
     const mine = allClients.filter(c => c.calledBy === m.uid);
+    const startMs2 = start.getTime(), endMs2 = end.getTime();
     const periodMine = mine.filter(c => {
       if (!c.calledAt) return false;
-      const d = c.calledAt.toDate ? c.calledAt.toDate() : new Date(c.calledAt);
-      return d >= start && d <= end;
+      const ms = toMs(c.calledAt);
+      return ms >= startMs2 && ms <= endMs2;
     });
     barCounts.push(periodMine.length);
     const total = mine.length;
