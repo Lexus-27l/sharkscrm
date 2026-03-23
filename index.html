@@ -1418,6 +1418,8 @@ async function doImport() {
         address:  get('адрес','address') || String(row[3]||''),
         relation: get('отношение','кем приходится','relation') || '',
       }],
+      baseId:   baseRef.id,
+      baseName: baseName,
       status:'new', result:null, comment:'',
       calledBy:null, calledAt:null,
       createdAt:Timestamp.now()
