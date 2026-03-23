@@ -1711,7 +1711,7 @@ async function initManager() {
     el('mgr-avatar-img').style.display = 'block';
     el('mgr-avatar-initials').style.display = 'none';
   }
-  // Load bases (small) + user doc for assignedBases
+  // Load bases + user doc in parallel
   const [mgrDoc, basesSnap] = await Promise.all([
     getDoc(doc(db,'user', me.uid)),
     getDocs(collection(db,'bases'))
@@ -1721,7 +1721,27 @@ async function initManager() {
   _cacheLoaded = true;
   subscribeStats();
   loadMgrMiniStats();
+  // Load my callbacks from Firebase (survive page refresh)
+  loadCallbacksFromDB();
   loadNextClient();
+}
+
+async function loadCallbacksFromDB() {
+  try {
+    const snap = await getDocs(query(
+      collection(db,'clients'),
+      where('calledBy','==', me.uid),
+      where('result','==','callback'),
+      limit(20)
+    ));
+    callbackQueue = [];
+    snap.docs.forEach(d => {
+      const data = d.data();
+      // Only show callbacks that are still active (not locked by someone else)
+      callbackQueue.push({ id: d.id, ...data });
+    });
+    renderCallbackSidebar();
+  } catch(e) { console.error('loadCallbacksFromDB:', e); }
 }
 
 window.uploadMgrAvatar = (e) => {
@@ -2104,10 +2124,9 @@ window.act = async result => {
 
   // Update counters locally — no reads needed
   const msToday = el('ms-today');
-  if (msToday && result !== 'callback') {
+  if (msToday) {
     const cur = parseInt(msToday.textContent)||0;
     msToday.textContent = cur + 1;
-    // Update specific counter
     const map = { transferred:'ms-transferred', nodial:'ms-nodial', ao:'ms-ao', skip:'ms-skip' };
     if (map[result]) {
       const el2 = el(map[result]);
@@ -2496,20 +2515,19 @@ async function loadBaseStats(bases) {
 }
 
 async function loadBaseStatsCounts(bases) {
-  // Fetch all bases in PARALLEL — filter result on client side (no index needed)
+  // Sequential to avoid hammering Firestore (admin panel)
   try {
-    await Promise.all(bases.map(async b => {
+    for (const b of bases) {
       const snap = await getDocs(query(
         collection(db,'clients'),
         where('baseId','==', b.id),
         limit(500)
       ));
-      // Count locally — no compound index needed
       b.calledCount = snap.docs.filter(d => {
         const r = d.data().result;
         return r && r !== 'callback';
       }).length;
-    }));
+    }
   } catch(e) { console.error('loadBaseStatsCounts:', e); }
   renderBases(bases);
 }
