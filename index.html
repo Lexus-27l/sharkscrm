@@ -2022,11 +2022,6 @@ async function loadNextClient() {
           throw e;
         }
         if (claimed) break;
-          } catch(e) {
-            if (['gone','taken'].includes(e.message)) continue;
-            throw e;
-          }
-        }
       }
     }
 
