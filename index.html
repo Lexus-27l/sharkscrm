@@ -2494,18 +2494,21 @@ async function loadBaseStats(bases) {
 }
 
 async function loadBaseStatsCounts(bases) {
-  // Per-base light queries — only count docs with result != null
-  for (const b of bases) {
-    try {
-      const q = await getDocs(query(
+  // Fetch all bases in PARALLEL — filter result on client side (no index needed)
+  try {
+    await Promise.all(bases.map(async b => {
+      const snap = await getDocs(query(
         collection(db,'clients'),
         where('baseId','==', b.id),
-        where('result','!=', null),
         limit(500)
       ));
-      b.calledCount = q.size;
-    } catch(e) { b.calledCount = b.calledCount || 0; }
-  }
+      // Count locally — no compound index needed
+      b.calledCount = snap.docs.filter(d => {
+        const r = d.data().result;
+        return r && r !== 'callback';
+      }).length;
+    }));
+  } catch(e) { console.error('loadBaseStatsCounts:', e); }
   renderBases(bases);
 }
 
