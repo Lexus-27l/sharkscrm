@@ -510,23 +510,45 @@ input[type=file]{display:none}
             <button id="period-prevweek" onclick="setPeriod('prevweek')" class="btn btn-sm btn-ghost" style="border-radius:7px">Прошлая неделя</button>
           </div>
           <span id="period-label" style="font-size:12px;color:var(--text2)"></span>
+          <!-- Кнопка обновления статистики -->
+          <button id="stats-refresh-btn" onclick="refreshStats()" title="Обновить статистику"
+            style="margin-left:auto;width:34px;height:34px;border-radius:50%;border:1px solid var(--brd2);
+            background:var(--bg3);color:var(--acc2);font-size:16px;cursor:pointer;
+            display:flex;align-items:center;justify-content:center;transition:all .3s;flex-shrink:0">
+            🔄
+          </button>
         </div>
 
         <div class="chart-two">
           <div class="chart-box">
-            <h3 id="pie-title">📊 Результаты звонков сегодня</h3>
+            <h3 id="pie-title" style="display:flex;align-items:center;justify-content:space-between">
+              <span>📊 Результаты звонков сегодня</span>
+            </h3>
             <div class="chart-wrap"><canvas id="chart-pie"></canvas></div>
             <div class="chart-legend" id="chart-legend"></div>
           </div>
           <div class="chart-box" style="overflow:hidden">
-            <h3>👥 Статистика менеджеров по дням</h3>
+            <h3 style="display:flex;align-items:center;justify-content:space-between">
+              <span>👥 Статистика менеджеров по дням</span>
+            </h3>
             <div class="chart-wrap"><canvas id="chart-bar"></canvas></div>
           </div>
         </div>
 
+        <!-- Передачи по городам -->
+        <div class="card" id="city-stats-card" style="display:none">
+          <div class="card-title" style="display:flex;align-items:center;justify-content:space-between">
+            <span>📍 Передачи по городам</span>
+            <span id="city-stats-total" style="font-size:12px;color:var(--text2)"></span>
+          </div>
+          <div id="city-stats-body" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px"></div>
+        </div>
+
         <!-- Manager stats table like screenshot -->
         <div class="card">
-          <div class="card-title" id="mgr-table-title">👥 Детальная статистика менеджеров</div>
+          <div class="card-title" id="mgr-table-title" style="display:flex;align-items:center;justify-content:space-between">
+            <span>👥 Детальная статистика менеджеров</span>
+          </div>
           <div class="mgr-table-wrap">
             <table class="mgr-table">
               <thead id="mgr-thead"></thead>
@@ -1064,6 +1086,17 @@ window.aTab = t => {
 let currentPeriod = 'today';
 let allClientsForStats = [];
 
+window.refreshStats = async () => {
+  const btn = document.getElementById('stats-refresh-btn');
+  if (btn) {
+    btn.style.transform = 'rotate(360deg)';
+    btn.style.opacity = '0.6';
+    setTimeout(() => { btn.style.transform = ''; btn.style.opacity = '1'; }, 600);
+  }
+  await loadStats();
+  toast('✅ Статистика обновлена');
+};
+
 window.setPeriod = async (period) => {
   currentPeriod = period;
   // Update button styles
@@ -1089,6 +1122,12 @@ window.setPeriod = async (period) => {
     if (lbl) lbl.textContent = 'Пред. неделя: ' + mon.toLocaleDateString('ru-RU',{day:'numeric',month:'short'}) + ' — ' + sun.toLocaleDateString('ru-RU',{day:'numeric',month:'short'});
   }
   renderStatsByPeriod(allClientsForStats, period);
+  renderCityStats(allClientsForStats.filter(c => {
+    const { start, end } = getPeriodRange(period);
+    if (!c.calledAt) return false;
+    const ms = toMs(c.calledAt);
+    return ms >= start.getTime() && ms <= end.getTime();
+  }));
   if (allClientsForStats.length) loadMgrStats(allClientsForStats);
 };
 
@@ -1143,7 +1182,50 @@ async function loadStats() {
   el('s-pct').textContent   = pct + '%';
 
   setPeriod(currentPeriod);
+  renderCityStats(allClientsForStats);
   await loadMgrStats(allClientsForStats);
+}
+
+function renderCityStats(all) {
+  const card = document.getElementById('city-stats-card');
+  const body = document.getElementById('city-stats-body');
+  const totalEl = document.getElementById('city-stats-total');
+  if (!card || !body) return;
+
+  // Only transferred results
+  const transferred = all.filter(c => c.result === 'transferred' && c.region);
+
+  if (!transferred.length) { card.style.display = 'none'; return; }
+
+  // Group by city (first part of region before comma)
+  const cityMap = {};
+  transferred.forEach(c => {
+    const city = (c.region || '').split(',')[0].trim().toUpperCase() || 'Не указан';
+    cityMap[city] = (cityMap[city] || 0) + 1;
+  });
+
+  // Sort by count desc
+  const sorted = Object.entries(cityMap).sort((a,b) => b[1]-a[1]);
+  const total = transferred.length;
+
+  card.style.display = 'block';
+  if (totalEl) totalEl.textContent = 'Всего передач: ' + total;
+
+  // Color palette for cities
+  const colors = ['#22c55e','#06b6d4','#a78bfa','#f59e0b','#f43f5e','#ec4899','#8b5cf6','#14b8a6','#f97316','#3b82f6'];
+
+  body.innerHTML = sorted.map(([city, cnt], i) => {
+    const pct = Math.round(cnt/total*100);
+    const color = colors[i % colors.length];
+    return `<div style="background:${color}12;border:1px solid ${color}33;border-radius:12px;padding:12px 14px;position:relative;overflow:hidden">
+      <div style="position:absolute;bottom:0;left:0;height:3px;width:${pct}%;background:${color};border-radius:0 0 0 12px;transition:width .6s ease"></div>
+      <div style="font-size:12px;font-weight:700;color:${color};margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${city}">${city}</div>
+      <div style="display:flex;align-items:baseline;gap:6px">
+        <span style="font-size:22px;font-weight:900;font-family:var(--mono);color:${color}">${cnt}</span>
+        <span style="font-size:11px;color:var(--text2)">передач · ${pct}%</span>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function toMs(calledAt) {
@@ -1314,8 +1396,7 @@ async function doImport() {
   const rows    = importData;
   const headers = rows[0].map(h => String(h).toLowerCase().trim());
   const baseName = (el('excel-base-name') && el('excel-base-name').value.trim()) || ('Excel_' + new Date().toLocaleDateString('ru-RU'));
-  const existingSnap = await getDocs(collection(db,'clients'));
-  const existingNames = new Set(existingSnap.docs.map(d => (d.data().deceased||'').toLowerCase().trim()));
+  const existingNames = new Set(); // Skip duplicate check to save reads
   // Create base record
   const baseRef = await addDoc(collection(db,'bases'), {
     name: baseName, createdAt: Timestamp.now(), total: 0, clientIds: []
@@ -1416,7 +1497,7 @@ async function loadClients() {
   managersNameMap = {};
   usersSnap.docs.forEach(d => { managersNameMap[d.id] = d.data().name || d.data().email || d.id; });
 
-  const snap = await getDocs(query(collection(db,'clients'), orderBy('createdAt','desc')));
+  const snap = await getDocs(query(collection(db,'clients'), orderBy('createdAt','desc'), limit(500)));
   allClientsCache = snap.docs.map(d=>({id:d.id,...d.data()}));
 
   // Populate city filter
@@ -1662,33 +1743,29 @@ let mgrDailyChart = null;
 const MONEY_STICKERS = ['💵','💰','🤑','💸','🏆','⭐','🔥','💎','🎯','📈'];
 
 async function loadMgrMiniStats() {
-  // Fetch only MY calls from today — targeted query, minimal reads
   const now = new Date();
   const today = new Date(now); today.setHours(0,0,0,0);
-  const todayTS = Timestamp.fromDate(today);
 
-  // Small targeted query: only my calls, only today
-  const mySnap = await getDocs(query(
+  // ONE query: my calls for last 7 days — covers both today stats + chart
+  const week7ago = new Date(now); week7ago.setDate(week7ago.getDate() - 7); week7ago.setHours(0,0,0,0);
+  const snap7 = await getDocs(query(
     collection(db,'clients'),
     where('calledBy','==', me.uid),
-    where('calledAt','>=', todayTS),
-    limit(200)
+    where('calledAt','>=', Timestamp.fromDate(week7ago)),
+    limit(300)
   ));
-  const mineToday = mySnap.docs.map(d => d.data());
+  const mine = snap7.docs.map(d => d.data());
+  const mineToday = mine.filter(c => {
+    if (!c.calledAt) return false;
+    const ms = toMs(c.calledAt);
+    return ms >= today.getTime();
+  });
 
   el('ms-today').textContent = mineToday.length;
   el('ms-transferred').textContent = mineToday.filter(c=>c.result==='transferred').length;
   el('ms-nodial').textContent = mineToday.filter(c=>c.result==='nodial').length;
   el('ms-ao').textContent = mineToday.filter(c=>c.result==='ao').length;
   if (el('ms-skip')) el('ms-skip').textContent = mineToday.filter(c=>c.result==='skip').length;
-
-  // Store for chart
-  const all7days = await getDocs(query(
-    collection(db,'clients'),
-    where('calledBy','==', me.uid),
-    limit(500)
-  ));
-  const mine = all7days.docs.map(d => d.data());
 
   // 7-day data
   const days = [];
@@ -1779,21 +1856,8 @@ async function loadMgrMiniStats() {
     });
   }
 
-  // Top managers by transferred
-  const usersSnap = await getDocs(query(collection(db,'user'), where('role','==','manager')));
-  const managers = usersSnap.docs.map(d=>({uid:d.id,...d.data()}));
-  const topList = managers.map(m => ({
-    name: m.name || m.email,
-    count: all.filter(c=>c.calledBy===m.uid&&c.result==='transferred').length
-  })).sort((a,b)=>b.count-a.count).slice(0,3);
-
-  el('ms-top-list').innerHTML = topList.map((m,i) => 
-    `<div style="display:flex;align-items:center;gap:4px;background:var(--bg3);border:1px solid var(--brd);border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700">
-      <span>${['🥇','🥈','🥉'][i]}</span>
-      <span style="color:var(--text)">${(m.name||'').split(' ')[0]}</span>
-      <span style="color:var(--acc2);font-family:var(--mono)">${m.count}</span>
-    </div>`
-  ).join('');
+  // Hide top list to save reads — not critical for managers
+  if (el('ms-top-list')) el('ms-top-list').innerHTML = '';
 }
 
 // Minimal cache — only bases (small), no clients cache
@@ -1832,7 +1896,7 @@ async function loadNextClient() {
   el('cl-empty').style.display   = 'none';
   el('call-card').style.display  = 'none';
 
-  const LOCK_MS = 25 * 60 * 1000;
+  const LOCK_MS = 50 * 60 * 1000; // 50 minutes
   const now = Date.now();
   const nowTS = Timestamp.now();
 
@@ -1867,105 +1931,97 @@ async function loadNextClient() {
       return;
     }
 
-    // Randomly pick a base to try first — spreads load across bases
+    // PARALLEL fetch from ALL bases at once — much faster than sequential!
     const shuffledBases = [...targetBases].sort(() => Math.random() - 0.5);
-
     let claimed = null;
 
-    for (const baseId of shuffledBases) {
-      if (claimed) break;
+    // Helper: check if a doc is lockable
+    const getLockMs = (d) => d.lockedAt ? (d.lockedAt.toMillis ? d.lockedAt.toMillis() : Number(d.lockedAt)) : 0;
+    const isAvailable = (data) => {
+      if (!data.lockedBy) return true;
+      if (data.lockedBy === me.uid) return false; // skip our own open card
+      return now - getLockMs(data) >= LOCK_MS;    // expired lock = available
+    };
 
-      // Read ONLY 5 clients from this base with result=null — minimal reads!
-      const snap = await getDocs(query(
+    // Fetch all bases in PARALLEL
+    const allSnaps = await Promise.all(
+      shuffledBases.map(baseId => getDocs(query(
         collection(db,'clients'),
         where('baseId','==', baseId),
         where('result','==', null),
-        limit(15)
-      ));
+        limit(20)
+      )))
+    );
 
-      if (snap.empty) continue;
-
-      // Shuffle so different managers get different clients
-      const docs = snap.docs.sort(() => Math.random() - 0.5);
-
-      for (const d of docs) {
+    // Flatten + shuffle all candidates
+    const allCandidates = [];
+    allSnaps.forEach(snap => {
+      snap.docs.forEach(d => {
         const data = d.data();
+        if (isAvailable(data)) allCandidates.push({ id: d.id, ...data });
+      });
+    });
+    // Shuffle for fair distribution
+    allCandidates.sort(() => Math.random() - 0.5);
 
-        // Skip if locked by someone else recently
-        if (data.lockedBy && data.lockedBy !== me.uid) {
-          const lockedAt = data.lockedAt
-            ? (data.lockedAt.toMillis ? data.lockedAt.toMillis() : Number(data.lockedAt))
-            : 0;
-          if (now - lockedAt < LOCK_MS) continue;
-        }
-
-        // Skip if we already have it open
-        if (data.lockedBy === me.uid) {
-          const lockedAt = data.lockedAt
-            ? (data.lockedAt.toMillis ? data.lockedAt.toMillis() : Number(data.lockedAt))
-            : 0;
-          if (now - lockedAt < LOCK_MS) continue;
-        }
-
-        // Try to atomically claim this client
-        try {
-          await runTransaction(db, async (tx) => {
-            const ref = doc(db, 'clients', d.id);
-            const fresh = await tx.get(ref);
-            if (!fresh.exists()) throw new Error('gone');
-            const fd = fresh.data();
-            // Already taken by someone else?
-            if (fd.result && fd.result !== 'callback') throw new Error('done');
-            if (fd.lockedBy && fd.lockedBy !== me.uid) {
-              const lat = fd.lockedAt ? (fd.lockedAt.toMillis ? fd.lockedAt.toMillis() : Number(fd.lockedAt)) : 0;
-              if (now - lat < LOCK_MS) throw new Error('taken');
-            }
-            if (fd.lockedBy === me.uid) {
-              const lat = fd.lockedAt ? (fd.lockedAt.toMillis ? fd.lockedAt.toMillis() : Number(fd.lockedAt)) : 0;
-              if (now - lat < LOCK_MS) throw new Error('ours');
-            }
-            tx.update(ref, { lockedBy: me.uid, lockedAt: nowTS });
-            claimed = { id: d.id, ...fd };
-          });
-          if (claimed) break;
-        } catch(e) {
-          if (['gone','done','taken','ours'].includes(e.message)) continue;
-          throw e;
-        }
+    // Try to claim first available via transaction
+    for (const candidate of allCandidates) {
+      if (claimed) break;
+      try {
+        await runTransaction(db, async (tx) => {
+          const ref = doc(db,'clients', candidate.id);
+          const fresh = await tx.get(ref);
+          if (!fresh.exists()) throw new Error('gone');
+          const fd = fresh.data();
+          if (fd.result && fd.result !== 'callback') throw new Error('done');
+          if (fd.lockedBy && fd.lockedBy !== me.uid && now - getLockMs(fd) < LOCK_MS) throw new Error('taken');
+          if (fd.lockedBy === me.uid && now - getLockMs(fd) < LOCK_MS) throw new Error('ours');
+          tx.update(ref, { lockedBy: me.uid, lockedAt: nowTS });
+          claimed = { ...candidate, lockedBy: me.uid, lockedAt: nowTS };
+        });
+      } catch(e) {
+        if (['gone','done','taken','ours'].includes(e.message)) continue;
+        throw e;
       }
     }
 
-    // If no new clients, try callbacks
+    // If no new clients — try callbacks in parallel
     if (!claimed) {
-      for (const baseId of shuffledBases) {
-        if (claimed) break;
-        const snap = await getDocs(query(
+      const cbSnaps = await Promise.all(
+        shuffledBases.map(baseId => getDocs(query(
           collection(db,'clients'),
           where('baseId','==', baseId),
           where('result','==','callback'),
           limit(10)
-        ));
-        const docs = snap.docs.sort(() => Math.random() - 0.5);
-        for (const d of docs) {
+        )))
+      );
+      const cbCandidates = [];
+      cbSnaps.forEach(snap => {
+        snap.docs.forEach(d => {
           const data = d.data();
-          if (data.lockedBy && data.lockedBy !== me.uid) {
-            const lat = data.lockedAt ? (data.lockedAt.toMillis ? data.lockedAt.toMillis() : Number(data.lockedAt)) : 0;
-            if (now - lat < LOCK_MS) continue;
+          if (!data.lockedBy || now - getLockMs(data) >= LOCK_MS) {
+            cbCandidates.push({ id: d.id, ...data });
           }
-          try {
-            await runTransaction(db, async (tx) => {
-              const ref = doc(db,'clients', d.id);
-              const fresh = await tx.get(ref);
-              if (!fresh.exists()) throw new Error('gone');
-              const fd = fresh.data();
-              if (fd.lockedBy && fd.lockedBy !== me.uid) {
-                const lat = fd.lockedAt ? (fd.lockedAt.toMillis ? fd.lockedAt.toMillis() : Number(fd.lockedAt)) : 0;
-                if (now - lat < LOCK_MS) throw new Error('taken');
-              }
-              tx.update(ref, { lockedBy: me.uid, lockedAt: nowTS });
-              claimed = { id: d.id, ...fd };
-            });
-            if (claimed) break;
+        });
+      });
+      cbCandidates.sort(() => Math.random() - 0.5);
+      for (const candidate of cbCandidates) {
+        if (claimed) break;
+        try {
+          await runTransaction(db, async (tx) => {
+            const ref = doc(db,'clients', candidate.id);
+            const fresh = await tx.get(ref);
+            if (!fresh.exists()) throw new Error('gone');
+            const fd = fresh.data();
+            if (fd.lockedBy && fd.lockedBy !== me.uid && now - getLockMs(fd) < LOCK_MS) throw new Error('taken');
+            tx.update(ref, { lockedBy: me.uid, lockedAt: nowTS });
+            claimed = { ...candidate, lockedBy: me.uid, lockedAt: nowTS };
+          });
+        } catch(e) {
+          if (['gone','taken'].includes(e.message)) continue;
+          throw e;
+        }
+        if (claimed) break;
           } catch(e) {
             if (['gone','taken'].includes(e.message)) continue;
             throw e;
@@ -2151,9 +2207,8 @@ window.importText = async () => {
   
   el('txt-preview').textContent = '⏳ Загружаю ' + clients.length + ' клиентов...';
   
-  const existingSnap = await getDocs(collection(db,'clients'));
-  const existingNames = new Set(existingSnap.docs.map(d => (d.data().deceased||'').toLowerCase().trim()));
-  
+  const existingNames = new Set(); // Skip dup check to save reads
+
   // Create base record
   const baseRef = await addDoc(collection(db,'bases'), {
     name: baseName,
@@ -2287,21 +2342,13 @@ let allBases = [];
 async function loadBases() {
   el('bases-list').innerHTML = '<div class="empty-cell">⏳ Загрузка...</div>';
   // Parallel: fetch bases + clients at same time
-  const [basesSnap, clientsSnap] = await Promise.all([
-    getDocs(query(collection(db,'bases'), orderBy('createdAt','desc'))),
-    getDocs(collection(db,'clients'))
-  ]);
+  // Only load bases — calledCount computed from base.total minus remaining (saved in base doc)
+  const basesSnap = await getDocs(query(collection(db,'bases'), orderBy('createdAt','desc')));
   allBases = basesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-  // Pre-compute calledCount right away (no second fetch needed)
-  const clients = clientsSnap.docs.map(d => d.data());
-  if (!allClientsForStats || allClientsForStats.length === 0) {
-    allClientsForStats = clientsSnap.docs.map(d=>({id:d.id,...d.data()}));
-  }
-  allBases.forEach(b => {
-    const bClients = clients.filter(c => c.baseId === b.id);
-    b.calledCount = bClients.filter(c => c.result && c.result !== 'callback').length;
-  });
+  // Load called counts separately per base (light query per base)
   renderBases(allBases);
+  // Load stats async without blocking
+  loadBaseStatsCounts(allBases);
 }
 
 window.filterBases = () => {
@@ -2448,19 +2495,22 @@ window.showBaseStats = async (baseId, baseName) => {
 window.closeBaseStatsModal = () => { document.getElementById('base-stats-modal').style.display='none'; };
 
 async function loadBaseStats(bases) {
-  // Use cached clients if available for speed, otherwise fetch
-  let clients;
-  if (allClientsForStats && allClientsForStats.length > 0) {
-    clients = allClientsForStats;
-  } else {
-    const clientsSnap = await getDocs(collection(db,'clients'));
-    clients = clientsSnap.docs.map(d => ({id:d.id,...d.data()}));
+  loadBaseStatsCounts(bases);
+}
+
+async function loadBaseStatsCounts(bases) {
+  // Per-base light queries — only count docs with result != null
+  for (const b of bases) {
+    try {
+      const q = await getDocs(query(
+        collection(db,'clients'),
+        where('baseId','==', b.id),
+        where('result','!=', null),
+        limit(500)
+      ));
+      b.calledCount = q.size;
+    } catch(e) { b.calledCount = b.calledCount || 0; }
   }
-  bases.forEach(b => {
-    const bClients = clients.filter(c => c.baseId === b.id);
-    const called = bClients.filter(c => c.result && c.result !== 'callback').length;
-    b.calledCount = called;
-  });
   renderBases(bases);
 }
 
@@ -2822,8 +2872,13 @@ window.loadInlineMgrStats = async (period) => {
     start = getWeekStart(now, -1); end = new Date(start); end.setDate(end.getDate()+7);
   }
 
-  const snap = await getDocs(collection(db,'clients'));
-  const mine = snap.docs.map(d=>d.data()).filter(c => c.calledBy === me.uid);
+  // Only fetch MY calls — not all clients
+  const snap = await getDocs(query(
+    collection(db,'clients'),
+    where('calledBy','==', me.uid),
+    limit(500)
+  ));
+  const mine = snap.docs.map(d=>d.data());
   const periodMine = mine.filter(c => {
     if (!c.calledAt) return false;
     const d = c.calledAt.toDate ? c.calledAt.toDate() : new Date(c.calledAt);
