@@ -1063,57 +1063,182 @@ function renderBasesStat() {
   </table></div>`;
 }
 
-function renderCitiesStat() {
-  const all = cachedAllClients || [];
-  const { from, to } = getStatRange();
-  const citiesMap = {};
-  all.forEach(c => {
-    const region = (c.region||'Не указан').split(',')[0].trim().substring(0,40) || 'Не указан';
-    if (!citiesMap[region]) citiesMap[region] = { total:0, transferred:0, nodial:0, skip:0, callback:0, cut:0 };
-    citiesMap[region].total++;
-    if (c.calledAt) {
-      const d = c.calledAt.toDate ? c.calledAt.toDate() : new Date(c.calledAt);
-      if (d >= from && d <= to && c.result) {
-        citiesMap[region][c.result] = (citiesMap[region][c.result]||0)+1;
-      }
+/* ──────── НОРМАЛИЗАЦИЯ РЕГИОНОВ (улучшенная версия) ──────── */
+function normalizeRegion(baseName) {
+  if (!baseName) return 'Не указано';
+
+  let name = String(baseName)
+    .trim()
+    .toLowerCase()
+    .replace(/_?\d{1,2}\.\d{1,2}\.\d{4}/g, '')     // удаляем даты вида 23.03.2026
+    .replace(/_?\d{2}\.\d{2}\.\d{4}/g, '')
+    .replace(/обл\.?/gi, ' область')
+    .replace(/область/gi, ' область')
+    .replace(/г\./gi, '')
+    .replace(/город/gi, '')
+    .replace(/республика/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const regionMap = {
+    // Самара
+    'самара': 'Самара',
+    'самарская область': 'Самара',
+    'самарская обл': 'Самара',
+
+    // Томск
+    'томск': 'Томск',
+    'томская область': 'Томск',
+    'томская обл': 'Томск',
+
+    // Крым
+    'крым': 'Крым',
+    'республика крым': 'Крым',
+    'севастополь': 'Севастополь',
+
+    // ДНР / ЛНР
+    'днр': 'ДНР',
+    'донецкая народная республика': 'ДНР',
+    'донецкая область': 'ДНР',
+
+    'лнр': 'ЛНР',
+    'луганская народная республика': 'ЛНР',
+    'луганская область': 'ЛНР',
+
+    // Москва и область
+    'москва': 'Москва',
+    'московская область': 'Московская область',
+    'московская обл': 'Московская область',
+
+    // Часто встречающиеся
+    'оренбург': 'Оренбург',
+    'оренбургская область': 'Оренбург',
+    'оренбургская обл': 'Оренбург',
+
+    'ставрополь': 'Ставрополь',
+    'ставропольский край': 'Ставрополь',
+
+    'тверь': 'Тверь',
+    'тверская область': 'Тверь',
+    'тверская обл': 'Тверь',
+
+    'казань': 'Казань',
+    'республика татарстан': 'Татарстан',
+    'татарстан': 'Татарстан',
+
+    'магнитогорск': 'Магнитогорск',
+    'волгоград': 'Волгоград',
+    'волгоградская область': 'Волгоград',
+    'ростов': 'Ростов',
+    'ростовская область': 'Ростов',
+    'челябинск': 'Челябинск',
+    'челябинская область': 'Челябинск',
+
+    // Добавь сюда свои частые варианты по мере необходимости
+    'липецк': 'Липецк',
+    'липецкая область': 'Липецк',
+    'липецкая обл': 'Липецк'
+  };
+
+  if (regionMap[name]) {
+    return regionMap[name];
+  }
+
+  // Красивое форматирование неизвестных регионов
+  return name
+    .replace(/\b\w/g, l => l.toUpperCase())
+    .replace(' область', ' обл.')
+    .replace(' край', ' край');
+}
+
+/* ──────── РЕНДЕР СТАТИСТИКИ ПО РЕГИОНАМ ──────── */
+async function renderCities() {
+  const snap = await getDocs(collection(db, 'clients'));
+  const clients = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+  const regionMap = new Map();
+
+  clients.forEach(c => {
+    const rawName = c.baseName || c.region || 'Не указано';
+    const normalized = normalizeRegion(rawName);
+
+    if (!regionMap.has(normalized)) {
+      regionMap.set(normalized, {
+        total: 0,
+        transferred: 0,
+        nodial: 0,
+        skip: 0,
+        callback: 0,
+        cut: 0,
+        ao: 0
+      });
+    }
+
+    const stats = regionMap.get(normalized);
+    stats.total++;
+
+    if (c.result) {
+      if (c.result === 'transferred') stats.transferred++;
+      else if (c.result === 'nodial') stats.nodial++;
+      else if (c.result === 'skip') stats.skip++;
+      else if (c.result === 'callback') stats.callback++;
+      else if (c.result === 'cut') stats.cut++;
+      else if (c.result === 'ao') stats.ao++;
     }
   });
-  const cities = Object.entries(citiesMap).sort((a,b)=>b[1].total-a[1].total);
-  const container = el('cities-stat-table');
-  if (!container) return;
-  container.innerHTML = `<div style="overflow-x:auto"><table class="mgr-table" style="min-width:700px">
-    <thead><tr>
-      <th style="text-align:left">Регион</th>
-      <th>Всего</th>
-      <th style="color:var(--green)">✅ Передал</th>
-      <th style="color:var(--red)">❌ Недозвон</th>
-      <th style="color:var(--blue)">⏭ Скип</th>
-      <th style="color:var(--yellow)">🔄 Перезвон</th>
-      <th style="color:var(--pink)">✂️ Срез</th>
-      <th>% конв.</th>
-    </tr></thead>
-    <tbody>${cities.map(([city, s]) => {
-      const conv = s.total > 0 ? ((s.transferred||0)/s.total*100).toFixed(1) : '0.0';
-      const barW = s.total > 0 ? Math.round((s.transferred||0)/s.total*100) : 0;
-      return `<tr>
-        <td>
-          <div style="display:flex;align-items:center;gap:8px">
-            <div style="width:60px;height:4px;background:var(--bg3);border-radius:2px;overflow:hidden">
-              <div style="height:100%;width:${barW}%;background:var(--green);border-radius:2px"></div>
-            </div>
-            <span style="font-weight:600">${city}</span>
-          </div>
-        </td>
-        <td class="td-num">${s.total}</td>
-        <td class="td-num" style="color:var(--green)">${s.transferred||0}</td>
-        <td class="td-num" style="color:var(--red)">${s.nodial||0}</td>
-        <td class="td-num" style="color:var(--blue)">${s.skip||0}</td>
-        <td class="td-num" style="color:var(--yellow)">${s.callback||0}</td>
-        <td class="td-num" style="color:var(--pink)">${s.cut||0}</td>
-        <td class="td-num" style="color:${parseFloat(conv)>3?'var(--green)':parseFloat(conv)>1?'var(--yellow)':'var(--red)'};font-weight:800">${conv}%</td>
-      </tr>`;
-    }).join('')}</tbody>
-  </table></div>`;
+
+  const cities = Array.from(regionMap.entries())
+    .sort((a, b) => b[1].total - a[1].total);
+
+  const html = `
+    <div class="card">
+      <div class="card-title">📍 Статистика по регионам</div>
+      <div class="mgr-table-wrap">
+        <table class="mgr-table">
+          <thead>
+            <tr>
+              <th style="text-align:left">Регион</th>
+              <th>Всего</th>
+              <th style="color:var(--green)">✅ ПЕРЕДАЛ</th>
+              <th style="color:#fca5a5">❌ НЕ ДОЗВОН</th>
+              <th style="color:#93c5fd">⏭ СКИП</th>
+              <th style="color:#fcd34d">📞 ПЕРЕЗВОН</th>
+              <th style="color:#f9a8d4">✂️ СРЕЗ</th>
+              <th style="color:#90e0ef">🎯 АО</th>
+              <th>% КОНВ.</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${cities.map(([region, s]) => {
+              const conv = s.total > 0 ? ((s.transferred || 0) / s.total * 100).toFixed(1) : '0.0';
+              return `
+                <tr>
+                  <td><b>${region}</b></td>
+                  <td class="td-num">${s.total}</td>
+                  <td class="td-num" style="color:var(--green)">${s.transferred || 0}</td>
+                  <td class="td-num" style="color:#fca5a5">${s.nodial || 0}</td>
+                  <td class="td-num" style="color:#93c5fd">${s.skip || 0}</td>
+                  <td class="td-num" style="color:#fcd34d">${s.callback || 0}</td>
+                  <td class="td-num" style="color:#f9a8d4">${s.cut || 0}</td>
+                  <td class="td-num" style="color:#90e0ef">${s.ao || 0}</td>
+                  <td class="td-num" style="font-weight:800;color:${parseFloat(conv)>3?'var(--green)':parseFloat(conv)>1?'#fcd34d':'#fca5a5'}">${conv}%</td>
+                </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+
+  // Надёжная вставка в таб "По городам / регионам"
+  const cityTab = document.getElementById('tab-cities') || 
+                  document.querySelector('#cities-pane') || 
+                  document.querySelector('.tab-pane.on');
+
+  if (cityTab) {
+    cityTab.innerHTML = html;           // полностью заменяем содержимое вкладки
+  } else {
+    console.error('Не найдена вкладка для статистики по регионам!');
+  }
 }
 
 function renderPie(counts) {
