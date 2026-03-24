@@ -1673,11 +1673,12 @@ window.importText = async () => {
   
   // Create base record
   const baseRef = await addDoc(collection(db,'bases'), {
-    name: baseName,
-    createdAt: Timestamp.now(),
-    total: 0,
-    clientIds: []
-  });
+  name: baseName,
+  createdAt: Timestamp.now(),
+  active: true,           // ← ОБЯЗАТЕЛЬНО добавить
+  total: 0,
+  clientIds: []
+});;
   
   const batch = writeBatch(db);
   let count = 0; let skipped = 0;
@@ -1803,8 +1804,25 @@ let allBases = [];
 
 async function loadBases() {
   el('bases-list').innerHTML = '<div class="empty-cell">⏳ Загрузка...</div>';
-  const snap = await getDocs(query(collection(db,'bases'), orderBy('createdAt','desc')));
-  allBases = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+  let q = query(collection(db, 'bases'), orderBy('createdAt', 'desc'));
+
+  // Менеджеры видят только активные базы
+  if (me.role !== 'admin') {
+    q = query(q, where('active', '!=', false));
+  }
+
+  const snap = await getDocs(q);
+  
+  allBases = snap.docs.map(d => {
+    const data = d.data();
+    return { 
+      id: d.id, 
+      active: data.active !== false,   // по умолчанию true
+      ...data 
+    };
+  });
+
   renderBases(allBases);
 }
 
@@ -1818,53 +1836,88 @@ function renderBases(bases) {
     el('bases-list').innerHTML = '<div class="empty-cell">Нет баз. Загрузи первую!</div>';
     return;
   }
-  el('bases-list').innerHTML = `
+
+  let html = `
     <table class="clients-table">
       <thead><tr>
-        <th>Название</th><th>Дата</th><th>Клиентов</th><th>Прозвонено</th><th>Осталось</th><th>Прогресс</th><th></th>
+        <th>Название</th>
+        <th>Дата</th>
+        <th>Клиентов</th>
+        <th>Прозвонено</th>
+        <th>Осталось</th>
+        <th>Прогресс</th>
+        <th>Статус</th>
+        <th>Действия</th>
       </tr></thead>
-      <tbody>${bases.map(b => {
-        const total = b.total || 0;
-        const called = b.calledCount || 0;
-        const remain = total - called;
-        const pct = total > 0 ? Math.round(called/total*100) : 0;
-        return `<tr>
-          <td><b style="color:var(--acc2)">${b.name}</b></td>
-          <td style="color:var(--text2);font-size:12px">${fmt(b.createdAt)}</td>
-          <td class="num" style="color:var(--text)">${total}</td>
-          <td class="num" style="color:var(--green)">${called}</td>
-          <td class="num" style="color:var(--yellow)">${remain}</td>
-          <td>
-            <div style="display:flex;align-items:center;gap:8px">
-              <div style="flex:1;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;min-width:60px">
-                <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--acc),var(--cyan));border-radius:3px"></div>
-              </div>
-              <span style="font-size:11px;color:var(--text2);font-family:var(--mono)">${pct}%</span>
+      <tbody>`;
+
+  bases.forEach(b => {
+    const total = b.total || 0;
+    const called = b.calledCount || 0;
+    const remain = total - called;
+    const pct = total > 0 ? Math.round(called / total * 100) : 0;
+    const isActive = b.active !== false;
+
+    html += `
+      <tr style="${!isActive ? 'opacity:0.65; background:rgba(255,255,255,0.03)' : ''}">
+        <td>
+          <b style="color:${isActive ? 'var(--acc2)' : '#777'}">
+            ${b.name}
+            ${!isActive ? ' <span style="color:#f59e0b">(выкл)</span>' : ''}
+          </b>
+        </td>
+        <td style="color:var(--text2);font-size:12px">${fmt(b.createdAt)}</td>
+        <td class="num" style="color:var(--text)">${total}</td>
+        <td class="num" style="color:var(--green)">${called}</td>
+        <td class="num" style="color:var(--yellow)">${remain}</td>
+        <td>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="flex:1;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;min-width:60px">
+              <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--acc),var(--cyan));border-radius:3px"></div>
             </div>
-          </td>
-          <td>
-            <div style="display:flex;gap:6px">
-              <button class="btn btn-ghost btn-sm" onclick="openExportModal('${b.id}','${b.name.replace(/'/g,"'")}')" title="Выгрузить">📥 Выгрузить</button>
-              <button class="btn btn-danger btn-sm" onclick="deleteBase('${b.id}','${b.name.replace(/'/g,'')}')" title="Удалить">🗑</button>
-            </div>
-          </td>
-        </tr>`;
-      }).join('')}</tbody>
-    </table>`;
-  
-  // Load called counts async
+            <span style="font-size:11px;color:var(--text2);font-family:var(--mono)">${pct}%</span>
+          </div>
+        </td>
+        <td style="font-size:12px;color:${isActive ? 'var(--green)' : '#f59e0b'}">
+          ${isActive ? '✅ Активна' : '⛔ Выключена'}
+        </td>
+        <td>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-ghost btn-sm" 
+                    onclick="openExportModal('${b.id}','${b.name.replace(/'/g,"''")}')" 
+                    title="Выгрузить">📥 Выгрузить</button>
+            
+            <button class="btn ${isActive ? 'btn-danger' : 'btn-pri'} btn-sm" 
+                    onclick="toggleBaseActive('${b.id}', ${isActive})"
+                    title="${isActive ? 'Выключить базу' : 'Включить базу'}">
+              ${isActive ? '⛔ Выкл' : '✅ Вкл'}
+            </button>
+
+            <button class="btn btn-danger btn-sm" 
+                    onclick="deleteBase('${b.id}','${b.name.replace(/'/g,'')}')" 
+                    title="Удалить">🗑</button>
+          </div>
+        </td>
+      </tr>`;
+  });
+
+  html += `</tbody></table>`;
+  el('bases-list').innerHTML = html;
+
   loadBaseStats(bases);
 }
 
 async function loadBaseStats(bases) {
-  const clientsSnap = await getDocs(collection(db,'clients'));
-  const clients = clientsSnap.docs.map(d => ({id:d.id,...d.data()}));
-  
+  const clientsSnap = await getDocs(collection(db, 'clients'));
+  const clients = clientsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
   bases.forEach(b => {
     const bClients = clients.filter(c => c.baseId === b.id);
     const called = bClients.filter(c => c.result && c.result !== 'callback').length;
     b.calledCount = called;
   });
+
+  // Перерисовываем таблицу только ОДИН раз в конце
   renderBases(bases);
 }
 
@@ -1932,6 +1985,30 @@ window.searchPoteri = () => {
   if (!name) return;
   const url = 'https://poteru.net/search?q=' + encodeURIComponent(name);
   window.open(url, '_blank');
+};
+
+// === ВКЛ/ВЫКЛ БАЗЫ ===
+window.toggleBaseActive = async (baseId, currentlyActive) => {
+  const newState = !currentlyActive;
+  
+  const action = newState ? 'включить' : 'выключить';
+  
+  if (!confirm(`Вы действительно хотите ${action} эту базу?\n\nМенеджеры ${newState ? 'снова смогут' : 'перестанут'} по ней звонить.`)) {
+    return;
+  }
+
+  try {
+    await updateDoc(doc(db, 'bases', baseId), {
+      active: newState,
+      updatedAt: Timestamp.now()
+    });
+
+    toast(newState ? '✅ База включена' : '⛔ База выключена', newState ? '' : 'warn');
+    loadBases();        // обновляем список
+  } catch (e) {
+    console.error(e);
+    toast('Ошибка при изменении статуса базы', 'err');
+  }
 };
 
 </script>
