@@ -512,10 +512,16 @@ input[type=file]{display:none}
           <span id="period-label" style="font-size:12px;color:var(--text2)"></span>
           <!-- Кнопка обновления статистики -->
           <button id="stats-refresh-btn" onclick="refreshStats()" title="Обновить статистику"
-            style="margin-left:auto;width:34px;height:34px;border-radius:50%;border:1px solid var(--brd2);
+            style="width:34px;height:34px;border-radius:50%;border:1px solid var(--brd2);
             background:var(--bg3);color:var(--acc2);font-size:16px;cursor:pointer;
             display:flex;align-items:center;justify-content:center;transition:all .3s;flex-shrink:0">
             🔄
+          </button>
+          <button onclick="openDailyStats()" title="Статистика по дням"
+            style="margin-left:4px;padding:0 14px;height:34px;border-radius:8px;border:1px solid var(--brd2);
+            background:var(--bg3);color:var(--acc2);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;
+            display:flex;align-items:center;gap:6px;transition:all .2s">
+            📅 По дням
           </button>
         </div>
 
@@ -1159,13 +1165,11 @@ function getPeriodRange(period) {
 }
 
 async function loadStats() {
-  // Two parallel queries: called + not called — avoid reading full collection fields
-  // Use bases data for totals when possible
   const basesSnap = await getDocs(collection(db,'bases'));
   const bases = basesSnap.docs.map(d=>d.data());
   const total = bases.reduce((s,b) => s + (b.total||0), 0);
 
-  // Only fetch clients that have a result (for pie chart) — much smaller set
+  // Fetch clients with result for charts
   const calledSnap = await getDocs(query(
     collection(db,'clients'),
     where('result','!=', null)
@@ -1176,10 +1180,20 @@ async function loadStats() {
   const remain = total - done;
   const pct    = total > 0 ? Math.round(done/total*100) : 0;
 
+  // "Прозвонено" = сколько прозвонено ЗА СЕГОДНЯ
+  const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+  const todayDone = allClientsForStats.filter(c => {
+    if (!c.calledAt) return false;
+    return toMs(c.calledAt) >= todayStart.getTime();
+  }).length;
+
   el('s-total').textContent = total;
-  el('s-called').textContent = done;
+  el('s-called').textContent = todayDone; // today only
   el('s-remain').textContent = Math.max(0, remain);
   el('s-pct').textContent   = pct + '%';
+  // Change label to "Прозвонено сегодня"
+  const calledLbl = document.querySelector('#s-called')?.closest('.scard')?.querySelector('.scard-lbl');
+  if (calledLbl) calledLbl.textContent = 'Прозвонено сегодня';
 
   setPeriod(currentPeriod);
   renderCityStats(allClientsForStats);
@@ -1332,10 +1346,11 @@ async function loadMgrStats(allClients) {
       return ms >= startMs2 && ms <= endMs2;
     });
     barCounts.push(periodMine.length);
-    const total = mine.length;
+    // Use periodMine for both total and cells — consistent with selected period
+    const total = periodMine.length;
 
     const cells = COLS.map(k => {
-      const cnt = mine.filter(c=>c.result===k).length;
+      const cnt = periodMine.filter(c=>c.result===k).length;
       const pct = total > 0 ? (cnt/total*100).toFixed(1) : '0.0';
       return `<td class="result-cell ${RESULTS[k].cls}">${cnt > 0 ? cnt+' ('+pct+'%)' : '0 (0.0%)'}</td>`;
     }).join('');
@@ -2416,7 +2431,7 @@ function renderBases(bases) {
           <td>
             <div style="display:flex;gap:6px;flex-wrap:wrap">
               <button class="btn btn-ghost btn-sm" onclick="showBaseStats('${b.id}','${safeName}')" title="Статистика">📊 Статистика</button>
-              <button class="btn btn-ghost btn-sm" onclick="exportBase('${b.id}','${safeName}')" title="Выгрузить">📥 Выгрузить</button>
+              <button class="btn btn-ghost btn-sm" onclick="openExportModal('${b.id}','${safeName}')" title="Выгрузить">📥 Выгрузить</button>
               <button class="btn btn-danger btn-sm" onclick="deleteBase('${b.id}','${safeName}')" title="Удалить">🗑</button>
             </div>
           </td>
@@ -2929,6 +2944,109 @@ window.loadInlineMgrStats = async (period) => {
 };
 
 </script>
+
+<!-- Export with Filter Modal -->
+<div id="export-filter-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:700;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)closeExportModal()">
+  <div style="background:var(--bg2);border:1px solid var(--brd2);border-radius:20px;padding:28px;width:min(480px,95vw);box-shadow:0 24px 64px rgba(0,0,0,.6);animation:fadeUp .25s ease">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div style="font-size:16px;font-weight:800">📥 Выгрузка базы</div>
+      <button onclick="closeExportModal()" style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);color:#fca5a5;font-size:18px;cursor:pointer;width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700">✕</button>
+    </div>
+    <div id="export-base-name" style="font-size:13px;color:var(--acc2);font-weight:700;margin-bottom:16px"></div>
+    <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Выберите статусы для выгрузки:</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px" id="export-checkboxes"></div>
+    <div style="display:flex;gap:8px;margin-bottom:16px">
+      <button class="btn btn-ghost btn-sm" onclick="selectAllExport(true)">✅ Выбрать все</button>
+      <button class="btn btn-ghost btn-sm" onclick="selectAllExport(false)">☐ Снять все</button>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeExportModal()">Отмена</button>
+      <button class="btn btn-pri" onclick="doFilteredExport()">📥 Выгрузить</button>
+    </div>
+  </div>
+</div>
+
+<!-- Daily Stats Modal -->
+<div id="daily-stats-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:700;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)closeDailyStats()">
+  <div style="background:var(--bg2);border:1px solid var(--brd2);border-radius:20px;padding:28px;width:min(900px,95vw);max-height:88vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.6);animation:fadeUp .25s ease">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div style="font-size:16px;font-weight:800">📅 Статистика по дням</div>
+      <button onclick="closeDailyStats()" style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);color:#fca5a5;font-size:18px;cursor:pointer;width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700">✕</button>
+    </div>
+    <!-- Mini calendar -->
+    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px;align-items:flex-start">
+      <div style="background:var(--bg3);border:1px solid var(--brd);border-radius:14px;padding:16px;min-width:260px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <button onclick="calNav(-1)" style="background:none;border:none;color:var(--acc2);font-size:18px;cursor:pointer">‹</button>
+          <div id="cal-month-label" style="font-size:14px;font-weight:700;color:var(--text)"></div>
+          <button onclick="calNav(1)" style="background:none;border:none;color:var(--acc2);font-size:18px;cursor:pointer">›</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:6px">
+          ${['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].map(d=>`<div style="text-align:center;font-size:10px;color:var(--text2);font-weight:700;padding:4px">${d}</div>`).join('')}
+        </div>
+        <div id="cal-days" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px"></div>
+      </div>
+      <div style="flex:1;min-width:200px">
+        <div id="daily-stats-selected-date" style="font-size:13px;color:var(--text2);margin-bottom:10px">Выберите дату в календаре</div>
+        <div id="daily-stats-content"><div style="color:var(--text2);font-size:13px">👈 Нажми на день</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Export with Filter Modal -->
+<div id="export-filter-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:700;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)closeExportModal()">
+  <div style="background:var(--bg2);border:1px solid var(--brd2);border-radius:20px;padding:28px;width:min(480px,95vw);box-shadow:0 24px 64px rgba(0,0,0,.6);animation:fadeUp .25s ease">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div style="font-size:16px;font-weight:800">📥 Выгрузка базы</div>
+      <button onclick="closeExportModal()" style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);color:#fca5a5;font-size:18px;cursor:pointer;width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700">✕</button>
+    </div>
+    <div id="export-base-name" style="font-size:13px;color:var(--acc2);font-weight:700;margin-bottom:16px"></div>
+    <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Выберите статусы для выгрузки:</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px" id="export-checkboxes"></div>
+    <div style="display:flex;gap:8px;margin-bottom:16px">
+      <button class="btn btn-ghost btn-sm" onclick="selectAllExport(true)">✅ Выбрать все</button>
+      <button class="btn btn-ghost btn-sm" onclick="selectAllExport(false)">☐ Снять все</button>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeExportModal()">Отмена</button>
+      <button class="btn btn-pri" onclick="doFilteredExport()">📥 Выгрузить</button>
+    </div>
+  </div>
+</div>
+
+<!-- Daily Stats Modal -->
+<div id="daily-stats-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:700;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)closeDailyStats()">
+  <div style="background:var(--bg2);border:1px solid var(--brd2);border-radius:20px;padding:28px;width:min(900px,95vw);max-height:88vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.6);animation:fadeUp .25s ease">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div style="font-size:16px;font-weight:800">📅 Статистика по дням</div>
+      <button onclick="closeDailyStats()" style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);color:#fca5a5;font-size:18px;cursor:pointer;width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700">✕</button>
+    </div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">
+      <div style="background:var(--bg3);border:1px solid var(--brd);border-radius:14px;padding:16px;min-width:260px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <button onclick="calNav(-1)" style="background:none;border:none;color:var(--acc2);font-size:20px;cursor:pointer;padding:4px 8px">‹</button>
+          <div id="cal-month-label" style="font-size:14px;font-weight:700;color:var(--text)"></div>
+          <button onclick="calNav(1)" style="background:none;border:none;color:var(--acc2);font-size:20px;cursor:pointer;padding:4px 8px">›</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px">
+          <div style="text-align:center;font-size:10px;color:var(--text2);font-weight:700;padding:4px">Пн</div>
+          <div style="text-align:center;font-size:10px;color:var(--text2);font-weight:700;padding:4px">Вт</div>
+          <div style="text-align:center;font-size:10px;color:var(--text2);font-weight:700;padding:4px">Ср</div>
+          <div style="text-align:center;font-size:10px;color:var(--text2);font-weight:700;padding:4px">Чт</div>
+          <div style="text-align:center;font-size:10px;color:var(--text2);font-weight:700;padding:4px">Пт</div>
+          <div style="text-align:center;font-size:10px;color:var(--text2);font-weight:700;padding:4px">Сб</div>
+          <div style="text-align:center;font-size:10px;color:var(--text2);font-weight:700;padding:4px">Вс</div>
+        </div>
+        <div id="cal-days" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px"></div>
+      </div>
+      <div style="flex:1;min-width:220px">
+        <div id="daily-stats-selected-date" style="font-size:13px;font-weight:700;color:var(--acc2);margin-bottom:12px">👈 Выберите дату</div>
+        <div id="daily-stats-content"></div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Base Stats Modal -->
 <div id="base-stats-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:600;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)closeBaseStatsModal()">
