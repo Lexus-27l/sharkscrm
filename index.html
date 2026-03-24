@@ -30,7 +30,7 @@
   --teal:    #14b8a6;
   --text:    #e2e2f0;
   --text2:   #8888a8;
-  --text3:   #555577;
+  --text3:   #5555778;
   --brd:     rgba(124,58,237,.15);
   --brd2:    rgba(124,58,237,.3);
   --r:       12px;
@@ -39,73 +39,6 @@
   --mono:    'JetBrains Mono', monospace;
   --shadow:  0 8px 32px rgba(0,0,0,.45);
 }
-
-/* ── THEMES ── */
-body.theme-teal {
-  --bg:#07131a;--bg2:#0d1f28;--bg3:#122633;--bg4:#173040;--bg5:#1d3a4d;
-  --acc:#0d9488;--acc2:#2dd4bf;--acc3:#0f766e;
-  --brd:rgba(13,148,136,.15);--brd2:rgba(13,148,136,.3);
-}
-body.theme-rose {
-  --bg:#140b0e;--bg2:#1e1014;--bg3:#28141a;--bg4:#321820;--bg5:#3c1c26;
-  --acc:#e11d48;--acc2:#fb7185;--acc3:#be123c;
-  --brd:rgba(225,29,72,.15);--brd2:rgba(225,29,72,.3);
-}
-body.theme-amber {
-  --bg:#120f04;--bg2:#1c1708;--bg3:#261f0c;--bg4:#302710;--bg5:#3a2f14;
-  --acc:#d97706;--acc2:#fbbf24;--acc3:#b45309;
-  --brd:rgba(217,119,6,.15);--brd2:rgba(217,119,6,.3);
-}
-body.theme-sky {
-  --bg:#04101a;--bg2:#081826;--bg3:#0c2132;--bg4:#102a3e;--bg5:#14334a;
-  --acc:#0369a1;--acc2:#38bdf8;--acc3:#0284c7;
-  --brd:rgba(3,105,161,.15);--brd2:rgba(3,105,161,.3);
-}
-body.theme-emerald {
-  --bg:#061310;--bg2:#0a1f1a;--bg3:#0f2b24;--bg4:#14372e;--bg5:#194338;
-  --acc:#059669;--acc2:#34d399;--acc3:#047857;
-  --brd:rgba(5,150,105,.15);--brd2:rgba(5,150,105,.3);
-}
-body.theme-indigo {
-  --bg:#06070f;--bg2:#0d0e1c;--bg3:#121529;--bg4:#171c36;--bg5:#1c2343;
-  --acc:#4338ca;--acc2:#818cf8;--acc3:#3730a3;
-  --brd:rgba(67,56,202,.15);--brd2:rgba(67,56,202,.3);
-}
-body.theme-fuchsia {
-  --bg:#120614;--bg2:#1c0a1e;--bg3:#260e28;--bg4:#301232;--bg5:#3a163c;
-  --acc:#a21caf;--acc2:#e879f9;--acc3:#86198f;
-  --brd:rgba(162,28,175,.15);--brd2:rgba(162,28,175,.3);
-}
-body.theme-orange {
-  --bg:#140a04;--bg2:#1e1008;--bg3:#28160c;--bg4:#321c10;--bg5:#3c2214;
-  --acc:#ea580c;--acc2:#fb923c;--acc3:#c2410c;
-  --brd:rgba(234,88,12,.15);--brd2:rgba(234,88,12,.3);
-}
-
-/* ── THEME PICKER BUTTON ── */
-.theme-btn {
-  width:22px;height:22px;border-radius:50%;border:2px solid transparent;
-  cursor:pointer;transition:all .2s;flex-shrink:0;
-}
-.theme-btn:hover{transform:scale(1.2);border-color:rgba(255,255,255,.6)}
-.theme-btn.active{border-color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.3)}
-#theme-picker-panel{
-  position:fixed;bottom:70px;right:16px;z-index:999;
-  background:var(--bg2);border:1px solid var(--brd2);border-radius:16px;
-  padding:16px;width:280px;
-  box-shadow:0 16px 48px rgba(0,0,0,.6);
-  display:none;animation:fadeUp .2s ease;
-}
-#theme-picker-panel.open{display:block}
-.theme-fab{
-  position:fixed;bottom:16px;right:16px;z-index:999;
-  width:46px;height:46px;border-radius:50%;border:none;
-  background:linear-gradient(135deg,var(--acc),var(--acc3));
-  color:#fff;font-size:20px;cursor:pointer;
-  box-shadow:0 4px 16px rgba(0,0,0,.4);transition:all .2s;
-  display:none;
-}
-.theme-fab:hover{transform:scale(1.1)}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;overflow:hidden}
 button{cursor:pointer;font-family:var(--font)}
@@ -117,13 +50,6 @@ a{color:var(--cyan)}
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--brd2);border-radius:3px}
-#sidebar-resize-handle{border-left:2px solid transparent;transition:border-color .15s}
-#sidebar-resize-handle:hover{border-left-color:rgba(124,58,237,.5)}
-
-/* Toggle switch */
-input[type=checkbox].toggle{appearance:none;-webkit-appearance:none;width:38px;height:20px;border-radius:10px;position:relative;cursor:pointer;transition:background .25s;outline:none;flex-shrink:0}
-input[type=checkbox].toggle::after{content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:left .2s}
-input[type=checkbox].toggle:checked::after{left:20px}
 
 /* ============================================================
    ANIMATIONS
@@ -308,10 +234,7 @@ input[type=file]{display:none}
 .rc-nonliq{background:#3a0ca3;color:#fff}
 .rc-first{background:#48cae4;color:#003049}
 .rc-transfer{background:#f3722c;color:#fff}
-.rc-wrongop{background:#8b5cf6;color:#fff}
-.rc-liar{background:#f43f5e;color:#fff}
 .rc-recallb{background:#f8961e;color:#fff}
-.rc-wrongop{background:#8b5cf6;color:#fff}
 
 /* Clients table */
 .clients-table{width:100%;border-collapse:collapse;font-size:13px}
@@ -425,6 +348,12 @@ input[type=file]{display:none}
 .toast.warn{border-color:rgba(245,158,11,.5);color:var(--yellow)}
 .toast.err{border-color:rgba(239,68,68,.5);color:var(--red)}
 
+.stat-period-btn{padding:7px 14px;border:1px solid var(--brd2);border-radius:8px;background:transparent;color:var(--text2);font-size:12px;font-weight:600;font-family:var(--font);cursor:pointer;transition:all .2s}
+.stat-period-btn.active{background:var(--acc);border-color:var(--acc);color:#fff}
+.stat-period-btn:hover:not(.active){border-color:var(--acc2);color:var(--acc2)}
+.stat-sub-btn{padding:8px 16px;border:none;border-bottom:2px solid transparent;margin-bottom:-1px;background:transparent;color:var(--text2);font-size:13px;font-weight:600;font-family:var(--font);cursor:pointer;transition:all .2s;border-radius:6px 6px 0 0}
+.stat-sub-btn:hover{color:var(--text);background:var(--bg3)}
+.stat-sub-btn.active{color:var(--acc2);border-bottom-color:var(--acc2);background:var(--bg3)}
 /* misc */
 .empty-cell{text-align:center;padding:32px;color:var(--text2);font-size:13px}
 .divider{height:1px;background:var(--brd);margin:4px 0}
@@ -483,83 +412,76 @@ input[type=file]{display:none}
 
       <!-- STATS -->
       <div class="tab-pane on" id="tp-stats">
+        <!-- Summary cards -->
         <div class="stats-row">
-          <div class="scard" style="--c:var(--acc2)">
-            <div class="scard-lbl">Всего в базе</div>
-            <div class="scard-val" id="s-total">—</div>
+          <div class="scard" style="--c:var(--acc2)"><div class="scard-lbl">Всего в базе</div><div class="scard-val" id="s-total">—</div></div>
+          <div class="scard" style="--c:var(--green)"><div class="scard-lbl">Прозвонено сегодня</div><div class="scard-val" id="s-called">—</div></div>
+          <div class="scard" style="--c:var(--yellow)"><div class="scard-lbl">Осталось</div><div class="scard-val" id="s-remain">—</div></div>
+          <div class="scard" style="--c:var(--cyan)"><div class="scard-lbl">Прогресс</div><div class="scard-val" id="s-pct">—</div></div>
+        </div>
+
+        <!-- Date filter -->
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+          <button class="stat-period-btn active" data-period="today" onclick="setStatPeriod('today')">Сегодня</button>
+          <button class="stat-period-btn" data-period="week" onclick="setStatPeriod('week')">Эта неделя</button>
+          <button class="stat-period-btn" data-period="lastweek" onclick="setStatPeriod('lastweek')">Прошлая неделя</button>
+          <span style="color:var(--text2);font-size:12px;margin:0 4px">или</span>
+          <input type="date" id="stat-date-from" style="width:140px;font-size:12px;padding:6px 10px" onchange="setStatPeriod('custom')">
+          <span style="color:var(--text2);font-size:12px">—</span>
+          <input type="date" id="stat-date-to" style="width:140px;font-size:12px;padding:6px 10px" onchange="setStatPeriod('custom')">
+          <button class="btn btn-pri btn-sm" onclick="setStatPeriod('custom')">📅 По дням</button>
+        </div>
+
+        <!-- Stats sub-tabs -->
+        <div style="display:flex;gap:4px;border-bottom:1px solid var(--brd);margin-bottom:12px">
+          <button class="stat-sub-btn active" data-sub="general" onclick="setStatSub('general')">📊 Общая</button>
+          <button class="stat-sub-btn" data-sub="bases" onclick="setStatSub('bases')">📁 По базам</button>
+          <button class="stat-sub-btn" data-sub="cities" onclick="setStatSub('cities')">🏙 По городам</button>
+        </div>
+
+        <!-- GENERAL sub-tab -->
+        <div id="stat-sub-general">
+          <div class="chart-two">
+            <div class="chart-box">
+              <h3 id="pie-chart-title">📊 Результаты звонков</h3>
+              <div class="chart-wrap"><canvas id="chart-pie"></canvas></div>
+              <div class="chart-legend" id="chart-legend"></div>
+            </div>
+            <div class="chart-box" style="overflow:hidden">
+              <h3>👥 Менеджеры за период</h3>
+              <div class="chart-wrap"><canvas id="chart-bar"></canvas></div>
+            </div>
           </div>
-          <div class="scard" style="--c:var(--green)">
-            <div class="scard-lbl">Прозвонено</div>
-            <div class="scard-val" id="s-called">—</div>
+          <!-- Cities transfers -->
+          <div class="card" style="margin-top:0">
+            <div class="card-title">🏙 Передачи по городам <span id="cities-period-label" style="font-weight:400;color:var(--text2);font-size:11px"></span></div>
+            <div id="cities-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px"></div>
           </div>
-          <div class="scard" style="--c:var(--yellow)">
-            <div class="scard-lbl">Осталось</div>
-            <div class="scard-val" id="s-remain">—</div>
-          </div>
-          <div class="scard" style="--c:var(--cyan)">
-            <div class="scard-lbl">Прогресс</div>
-            <div class="scard-val" id="s-pct">—</div>
+          <!-- Manager detail table -->
+          <div class="card">
+            <div class="card-title">👥 Детальная статистика менеджеров</div>
+            <div class="mgr-table-wrap">
+              <table class="mgr-table">
+                <thead id="mgr-thead"></thead>
+                <tbody id="mgr-tbody"></tbody>
+              </table>
+            </div>
           </div>
         </div>
 
-        <!-- Period tabs -->
-        <div style="display:flex;gap:8px;margin-bottom:4px;flex-wrap:wrap;align-items:center">
-          <div style="display:flex;gap:4px;background:var(--bg3);border:1px solid var(--brd);border-radius:10px;padding:4px">
-            <button id="period-today" onclick="setPeriod('today')" class="btn btn-sm" style="border-radius:7px;background:var(--acc);color:#fff;border:none">Сегодня</button>
-            <button id="period-week" onclick="setPeriod('week')" class="btn btn-sm btn-ghost" style="border-radius:7px">Эта неделя</button>
-            <button id="period-prevweek" onclick="setPeriod('prevweek')" class="btn btn-sm btn-ghost" style="border-radius:7px">Прошлая неделя</button>
-          </div>
-          <span id="period-label" style="font-size:12px;color:var(--text2)"></span>
-          <!-- Кнопка обновления статистики -->
-          <button id="stats-refresh-btn" onclick="refreshStats()" title="Обновить статистику"
-            style="width:34px;height:34px;border-radius:50%;border:1px solid var(--brd2);
-            background:var(--bg3);color:var(--acc2);font-size:16px;cursor:pointer;
-            display:flex;align-items:center;justify-content:center;transition:all .3s;flex-shrink:0">
-            🔄
-          </button>
-          <button onclick="openDailyStats()" title="Статистика по дням"
-            style="margin-left:4px;padding:0 14px;height:34px;border-radius:8px;border:1px solid var(--brd2);
-            background:var(--bg3);color:var(--acc2);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;
-            display:flex;align-items:center;gap:6px;transition:all .2s">
-            📅 По дням
-          </button>
-        </div>
-
-        <div class="chart-two">
-          <div class="chart-box">
-            <h3 id="pie-title" style="display:flex;align-items:center;justify-content:space-between">
-              <span>📊 Результаты звонков сегодня</span>
-            </h3>
-            <div class="chart-wrap"><canvas id="chart-pie"></canvas></div>
-            <div class="chart-legend" id="chart-legend"></div>
-          </div>
-          <div class="chart-box" style="overflow:hidden">
-            <h3 style="display:flex;align-items:center;justify-content:space-between">
-              <span>👥 Статистика менеджеров по дням</span>
-            </h3>
-            <div class="chart-wrap"><canvas id="chart-bar"></canvas></div>
+        <!-- BASES sub-tab -->
+        <div id="stat-sub-bases" style="display:none">
+          <div class="card">
+            <div class="card-title">📁 Статистика по базам</div>
+            <div id="bases-stat-list"></div>
           </div>
         </div>
 
-        <!-- Передачи по городам -->
-        <div class="card" id="city-stats-card" style="display:none">
-          <div class="card-title" style="display:flex;align-items:center;justify-content:space-between">
-            <span>📍 Передачи по городам</span>
-            <span id="city-stats-total" style="font-size:12px;color:var(--text2)"></span>
-          </div>
-          <div id="city-stats-body" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px"></div>
-        </div>
-
-        <!-- Manager stats table like screenshot -->
-        <div class="card">
-          <div class="card-title" id="mgr-table-title" style="display:flex;align-items:center;justify-content:space-between">
-            <span>👥 Детальная статистика менеджеров</span>
-          </div>
-          <div class="mgr-table-wrap">
-            <table class="mgr-table">
-              <thead id="mgr-thead"></thead>
-              <tbody id="mgr-tbody"></tbody>
-            </table>
+        <!-- CITIES sub-tab -->
+        <div id="stat-sub-cities" style="display:none">
+          <div class="card">
+            <div class="card-title">🏙 Статистика по городам / регионам</div>
+            <div id="cities-stat-table"></div>
           </div>
         </div>
       </div>
@@ -660,51 +582,13 @@ input[type=file]{display:none}
 
       <!-- CLIENTS -->
       <div class="tab-pane" id="tp-clients">
-        <div class="card" style="margin-bottom:0;border-radius:var(--r2) var(--r2) 0 0">
-          <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
-            <!-- Search -->
-            <div style="flex:2;min-width:200px;position:relative">
-              <label>🔍 Поиск</label>
-              <span style="position:absolute;left:11px;bottom:10px;color:var(--text2);font-size:13px;pointer-events:none">🔍</span>
-              <input id="clients-search" placeholder="Умерший, родственник, телефон..." 
-                oninput="filterClients()" style="padding-left:34px">
-            </div>
-            <!-- Filter by city -->
-            <div style="flex:1;min-width:160px">
-              <label>📍 Город / Регион</label>
-              <select id="clients-filter-city" onchange="filterClients()" style="width:100%">
-                <option value="">Все города</option>
-              </select>
-            </div>
-            <!-- Filter by manager -->
-            <div style="flex:1;min-width:160px">
-              <label>👤 Менеджер</label>
-              <select id="clients-filter-mgr" onchange="filterClients()" style="width:100%">
-                <option value="">Все менеджеры</option>
-              </select>
-            </div>
-            <!-- Filter by result -->
-            <div style="flex:1;min-width:140px">
-              <label>📋 Результат</label>
-              <select id="clients-filter-result" onchange="filterClients()" style="width:100%">
-                <option value="">Все результаты</option>
-                <option value="__new__">🆕 Новый</option>
-              </select>
-            </div>
-            <div style="display:flex;gap:6px;align-items:flex-end">
-              <button class="btn btn-ghost btn-sm" onclick="clearClientFilters()">✕ Сбросить</button>
-              <button class="btn btn-ghost btn-sm" onclick="loadClients()">🔄</button>
-            </div>
-            <span id="clients-count" style="font-size:12px;color:var(--text2);align-self:center"></span>
-          </div>
-        </div>
-        <div class="card" style="padding:0;overflow:hidden;border-radius:0 0 var(--r2) var(--r2);border-top:none">
+        <div class="card" style="padding:0;overflow:hidden">
           <div style="overflow-x:auto">
             <table class="clients-table">
               <thead>
                 <tr>
                   <th>Умерший</th><th>Регион</th><th>Родственники / телефон</th>
-                  <th>Результат</th><th>Менеджер</th><th>Комментарий</th><th>Дата</th><th></th>
+                  <th>Результат</th><th>Комментарий</th><th>Дата</th><th></th>
                 </tr>
               </thead>
               <tbody id="clients-tbody"></tbody>
@@ -732,17 +616,9 @@ input[type=file]{display:none}
           </div>
           <button class="btn btn-pri" onclick="createManager()">Создать менеджера</button>
         </div>
-        <div class="card" style="padding:12px 16px 0">
-          <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px">
-            <div style="flex:1;position:relative">
-              <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text2)">🔍</span>
-              <input id="mgr-search" placeholder="Поиск по имени или email..." oninput="filterMgrList()" style="padding-left:32px">
-            </div>
-          </div>
-        </div>
-        <div class="card" style="padding:0;overflow:hidden;border-top:none;border-radius:0 0 var(--r2) var(--r2)">
+        <div class="card" style="padding:0;overflow:hidden">
           <table class="clients-table">
-            <thead><tr><th>Имя</th><th>Email</th><th>Роль</th><th>Действия</th></tr></thead>
+            <thead><tr><th>Имя</th><th>Email</th><th>Роль</th><th>Назначенные базы</th><th>Действия</th></tr></thead>
             <tbody id="mgr-list-tbody"></tbody>
           </table>
         </div>
@@ -753,78 +629,67 @@ input[type=file]{display:none}
 
   <!-- ═══ MANAGER PANEL ═══ -->
   <div id="manager-panel">
-    <!-- Slim top bar: avatar + name + progress only -->
-    <div style="background:var(--bg2);border-bottom:1px solid var(--brd);padding:8px 20px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;min-height:52px">
-      <!-- Avatar -->
+    <div class="progress-wrap">
+      <div class="progress-counters">
+        <div class="pc"><div class="pc-val" id="p-total" style="color:var(--acc2)">—</div><div class="pc-lbl">Всего</div></div>
+        <div class="pc"><div class="pc-val" id="p-called" style="color:var(--green)">—</div><div class="pc-lbl">Прозвонено</div></div>
+        <div class="pc"><div class="pc-val" id="p-remain" style="color:var(--yellow)">—</div><div class="pc-lbl">Осталось</div></div>
+        <div class="pc"><div class="pc-val" id="p-pct" style="color:var(--cyan)">0%</div><div class="pc-lbl">Прогресс</div></div>
+      </div>
+      <div class="prog-track"><div class="prog-fill" id="p-bar" style="width:0%"></div></div>
+    </div>
+
+    <!-- Manager mini stats bar -->
+    <div id="mgr-mini-stats" style="background:var(--bg2);border-bottom:1px solid var(--brd);padding:10px 20px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
       <div style="display:flex;align-items:center;gap:8px">
         <div id="mgr-avatar-wrap" style="position:relative;cursor:pointer" onclick="document.getElementById('mgr-avatar-input').click()">
-          <div id="mgr-avatar-circle" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--acc),var(--acc3));display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;overflow:hidden;border:2px solid var(--brd2)">
+          <div id="mgr-avatar-circle" style="width:38px;height:38px;border-radius:50%;background:var(--acc);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;overflow:hidden;border:2px solid var(--brd2)">
             <span id="mgr-avatar-initials">?</span>
             <img id="mgr-avatar-img" style="display:none;width:100%;height:100%;object-fit:cover">
           </div>
-          <div style="position:absolute;bottom:-1px;right:-1px;width:12px;height:12px;background:var(--green);border-radius:50%;border:2px solid var(--bg2)"></div>
+          <div style="position:absolute;bottom:-2px;right:-2px;width:14px;height:14px;background:var(--acc3);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px">📷</div>
         </div>
         <input type="file" id="mgr-avatar-input" accept="image/*" style="display:none" onchange="uploadMgrAvatar(event)">
         <div>
-          <div id="mgr-name-display" style="font-size:13px;font-weight:800;color:var(--text)"></div>
-          <div style="font-size:9px;color:var(--green);font-weight:600">Онлайн</div>
+          <div id="mgr-name-display" style="font-size:13px;font-weight:700;color:var(--text)"></div>
+          <div style="font-size:10px;color:var(--text2)">Менеджер</div>
         </div>
       </div>
-      <div style="width:1px;height:28px;background:var(--brd);flex-shrink:0"></div>
-      <!-- Compact counters -->
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <div style="text-align:center;padding:4px 10px;background:var(--bg3);border-radius:8px;border:1px solid var(--brd)">
-          <div id="p-total" style="font-size:16px;font-weight:900;font-family:var(--mono);color:var(--acc2)">—</div>
-          <div style="font-size:8px;color:var(--text2);text-transform:uppercase;letter-spacing:.4px">Всего</div>
+      <div style="width:1px;height:32px;background:var(--brd);margin:0 4px"></div>
+      <!-- Today stats -->
+      <div style="display:flex;gap:16px;flex:1">
+        <div style="text-align:center">
+          <div id="ms-today" style="font-size:18px;font-weight:900;font-family:var(--mono);color:var(--green)">0</div>
+          <div style="font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Сегодня</div>
         </div>
-        <div style="text-align:center;padding:4px 10px;background:var(--bg3);border-radius:8px;border:1px solid var(--brd)">
-          <div id="p-called" style="font-size:16px;font-weight:900;font-family:var(--mono);color:var(--green)">—</div>
-          <div style="font-size:8px;color:var(--text2);text-transform:uppercase;letter-spacing:.4px">Прозвон.</div>
+        <div style="text-align:center">
+          <div id="ms-transferred" style="font-size:18px;font-weight:900;font-family:var(--mono);color:var(--acc2)">0</div>
+          <div style="font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Передач</div>
         </div>
-        <div style="text-align:center;padding:4px 10px;background:var(--bg3);border-radius:8px;border:1px solid var(--brd)">
-          <div id="p-remain" style="font-size:16px;font-weight:900;font-family:var(--mono);color:var(--yellow)">—</div>
-          <div style="font-size:8px;color:var(--text2);text-transform:uppercase;letter-spacing:.4px">Осталось</div>
+        <div style="text-align:center">
+          <div id="ms-nodial" style="font-size:18px;font-weight:900;font-family:var(--mono);color:var(--red)">0</div>
+          <div style="font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Не дозвон</div>
         </div>
-        <div style="text-align:center;padding:4px 10px;background:rgba(34,197,94,.08);border-radius:8px;border:1px solid rgba(34,197,94,.25)">
-          <div id="p-active-bases" style="font-size:16px;font-weight:900;font-family:var(--mono);color:var(--green)">—</div>
-          <div style="font-size:8px;color:var(--green);text-transform:uppercase;letter-spacing:.4px">🟢 Баз</div>
+        <div style="text-align:center">
+          <div id="ms-ao" style="font-size:18px;font-weight:900;font-family:var(--mono);color:var(--cyan)">0</div>
+          <div style="font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">АО</div>
         </div>
       </div>
-      <!-- Progress bar compact -->
-      <div style="flex:1;min-width:100px">
-        <div style="display:flex;justify-content:space-between;margin-bottom:3px">
-          <span style="font-size:9px;color:var(--text2)">Прогресс</span>
-          <span id="p-pct" style="font-size:9px;color:var(--cyan);font-weight:700">0%</span>
-          <span id="p-pct2" style="display:none">0%</span>
-        </div>
-        <div class="prog-track"><div class="prog-fill" id="p-bar" style="width:0%"></div></div>
-      </div>
-      <!-- Top -->
-      <div id="ms-top-wrap" style="display:flex;align-items:center;gap:4px;flex-shrink:0">
-        <span style="font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.4px">🏆</span>
+      <!-- Top передач -->
+      <div id="ms-top-wrap" style="display:flex;align-items:center;gap:6px">
+        <div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-right:4px">Топ 🏆</div>
         <div id="ms-top-list" style="display:flex;gap:4px"></div>
       </div>
     </div>
 
-    <!-- Main area + right sidebar -->
+    <!-- Callback queue sidebar -->
     <div style="display:flex;flex:1;overflow:hidden">
-      <div class="call-area" id="main-call-area" style="flex:1">
       <div class="call-area" id="main-call-area" style="flex:1">
       <div class="call-loading" id="cl-loading"><span class="spin">⏳</span>Загрузка...</div>
       <div class="call-empty" id="cl-empty">
-        <div style="font-size:72px;margin-bottom:8px;animation:fadeUp .5s ease">🌸</div>
-        <h2 style="font-size:20px;font-weight:900;margin-bottom:10px;background:linear-gradient(135deg,var(--acc2),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent">
-          А вот не хер так много звонить!
-        </h2>
-        <div style="background:var(--bg3);border:1px solid var(--brd2);border-radius:16px;padding:18px 24px;max-width:380px;margin:0 auto">
-          <p style="color:var(--text);font-size:14px;font-weight:600;margin-bottom:6px">База закончилась 🎉</p>
-          <p style="color:var(--text2);font-size:13px;line-height:1.6">
-            Все клиенты обработаны.<br>
-            Обратитесь к <b style="color:var(--acc2)">Lexus 🌸</b> за помощью.<br>
-            <span style="font-size:12px;color:var(--text2);font-style:italic">По настроению поможет, а может и нет&nbsp;;)</span>
-          </p>
-        </div>
-        <button class="btn btn-ghost" style="margin-top:18px" onclick="loadNextClient()">🔄 Проверить ещё раз</button>
+        <div class="ico">🎉</div>
+        <h2>База прозвонена!</h2>
+        <p>Все клиенты обработаны. Отличная работа!</p>
       </div>
       <div class="call-card" id="call-card">
         <input type="hidden" id="cc-id">
@@ -876,64 +741,22 @@ input[type=file]{display:none}
           <label>💬 Комментарий</label>
           <textarea id="cc-comment" rows="2" placeholder="Оставьте комментарий перед действием..." style="margin-top:6px"></textarea>
         </div>
-        <div class="call-actions" style="grid-template-columns:repeat(4,1fr)">
+        <div class="call-actions">
           <button class="act-btn ab-nd" onclick="act('nodial')"><span class="ico">❌</span>Не дозвон</button>
           <button class="act-btn ab-sk" onclick="act('skip')"><span class="ico">⏭️</span>Скип</button>
           <button class="act-btn ab-cb" onclick="act('callback')"><span class="ico">🔄</span>Перезвон</button>
           <button class="act-btn ab-tr" onclick="act('transferred')"><span class="ico">✅</span>Передал</button>
           <button class="act-btn ab-ct" onclick="act('cut')"><span class="ico">✂️</span>Срез</button>
           <button class="act-btn" style="background:rgba(0,180,216,.12);border:1.5px solid rgba(0,180,216,.4);color:#90e0ef" onclick="act('ao')"><span class="ico">🎯</span>АО</button>
-          <button class="act-btn" style="background:rgba(139,92,246,.12);border:1.5px solid rgba(139,92,246,.4);color:#c4b5fd" onclick="act('wrongop')"><span class="ico">📵</span>Не тот оператор</button>
-          <button class="act-btn" style="background:rgba(244,63,94,.12);border:1.5px solid rgba(244,63,94,.5);color:#fda4af" onclick="act('liar')"><span class="ico">🤥</span>Пиздабол ёбаный</button>
+          <button class="act-btn" style="background:rgba(107,114,128,.12);border:1.5px solid rgba(107,114,128,.4);color:#d1d5db" onclick="act('norel')"><span class="ico">🚷</span>Нет родств.</button>
         </div>
       </div>
-      </div>
+    </div>
       </div><!-- main-call-area -->
-      <!-- Right sidebar: callbacks + my stats + chart -->
-      <!-- Resize handle -->
-      <div id="sidebar-resize-handle" style="width:6px;background:transparent;cursor:col-resize;flex-shrink:0;position:relative;z-index:10;transition:background .15s"
-        title="Потяни чтобы изменить ширину"></div>
-      <div id="callback-sidebar" style="width:270px;min-width:140px;max-width:520px;background:var(--bg2);border-left:1px solid var(--brd);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0">
-
-        <!-- Stats toggle panel -->
-        <div style="border-bottom:1px solid var(--brd)">
-          <!-- Mini stats always visible -->
-          <div style="padding:8px 12px;display:grid;grid-template-columns:repeat(3,1fr);gap:5px">
-            <div style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.25);border-radius:8px;padding:5px;text-align:center">
-              <div id="ms-today" style="font-size:16px;font-weight:900;font-family:var(--mono);color:var(--green)">0</div>
-              <div style="font-size:8px;color:var(--green);text-transform:uppercase;letter-spacing:.3px">Сегодня</div>
-            </div>
-            <div style="background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.25);border-radius:8px;padding:5px;text-align:center">
-              <div id="ms-transferred" style="font-size:16px;font-weight:900;font-family:var(--mono);color:var(--acc2)">0</div>
-              <div style="font-size:8px;color:var(--acc2);text-transform:uppercase;letter-spacing:.3px">Передал</div>
-            </div>
-            <div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);border-radius:8px;padding:5px;text-align:center">
-              <div id="ms-nodial" style="font-size:16px;font-weight:900;font-family:var(--mono);color:var(--red)">0</div>
-              <div style="font-size:8px;color:var(--red);text-transform:uppercase;letter-spacing:.3px">Не дозвон</div>
-            </div>
-            <div style="background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.25);border-radius:8px;padding:5px;text-align:center">
-              <div id="ms-ao" style="font-size:16px;font-weight:900;font-family:var(--mono);color:var(--cyan)">0</div>
-              <div style="font-size:8px;color:var(--cyan);text-transform:uppercase;letter-spacing:.3px">АО</div>
-            </div>
-            <div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);border-radius:8px;padding:5px;text-align:center">
-              <div id="ms-skip" style="font-size:16px;font-weight:900;font-family:var(--mono);color:var(--yellow)">0</div>
-              <div style="font-size:8px;color:var(--yellow);text-transform:uppercase;letter-spacing:.3px">Скип</div>
-            </div>
-          </div>
-          <!-- Toggle button -->
-          <button id="mgr-stats-toggle-btn" onclick="toggleMgrStatsPanel()" style="width:100%;padding:7px 12px;background:linear-gradient(135deg,rgba(124,58,237,.15),rgba(79,70,229,.1));border:none;border-top:1px solid var(--brd);color:var(--acc2);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">
-            📊 Подробная статистика ▼
-          </button>
-          <!-- Collapsible detail panel -->
-          <div id="mgr-stats-detail" style="display:none;padding:10px 12px;border-top:1px solid var(--brd)">
-            <div id="mgr-stats-body-inline"><div style="text-align:center;padding:10px;color:var(--text2);font-size:12px">⏳ Загрузка...</div></div>
-          </div>
-          <canvas id="mgr-daily-chart" style="display:none"></canvas>
-        </div>
-
-        <!-- Callbacks -->
-        <div style="padding:10px 12px;border-bottom:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between">
-          <span style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">🔄 Перезвоны</span>
+      <!-- Callback sidebar -->
+      <div id="callback-sidebar" style="width:260px;min-width:260px;background:var(--bg2);border-left:1px solid var(--brd);display:flex;flex-direction:column;overflow:hidden">
+        <div style="padding:12px 14px;border-bottom:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">🔄 Перезвоны</span>
           <span id="cb-count" style="background:var(--acc);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px">0</span>
         </div>
         <div id="cb-list" style="flex:1;overflow-y:auto;padding:8px">
@@ -947,24 +770,6 @@ input[type=file]{display:none}
 </div><!-- root -->
 <div id="toast" class="toast"></div>
 
-<!-- ── THEME PICKER FAB ── -->
-<button class="theme-fab" id="theme-fab" onclick="toggleThemePicker()" title="Сменить тему">🎨</button>
-<div id="theme-picker-panel">
-  <div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px">🎨 Цветовая тема</div>
-  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">
-    <button class="theme-btn" data-theme="" style="background:linear-gradient(135deg,#7c3aed,#4f46e5)" title="Фиолетовый (по умолч.)"></button>
-    <button class="theme-btn" data-theme="teal" style="background:linear-gradient(135deg,#0d9488,#0f766e)" title="Бирюзовый"></button>
-    <button class="theme-btn" data-theme="rose" style="background:linear-gradient(135deg,#e11d48,#be123c)" title="Розовый/Красный"></button>
-    <button class="theme-btn" data-theme="amber" style="background:linear-gradient(135deg,#d97706,#b45309)" title="Янтарный"></button>
-    <button class="theme-btn" data-theme="sky" style="background:linear-gradient(135deg,#0369a1,#0284c7)" title="Небесный"></button>
-    <button class="theme-btn" data-theme="emerald" style="background:linear-gradient(135deg,#059669,#047857)" title="Изумрудный"></button>
-    <button class="theme-btn" data-theme="indigo" style="background:linear-gradient(135deg,#4338ca,#3730a3)" title="Индиго"></button>
-    <button class="theme-btn" data-theme="fuchsia" style="background:linear-gradient(135deg,#a21caf,#86198f)" title="Фуксия"></button>
-    <button class="theme-btn" data-theme="orange" style="background:linear-gradient(135deg,#ea580c,#c2410c)" title="Оранжевый"></button>
-  </div>
-  <div style="font-size:11px;color:var(--text2)">Тема сохраняется лично для тебя</div>
-</div>
-
 <!-- ═══════════════════════════════════════════════════
      FIREBASE + APP LOGIC
      ═══════════════════════════════════════════════════ -->
@@ -975,11 +780,11 @@ input[type=file]{display:none}
    ────────────────────────────────────────────────── */
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged,
-         createUserWithEmailAndPassword, browserLocalPersistence, setPersistence }
+         createUserWithEmailAndPassword }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getFirestore, collection, addDoc, getDocs, getDoc, setDoc, doc,
          updateDoc, deleteDoc, query, where, orderBy, onSnapshot,
-         writeBatch, Timestamp, limit, runTransaction }
+         writeBatch, Timestamp, limit }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -994,9 +799,6 @@ const firebaseConfig = {
 const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db   = getFirestore(app);
-
-// Постоянная сессия — не вылетает при перезагрузке
-setPersistence(auth, browserLocalPersistence).catch(console.error);
 
 /* ──────── STATE ──────── */
 let me = null;       // { uid, name, email, role }
@@ -1014,10 +816,7 @@ const RESULTS = {
   callback:    { label:'🔄 Перезвон',   cls:'rc-callback',color:'#f4a261' },
   transferred: { label:'✅ Передал',    cls:'rc-passed',  color:'#52b788' },
   cut:         { label:'✂️ Срез',       cls:'rc-pzdbl',   color:'#d00000' },
-  ao:          { label:'🎯 АО',         cls:'rc-ao',      color:'#00b4d8' },
-  wrongop:     { label:'📵 Не тот оператор', cls:'rc-wrongop',  color:'#8b5cf6' },
-  liar:        { label:'🤥 Пиздабол ёбаный',  cls:'rc-liar',     color:'#f43f5e' },
-  incorrect:   { label:'🚷 Не родственник',  cls:'rc-incorrect',  color:'#88111a' },
+  ao:          { label:'🎯 АО',             cls:'rc-ao',     color:'#00b4d8' },
 };
 const RESULT_KEYS = Object.keys(RESULTS);
 
@@ -1090,212 +889,248 @@ window.aTab = t => {
 };
 
 /* ──────── STATS ──────── */
-let currentPeriod = 'today';
-let allClientsForStats = [];
+/* ──────── STATS PERIOD CONTROL ──────── */
+let statPeriod = 'today';
+let statDateFrom = null;
+let statDateTo = null;
+let cachedAllClients = null;
+let statsLoading = false;
 
-window.refreshStats = async () => {
-  const btn = document.getElementById('stats-refresh-btn');
-  if (btn) {
-    btn.style.transform = 'rotate(360deg)';
-    btn.style.opacity = '0.6';
-    setTimeout(() => { btn.style.transform = ''; btn.style.opacity = '1'; }, 600);
-  }
-  await loadStats();
-  toast('✅ Статистика обновлена');
-};
-
-window.setPeriod = async (period) => {
-  currentPeriod = period;
-  // Update button styles
-  ['today','week','prevweek'].forEach(p => {
-    const btn = el('period-' + p);
-    if (!btn) return;
-    btn.style.background = p === period ? 'var(--acc)' : 'transparent';
-    btn.style.color = p === period ? '#fff' : 'var(--text2)';
-    btn.style.border = 'none';
-  });
-  // Update label
-  const lbl = el('period-label');
+function getStatRange() {
   const now = new Date();
-  if (period === 'today') {
-    if (lbl) lbl.textContent = now.toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long'});
-  } else if (period === 'week') {
-    const mon = getWeekStart(now, 0);
-    const sun = new Date(mon); sun.setDate(sun.getDate()+6);
-    if (lbl) lbl.textContent = mon.toLocaleDateString('ru-RU',{day:'numeric',month:'short'}) + ' — ' + sun.toLocaleDateString('ru-RU',{day:'numeric',month:'short'});
+  let from, to;
+  if (statPeriod === 'today') {
+    from = new Date(now); from.setHours(0,0,0,0);
+    to = new Date(now); to.setHours(23,59,59,999);
+  } else if (statPeriod === 'week') {
+    from = new Date(now); from.setDate(now.getDate() - now.getDay() + 1); from.setHours(0,0,0,0);
+    to = new Date(now); to.setHours(23,59,59,999);
+  } else if (statPeriod === 'lastweek') {
+    from = new Date(now); from.setDate(now.getDate() - now.getDay() - 6); from.setHours(0,0,0,0);
+    to = new Date(now); to.setDate(now.getDate() - now.getDay()); to.setHours(23,59,59,999);
+  } else if (statPeriod === 'custom' && statDateFrom && statDateTo) {
+    from = new Date(statDateFrom); from.setHours(0,0,0,0);
+    to = new Date(statDateTo); to.setHours(23,59,59,999);
   } else {
-    const mon = getWeekStart(now, -1);
-    const sun = new Date(mon); sun.setDate(sun.getDate()+6);
-    if (lbl) lbl.textContent = 'Пред. неделя: ' + mon.toLocaleDateString('ru-RU',{day:'numeric',month:'short'}) + ' — ' + sun.toLocaleDateString('ru-RU',{day:'numeric',month:'short'});
+    from = new Date(now); from.setHours(0,0,0,0);
+    to = new Date(now); to.setHours(23,59,59,999);
   }
-  renderStatsByPeriod(allClientsForStats, period);
-  renderCityStats(allClientsForStats.filter(c => {
-    const { start, end } = getPeriodRange(period);
-    if (!c.calledAt) return false;
-    const ms = toMs(c.calledAt);
-    return ms >= start.getTime() && ms <= end.getTime();
-  }));
-  if (allClientsForStats.length) loadMgrStats(allClientsForStats);
+  return { from, to };
+}
+
+window.setStatPeriod = (period) => {
+  statPeriod = period;
+  if (period === 'custom') {
+    statDateFrom = el('stat-date-from').value;
+    statDateTo = el('stat-date-to').value;
+    if (!statDateFrom || !statDateTo) return;
+  }
+  document.querySelectorAll('.stat-period-btn').forEach(b => b.classList.toggle('active', b.dataset.period === period));
+  loadStats();
 };
 
-function getWeekStart(date, offset=0) {
-  // offset=0 → current week Mon, offset=-1 → prev week Mon
-  const d = new Date(date);
-  const day = d.getDay(); // 0=Sun
-  const diff = (day === 0 ? -6 : 1 - day) + offset * 7;
-  d.setDate(d.getDate() + diff);
-  d.setHours(0,0,0,0);
-  return d;
-}
-
-function getPeriodRange(period) {
-  const now = new Date();
-  if (period === 'today') {
-    const start = new Date(now); start.setHours(0,0,0,0);
-    const end = new Date(now); end.setHours(23,59,59,999);
-    return { start, end };
-  } else if (period === 'week') {
-    const start = getWeekStart(now, 0);
-    const end = new Date(start); end.setDate(end.getDate()+7);
-    return { start, end };
-  } else { // prevweek
-    const start = getWeekStart(now, -1);
-    const end = new Date(start); end.setDate(end.getDate()+7);
-    return { start, end };
-  }
-}
+window.setStatSub = (sub) => {
+  document.querySelectorAll('.stat-sub-btn').forEach(b => b.classList.toggle('active', b.dataset.sub === sub));
+  ['general','bases','cities'].forEach(s => {
+    const el2 = el('stat-sub-'+s);
+    if (el2) el2.style.display = s === sub ? 'block' : 'none';
+  });
+  if (sub === 'bases') renderBasesStat();
+  if (sub === 'cities') renderCitiesStat();
+};
 
 async function loadStats() {
-  const basesSnap = await getDocs(collection(db,'bases'));
-  const bases = basesSnap.docs.map(d=>d.data());
-  const total = bases.reduce((s,b) => s + (b.total||0), 0);
-
-  // Fetch clients with result for charts
-  const calledSnap = await getDocs(query(
-    collection(db,'clients'),
-    where('result','!=', null)
-  ));
-  allClientsForStats = calledSnap.docs.map(d => ({ id:d.id, ...d.data() }));
-
-  const done   = allClientsForStats.filter(c => c.result !== 'callback').length;
-  const remain = total - done;
+  if (statsLoading) return;
+  statsLoading = true;
+  
+  // Load all clients (cached for performance)
+  const snap = await getDocs(collection(db, 'clients'));
+  cachedAllClients = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+  const all = cachedAllClients;
+  
+  const total  = all.length;
+  const done   = all.filter(c => c.result && c.result!=='callback').length;
+  const remain = all.filter(c => !c.result || c.result==='callback').length;
   const pct    = total > 0 ? Math.round(done/total*100) : 0;
 
-  // "Прозвонено" = сколько прозвонено ЗА СЕГОДНЯ
-  const todayStart = new Date(); todayStart.setHours(0,0,0,0);
-  const todayDone = allClientsForStats.filter(c => {
-    if (!c.calledAt) return false;
-    return toMs(c.calledAt) >= todayStart.getTime();
-  }).length;
-
   el('s-total').textContent = total;
-  el('s-called').textContent = todayDone; // today only
-  el('s-remain').textContent = Math.max(0, remain);
-  el('s-pct').textContent   = pct + '%';
-  // Change label to "Прозвонено сегодня"
-  const calledLbl = document.querySelector('#s-called')?.closest('.scard')?.querySelector('.scard-lbl');
-  if (calledLbl) calledLbl.textContent = 'Прозвонено сегодня';
+  el('s-remain').textContent = remain;
+  el('s-pct').textContent = pct + '%';
 
-  setPeriod(currentPeriod);
-  renderCityStats(allClientsForStats);
-  await loadMgrStats(allClientsForStats);
-}
-
-function renderCityStats(all) {
-  const card = document.getElementById('city-stats-card');
-  const body = document.getElementById('city-stats-body');
-  const totalEl = document.getElementById('city-stats-total');
-  if (!card || !body) return;
-
-  // Only transferred results
-  const transferred = all.filter(c => c.result === 'transferred' && c.region);
-
-  if (!transferred.length) { card.style.display = 'none'; return; }
-
-  // Group by city (first part of region before comma)
-  const cityMap = {};
-  transferred.forEach(c => {
-    const city = (c.region || '').split(',')[0].trim().toUpperCase() || 'Не указан';
-    cityMap[city] = (cityMap[city] || 0) + 1;
+  // Filter by period
+  const { from, to } = getStatRange();
+  const periodClients = all.filter(c => {
+    if (!c.calledAt) return false;
+    const d = c.calledAt.toDate ? c.calledAt.toDate() : new Date(c.calledAt);
+    return d >= from && d <= to;
   });
 
-  // Sort by count desc
-  const sorted = Object.entries(cityMap).sort((a,b) => b[1]-a[1]);
+  el('s-called').textContent = periodClients.length;
+
+  // Pie chart
+  const resultCounts = {};
+  periodClients.forEach(c => { if (c.result) resultCounts[c.result] = (resultCounts[c.result]||0)+1; });
+  const periodLabel = statPeriod==='today'?'сегодня':statPeriod==='week'?'эта неделя':statPeriod==='lastweek'?'прошлая неделя':'за период';
+  el('pie-chart-title').textContent = '📊 Результаты (' + periodLabel + ')';
+  renderPie(resultCounts);
+
+  // Cities transfers for period
+  renderCitiesCards(periodClients, periodLabel);
+
+  // Manager stats
+  await loadMgrStats(all, periodClients);
+  
+  statsLoading = false;
+}
+
+function renderCitiesCards(periodClients, periodLabel) {
+  const transferred = periodClients.filter(c => c.result === 'transferred');
+  const cities = {};
+  transferred.forEach(c => {
+    const region = (c.region||'Не указан').split(',')[0].trim().substring(0,30);
+    cities[region] = (cities[region]||0)+1;
+  });
+  const sorted = Object.entries(cities).sort((a,b)=>b[1]-a[1]);
   const total = transferred.length;
-
-  card.style.display = 'block';
-  if (totalEl) totalEl.textContent = 'Всего передач: ' + total;
-
-  // Color palette for cities
-  const colors = ['#22c55e','#06b6d4','#a78bfa','#f59e0b','#f43f5e','#ec4899','#8b5cf6','#14b8a6','#f97316','#3b82f6'];
-
-  body.innerHTML = sorted.map(([city, cnt], i) => {
-    const pct = Math.round(cnt/total*100);
-    const color = colors[i % colors.length];
-    return `<div style="background:${color}12;border:1px solid ${color}33;border-radius:12px;padding:12px 14px;position:relative;overflow:hidden">
-      <div style="position:absolute;bottom:0;left:0;height:3px;width:${pct}%;background:${color};border-radius:0 0 0 12px;transition:width .6s ease"></div>
-      <div style="font-size:12px;font-weight:700;color:${color};margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${city}">${city}</div>
-      <div style="display:flex;align-items:baseline;gap:6px">
-        <span style="font-size:22px;font-weight:900;font-family:var(--mono);color:${color}">${cnt}</span>
-        <span style="font-size:11px;color:var(--text2)">передач · ${pct}%</span>
+  
+  if (el('cities-period-label')) el('cities-period-label').textContent = '— ' + periodLabel + ', всего передач: ' + total;
+  
+  const citiesEl = el('cities-list');
+  if (!citiesEl) return;
+  if (!sorted.length) { citiesEl.innerHTML = '<div style="color:var(--text2);font-size:13px;padding:8px">Нет передач за период</div>'; return; }
+  
+  citiesEl.innerHTML = sorted.map(([city, cnt]) => {
+    const pct = total > 0 ? Math.round(cnt/total*100) : 0;
+    return `<div style="background:var(--bg3);border:1px solid var(--brd);border-radius:12px;padding:12px">
+      <div style="font-size:12px;font-weight:700;color:var(--acc2);margin-bottom:6px">${city}</div>
+      <div style="font-size:22px;font-weight:900;font-family:var(--mono);color:var(--green)">${cnt}</div>
+      <div style="font-size:10px;color:var(--text2)">передач · ${pct}%</div>
+      <div style="height:4px;background:var(--bg4);border-radius:2px;margin-top:8px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:var(--green);border-radius:2px"></div>
       </div>
     </div>`;
   }).join('');
 }
 
-function toMs(calledAt) {
-  if (!calledAt) return 0;
-  if (typeof calledAt.toMillis === 'function') return calledAt.toMillis();
-  if (typeof calledAt.toDate === 'function') return calledAt.toDate().getTime();
-  if (calledAt.seconds) return calledAt.seconds * 1000;
-  return new Date(calledAt).getTime();
-}
-
-function renderStatsByPeriod(all, period) {
-  const { start, end } = getPeriodRange(period);
-  const startMs = start.getTime();
-  const endMs   = end.getTime();
-
-  const periodClients = all.filter(c => {
-    if (!c.calledAt) return false;
-    const ms = toMs(c.calledAt);
-    return ms >= startMs && ms <= endMs;
+function renderBasesStat() {
+  const all = cachedAllClients || [];
+  const { from, to } = getStatRange();
+  const basesMap = {};
+  all.forEach(c => {
+    const bid = c.baseId || 'nobase';
+    const bname = c.baseName || 'Без базы';
+    if (!basesMap[bid]) basesMap[bid] = { name:bname, total:0, called:0, transferred:0, nodial:0, skip:0, callback:0, cut:0, ao:0, norel:0 };
+    basesMap[bid].total++;
+    if (c.calledAt) {
+      const d = c.calledAt.toDate ? c.calledAt.toDate() : new Date(c.calledAt);
+      if (d >= from && d <= to) {
+        basesMap[bid].called++;
+        if (c.result) basesMap[bid][c.result] = (basesMap[bid][c.result]||0)+1;
+      }
+    }
   });
-
-  const titles = { today:'сегодня', week:'эту неделю', prevweek:'прошлую неделю' };
-  if (el('pie-title')) el('pie-title').textContent = '📊 Результаты за ' + (titles[period]||period);
-
-  const resultCounts = {};
-  periodClients.forEach(c => { if (c.result) resultCounts[c.result] = (resultCounts[c.result]||0)+1; });
-  renderPie(resultCounts);
+  const bases = Object.values(basesMap).sort((a,b)=>b.total-a.total);
+  const container = el('bases-stat-list');
+  if (!container) return;
+  if (!bases.length) { container.innerHTML = '<div class="empty-cell">Нет данных</div>'; return; }
+  container.innerHTML = `<div style="overflow-x:auto"><table class="mgr-table" style="min-width:700px">
+    <thead><tr>
+      <th style="text-align:left">База</th>
+      <th>Всего</th><th>Прозвон (период)</th>
+      <th style="color:var(--green)">✅ Передал</th>
+      <th style="color:var(--red)">❌ Недозвон</th>
+      <th style="color:var(--blue)">⏭ Скип</th>
+      <th style="color:var(--yellow)">🔄 Перезвон</th>
+      <th style="color:var(--pink)">✂️ Срез</th>
+      <th style="color:var(--cyan)">🎯 АО</th>
+      <th>% конв.</th>
+    </tr></thead>
+    <tbody>${bases.map(b => {
+      const conv = b.called > 0 ? ((b.transferred||0)/b.called*100).toFixed(1) : '0.0';
+      return `<tr>
+        <td style="font-weight:700;color:var(--acc2)">${b.name}</td>
+        <td class="td-num">${b.total}</td>
+        <td class="td-num" style="color:var(--green)">${b.called}</td>
+        <td class="td-num">${b.transferred||0}</td>
+        <td class="td-num">${b.nodial||0}</td>
+        <td class="td-num">${b.skip||0}</td>
+        <td class="td-num">${b.callback||0}</td>
+        <td class="td-num">${b.cut||0}</td>
+        <td class="td-num">${b.ao||0}</td>
+        <td class="td-num" style="color:${parseFloat(conv)>3?'var(--green)':parseFloat(conv)>1?'var(--yellow)':'var(--red)'}">${conv}%</td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table></div>`;
 }
 
+function renderCitiesStat() {
+  const all = cachedAllClients || [];
+  const { from, to } = getStatRange();
+  const citiesMap = {};
+  all.forEach(c => {
+    const region = (c.region||'Не указан').split(',')[0].trim().substring(0,40) || 'Не указан';
+    if (!citiesMap[region]) citiesMap[region] = { total:0, transferred:0, nodial:0, skip:0, callback:0, cut:0 };
+    citiesMap[region].total++;
+    if (c.calledAt) {
+      const d = c.calledAt.toDate ? c.calledAt.toDate() : new Date(c.calledAt);
+      if (d >= from && d <= to && c.result) {
+        citiesMap[region][c.result] = (citiesMap[region][c.result]||0)+1;
+      }
+    }
+  });
+  const cities = Object.entries(citiesMap).sort((a,b)=>b[1].total-a[1].total);
+  const container = el('cities-stat-table');
+  if (!container) return;
+  container.innerHTML = `<div style="overflow-x:auto"><table class="mgr-table" style="min-width:700px">
+    <thead><tr>
+      <th style="text-align:left">Регион</th>
+      <th>Всего</th>
+      <th style="color:var(--green)">✅ Передал</th>
+      <th style="color:var(--red)">❌ Недозвон</th>
+      <th style="color:var(--blue)">⏭ Скип</th>
+      <th style="color:var(--yellow)">🔄 Перезвон</th>
+      <th style="color:var(--pink)">✂️ Срез</th>
+      <th>% конв.</th>
+    </tr></thead>
+    <tbody>${cities.map(([city, s]) => {
+      const conv = s.total > 0 ? ((s.transferred||0)/s.total*100).toFixed(1) : '0.0';
+      const barW = s.total > 0 ? Math.round((s.transferred||0)/s.total*100) : 0;
+      return `<tr>
+        <td>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="width:60px;height:4px;background:var(--bg3);border-radius:2px;overflow:hidden">
+              <div style="height:100%;width:${barW}%;background:var(--green);border-radius:2px"></div>
+            </div>
+            <span style="font-weight:600">${city}</span>
+          </div>
+        </td>
+        <td class="td-num">${s.total}</td>
+        <td class="td-num" style="color:var(--green)">${s.transferred||0}</td>
+        <td class="td-num" style="color:var(--red)">${s.nodial||0}</td>
+        <td class="td-num" style="color:var(--blue)">${s.skip||0}</td>
+        <td class="td-num" style="color:var(--yellow)">${s.callback||0}</td>
+        <td class="td-num" style="color:var(--pink)">${s.cut||0}</td>
+        <td class="td-num" style="color:${parseFloat(conv)>3?'var(--green)':parseFloat(conv)>1?'var(--yellow)':'var(--red)'};font-weight:800">${conv}%</td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table></div>`;
+}
 
 function renderPie(counts) {
-  const keys   = Object.keys(counts).filter(k => RESULTS[k]);
-  const vals   = keys.map(k => counts[k]);
-  const colors = keys.map(k => RESULTS[k].color);
-  const labels = keys.map(k => RESULTS[k].label);
-  const total  = vals.reduce((a,b)=>a+b,0);
+  const keys    = Object.keys(counts).filter(k => RESULTS[k]);
+  const vals    = keys.map(k => counts[k]);
+  const colors  = keys.map(k => RESULTS[k].color);
+  const labels  = keys.map(k => RESULTS[k].label);
+  const total   = vals.reduce((a,b)=>a+b,0);
 
   if (pieChart) pieChart.destroy();
   const ctx = el('chart-pie');
-  if (!ctx) return;
-  if (!keys.length) {
-    ctx.parentElement.innerHTML = '<div style="text-align:center;padding:60px;color:var(--text2)">Нет звонков за этот период</div>';
-    return;
-  }
-  // Restore canvas if it was replaced
-  if (!ctx.getContext) {
-    const newCanvas = document.createElement('canvas');
-    newCanvas.id = 'chart-pie';
-    ctx.parentElement.appendChild(newCanvas);
-  }
-  pieChart = new Chart(el('chart-pie'), {
+  if (!keys.length) { ctx.parentElement.innerHTML = '<div style="text-align:center;padding:60px;color:var(--text2)">Нет звонков сегодня</div>'; return; }
+  pieChart = new Chart(ctx, {
     type:'doughnut',
     data:{ labels, datasets:[{ data:vals, backgroundColor:colors, borderWidth:0, hoverOffset:8 }] },
     options:{
-      responsive:true, maintainAspectRatio:false,
+      responsive:true,maintainAspectRatio:false,
       plugins:{
         legend:{display:false},
         tooltip:{callbacks:{label:c=>' '+c.label+': '+c.parsed+' ('+Math.round(c.parsed/total*100)+'%)'}}
@@ -1311,20 +1146,16 @@ function renderPie(counts) {
     </div>`).join('');
 }
 
-async function loadMgrStats(allClients) {
+async function loadMgrStats(allClients, periodClients) {
   const usersSnap = await getDocs(query(collection(db,'user'), where('role','==','manager')));
   const managers  = usersSnap.docs.map(d => ({ uid:d.id, ...d.data() }));
 
-  const { start, end } = getPeriodRange(currentPeriod);
-
-  // Build table header
   const COLS = RESULT_KEYS;
   const thead = el('mgr-thead');
-  if (!thead) return;
   thead.innerHTML = `<tr>
     <th class="th-name">Менеджер</th>
     <th>Всего</th>
-    <th>Удалить</th>
+    <th>За период</th>
     ${COLS.map(k=>`<th style="background:${RESULTS[k].color}22;color:${RESULTS[k].color}">${RESULTS[k].label}</th>`).join('')}
   </tr>`;
 
@@ -1334,32 +1165,25 @@ async function loadMgrStats(allClients) {
     return;
   }
 
-  // Bar chart — per manager for period
-  const barLabels = managers.map(m => m.name || m.email);
-  const barCounts = [];
+  const barLabels = managers.map(m => m.name || m.email.split('@')[0]);
+  const barPeriod = [];
 
   tbody.innerHTML = managers.map(m => {
-    const mine = allClients.filter(c => c.calledBy === m.uid);
-    const startMs2 = start.getTime(), endMs2 = end.getTime();
-    const periodMine = mine.filter(c => {
-      if (!c.calledAt) return false;
-      const ms = toMs(c.calledAt);
-      return ms >= startMs2 && ms <= endMs2;
-    });
-    barCounts.push(periodMine.length);
-    // Use periodMine for both total and cells — consistent with selected period
-    const total = periodMine.length;
+    const mine       = allClients.filter(c => c.calledBy === m.uid);
+    const minePeriod = (periodClients||[]).filter(c => c.calledBy === m.uid);
+    barPeriod.push(minePeriod.length);
+    const total = mine.length;
 
     const cells = COLS.map(k => {
-      const cnt = periodMine.filter(c=>c.result===k).length;
-      const pct = total > 0 ? (cnt/total*100).toFixed(1) : '0.0';
+      const cnt = minePeriod.filter(c=>c.result===k).length;
+      const pct = minePeriod.length > 0 ? (cnt/minePeriod.length*100).toFixed(1) : '0.0';
       return `<td class="result-cell ${RESULTS[k].cls}">${cnt > 0 ? cnt+' ('+pct+'%)' : '0 (0.0%)'}</td>`;
     }).join('');
 
     return `<tr>
       <td class="td-name">${m.name || m.email}</td>
       <td class="td-num">${total}</td>
-      <td class="td-num">0 (0.0%)</td>
+      <td class="td-num" style="color:var(--green)">${minePeriod.length}</td>
       ${cells}
     </tr>`;
   }).join('');
@@ -1367,22 +1191,21 @@ async function loadMgrStats(allClients) {
   // Bar chart
   if (barChart) barChart.destroy();
   const bctx = el('chart-bar');
-  if (!bctx) return;
   barChart = new Chart(bctx, {
     type:'bar',
     data:{
-      labels: barLabels,
+      labels:barLabels,
       datasets:[{
-        label:'Прозвонено за период',
-        data: barCounts,
+        label:'Прозвонено сегодня',
+        data:barPeriod,
         backgroundColor:'rgba(124,58,237,.65)',
         borderRadius:6,
         borderSkipped:false,
       }]
     },
     options:{
-      responsive:true, maintainAspectRatio:false,
-      plugins:{legend:{display:false}, tooltip:{callbacks:{label:c=>' '+c.raw+' звонков'}}},
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+c.raw+' звонков'}}},
       scales:{
         x:{ticks:{color:'#8888a8',font:{family:'Montserrat',size:11}},grid:{display:false}},
         y:{ticks:{color:'#8888a8',font:{family:'Montserrat',size:11},stepSize:1},grid:{color:'rgba(124,58,237,.08)'}}
@@ -1412,7 +1235,8 @@ async function doImport() {
   const rows    = importData;
   const headers = rows[0].map(h => String(h).toLowerCase().trim());
   const baseName = (el('excel-base-name') && el('excel-base-name').value.trim()) || ('Excel_' + new Date().toLocaleDateString('ru-RU'));
-  const existingNames = new Set(); // Skip duplicate check to save reads
+  const existingSnap = await getDocs(collection(db,'clients'));
+  const existingNames = new Set(existingSnap.docs.map(d => (d.data().deceased||'').toLowerCase().trim()));
   // Create base record
   const baseRef = await addDoc(collection(db,'bases'), {
     name: baseName, createdAt: Timestamp.now(), total: 0, clientIds: []
@@ -1434,8 +1258,6 @@ async function doImport() {
         address:  get('адрес','address') || String(row[3]||''),
         relation: get('отношение','кем приходится','relation') || '',
       }],
-      baseId:   baseRef.id,
-      baseName: baseName,
       status:'new', result:null, comment:'',
       calledBy:null, calledAt:null,
       createdAt:Timestamp.now()
@@ -1504,124 +1326,20 @@ window.saveManual = async () => {
 };
 
 /* ──────── CLIENTS LIST ──────── */
-let allClientsCache = [];
-let managersNameMap = {};
-
 async function loadClients() {
-  el('clients-tbody').innerHTML = '<tr><td colspan="8" class="empty-cell">⏳ Загрузка...</td></tr>';
-  
-  // Load managers
-  const usersSnap = await getDocs(collection(db,'user'));
-  managersNameMap = {};
-  usersSnap.docs.forEach(d => { managersNameMap[d.id] = d.data().name || d.data().email || d.id; });
-
-  const snap = await getDocs(query(collection(db,'clients'), orderBy('createdAt','desc'), limit(500)));
-  allClientsCache = snap.docs.map(d=>({id:d.id,...d.data()}));
-
-  // Populate city filter
-  const citySet = new Set();
-  allClientsCache.forEach(c => {
-    if (c.region) {
-      // Extract first meaningful part as city
-      const city = c.region.split(',')[0].trim().toUpperCase();
-      if (city) citySet.add(city);
-    }
-  });
-  const cityEl = el('clients-filter-city');
-  if (cityEl) {
-    const cur = cityEl.value;
-    cityEl.innerHTML = '<option value="">Все города</option>' +
-      Array.from(citySet).sort().map(c => `<option value="${c}" ${c===cur?'selected':''}>${c}</option>`).join('');
-  }
-
-  // Populate manager filter
-  const mgrEl = el('clients-filter-mgr');
-  if (mgrEl) {
-    const cur = mgrEl.value;
-    const mgrs = Object.entries(managersNameMap);
-    mgrEl.innerHTML = '<option value="">Все менеджеры</option>' +
-      mgrs.map(([uid, name]) => `<option value="${uid}" ${uid===cur?'selected':''}>${name}</option>`).join('');
-  }
-
-  // Populate result filter
-  const resEl = el('clients-filter-result');
-  if (resEl && resEl.options.length <= 2) {
-    RESULT_KEYS.forEach(k => {
-      const opt = document.createElement('option');
-      opt.value = k; opt.textContent = RESULTS[k].label;
-      resEl.appendChild(opt);
-    });
-  }
-
-  renderClientsTable(allClientsCache);
-}
-
-window.clearClientFilters = () => {
-  if (el('clients-search')) el('clients-search').value = '';
-  if (el('clients-filter-city')) el('clients-filter-city').value = '';
-  if (el('clients-filter-mgr')) el('clients-filter-mgr').value = '';
-  if (el('clients-filter-result')) el('clients-filter-result').value = '';
-  renderClientsTable(allClientsCache);
-};
-
-window.filterClients = () => {
-  const q      = (el('clients-search') ? el('clients-search').value : '').toLowerCase().trim();
-  const city   = el('clients-filter-city') ? el('clients-filter-city').value : '';
-  const mgrUid = el('clients-filter-mgr') ? el('clients-filter-mgr').value : '';
-  const result = el('clients-filter-result') ? el('clients-filter-result').value : '';
-
-  const filtered = allClientsCache.filter(c => {
-    // Text search
-    if (q) {
-      const inDeceased = (c.deceased||'').toLowerCase().includes(q);
-      const inRegion   = (c.region||'').toLowerCase().includes(q);
-      const inRel      = (c.relatives||[]).some(r =>
-        (r.name||'').toLowerCase().includes(q) ||
-        (r.phone||'').replace(/\D/g,'').includes(q.replace(/\D/g,''))
-      );
-      if (!inDeceased && !inRegion && !inRel) return false;
-    }
-    // City filter
-    if (city) {
-      const cRegion = (c.region||'').split(',')[0].trim().toUpperCase();
-      if (cRegion !== city) return false;
-    }
-    // Manager filter
-    if (mgrUid) {
-      if (c.calledBy !== mgrUid) return false;
-    }
-    // Result filter
-    if (result) {
-      if (result === '__new__') { if (c.result) return false; }
-      else { if (c.result !== result) return false; }
-    }
-    return true;
-  });
-
-  renderClientsTable(filtered);
-};
-
-function renderClientsTable(rows) {
-  const countEl = el('clients-count');
-  if (countEl) countEl.textContent = rows.length + ' записей';
+  const snap = await getDocs(query(collection(db,'clients'),orderBy('createdAt','desc')));
+  const rows = snap.docs.map(d=>({id:d.id,...d.data()}));
   el('clients-tbody').innerHTML = rows.length
-    ? rows.map(c => {
-        const mgrName = c.calledBy ? (managersNameMap[c.calledBy] || '—') : '—';
-        const mgrBadge = c.calledBy
-          ? `<span style="font-size:11px;font-weight:700;color:var(--acc2);background:rgba(124,58,237,.12);padding:2px 8px;border-radius:20px">${mgrName}</span>`
-          : '<span style="color:var(--text2);font-size:11px">—</span>';
-        return `<tr>
-          <td><b>${c.deceased||'—'}</b></td>
-          <td style="font-size:12px">${c.region||'—'}</td>
-          <td style="font-size:12px">${(c.relatives||[]).map(r=>`${r.name||''} <span style="color:var(--cyan);font-family:var(--mono)">${r.phone||''}</span>`).join('<br>')}</td>
-          <td>${c.result?`<span class="badge" style="background:${(RESULTS[c.result]||{}).color||'#555'}22;color:${(RESULTS[c.result]||{}).color||'#aaa'}">${(RESULTS[c.result]||{label:c.result}).label}</span>`:'<span class="badge status-new">🆕 Новый</span>'}</td>
-          <td>${mgrBadge}</td>
-          <td style="color:var(--text2);font-size:12px;max-width:160px">${c.comment||'—'}</td>
-          <td style="color:var(--text2);font-size:12px">${fmt(c.calledAt)}</td>
-          <td><button class="btn btn-danger btn-sm" onclick="delClient('${c.id}')">🗑</button></td>
-        </tr>`;
-      }).join('')
-    : '<tr><td colspan="8" class="empty-cell">Ничего не найдено</td></tr>';
+    ? rows.map(c=>`<tr>
+        <td><b>${c.deceased||'—'}</b></td>
+        <td>${c.region||'—'}</td>
+        <td style="font-size:12px">${(c.relatives||[]).map(r=>`${r.name||''} <span style="color:var(--cyan);font-family:var(--mono)">${r.phone||''}</span>`).join('<br>')}</td>
+        <td>${c.result?`<span class="badge ${RESULTS[c.result]?'status-done':'status-cb'}" style="background:${(RESULTS[c.result]||{}).color||'#555'}22;color:${(RESULTS[c.result]||{}).color||'#aaa'}">${(RESULTS[c.result]||{label:c.result}).label}</span>`:'<span class="badge status-new">🆕 Новый</span>'}</td>
+        <td style="color:var(--text2);font-size:12px">${c.comment||'—'}</td>
+        <td style="color:var(--text2);font-size:12px">${fmt(c.calledAt)}</td>
+        <td><button class="btn btn-danger btn-sm" onclick="delClient('${c.id}')">🗑</button></td>
+      </tr>`).join('')
+    : '<tr><td colspan="7" class="empty-cell">База пуста</td></tr>';
 }
 
 window.delClient = async id => {
@@ -1632,36 +1350,32 @@ window.delClient = async id => {
 };
 
 /* ──────── MANAGERS MANAGEMENT ──────── */
-let allMgrCache = [];
-
 async function loadMgrList() {
-  // Parallel fetch for speed
-  const [usersSnap] = await Promise.all([getDocs(collection(db,'user'))]);
-  allMgrCache = usersSnap.docs.map(d=>({uid:d.id,...d.data()}));
-  renderMgrList(allMgrCache);
-}
+  const snap = await getDocs(collection(db,'user'));
+  const rows = snap.docs.map(d=>({uid:d.id,...d.data()}));
+  // Load bases for assignment display
+  const basesSnap2 = await getDocs(collection(db,'bases'));
+  const allBasesMap = {};
+  basesSnap2.docs.forEach(d => { allBasesMap[d.id] = d.data().name; });
 
-window.filterMgrList = () => {
-  const q = (el('mgr-search') ? el('mgr-search').value : '').toLowerCase().trim();
-  if (!q) { renderMgrList(allMgrCache); return; }
-  renderMgrList(allMgrCache.filter(u =>
-    (u.name||'').toLowerCase().includes(q) ||
-    (u.email||'').toLowerCase().includes(q)
-  ));
-};
-
-function renderMgrList(rows) {
-  el('mgr-list-tbody').innerHTML = rows.map(u => `<tr>
-    <td><b>${u.name||'—'}</b></td>
-    <td style="color:var(--text2);font-size:12px">${u.email||'—'}</td>
-    <td><span class="badge" style="background:${u.role==='admin'?'rgba(245,158,11,.15)':'rgba(34,197,94,.12)'};color:${u.role==='admin'?'var(--yellow)':'var(--green)'}">${u.role==='admin'?'👑 Админ':'📞 Менеджер'}</span></td>
-    <td>
-      <div style="display:flex;gap:6px">
-        <button class="btn btn-ghost btn-sm" onclick="openEditMgr('${u.uid}','${(u.name||'').replace(/'/g,"\'").replace(/"/g,"&quot;")}')">✏️ Изменить</button>
-        ${u.role!=='admin'?`<button class="btn btn-danger btn-sm" onclick="delMgr('${u.uid}')">🗑</button>`:''}
-      </div>
-    </td>
-  </tr>`).join('');
+  el('mgr-list-tbody').innerHTML = rows.map(u=>{
+    const assignedBases = (u.assignedBases||[]).map(bid => 
+      `<span style="background:rgba(124,58,237,.15);color:var(--acc2);padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600">${allBasesMap[bid]||bid}</span>`
+    ).join('');
+    return `<tr>
+      <td><b>${u.name||'—'}</b></td>
+      <td style="color:var(--text2);font-size:12px">${u.email||'—'}</td>
+      <td><span class="badge ${u.role==='admin'?'status-cb':'status-done'}">${u.role==='admin'?'👑 Админ':'📞 Менеджер'}</span></td>
+      <td style="max-width:250px"><div style="display:flex;flex-wrap:wrap;gap:4px">${assignedBases || '<span style="color:var(--text2);font-size:12px">Нет баз</span>'}</div></td>
+      <td>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-ghost btn-sm" onclick="openEditMgr('${u.uid}','${(u.name||'').replace(/'/g,"\'").replace(/"/g,'&quot;')}')">✏️ Изменить</button>
+          <button class="btn btn-pri btn-sm" onclick="openAssignBases('${u.uid}','${(u.name||'').replace(/'/g,"\'")}')">📁 Базы</button>
+          ${u.role!=='admin'?`<button class="btn btn-danger btn-sm" onclick="delMgr('${u.uid}')">🗑</button>`:''}
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
 }
 
 window.createManager = async () => {
@@ -1684,80 +1398,24 @@ window.delMgr = async uid => {
   loadMgrList();
 };
 
-window.openEditMgr = (uid, name) => {
-  el('edit-mgr-uid').value = uid;
-  el('edit-mgr-name').value = name || '';
-  el('edit-mgr-pass').value = '';
-  el('edit-mgr-modal').style.display = 'flex';
-};
-
-window.closeEditMgr = () => {
-  el('edit-mgr-modal').style.display = 'none';
-};
-
-window.saveEditMgr = async () => {
-  const uid  = el('edit-mgr-uid').value;
-  const name = el('edit-mgr-name').value.trim();
-  const pass = el('edit-mgr-pass').value;
-  if (!name) { toast('⚠️ Введите имя','warn'); return; }
-  try {
-    await updateDoc(doc(db,'user', uid), { name });
-    toast('✅ Имя сохранено: ' + name);
-    closeEditMgr();
-    loadMgrList();
-    // If editing self, update display
-    if (me && me.uid === uid) {
-      me.name = name;
-      const nd = el('mgr-name-display');
-      if (nd) nd.textContent = name;
-    }
-  } catch(e) { toast('Ошибка: ' + e.message, 'err'); }
-};
-
 /* ──────── MANAGER PANEL ──────── */
-async function initManager() {
+function initManager() {
   el('admin-panel').style.display   = 'none';
   el('manager-panel').style.display = 'flex';
+  // Set name and avatar
   el('mgr-name-display').textContent = me.name || me.email;
   const initials = (me.name||'?').charAt(0).toUpperCase();
   el('mgr-avatar-initials').textContent = initials;
+  // Load saved avatar
   const savedAvatar = localStorage.getItem('avatar_' + me.uid);
   if (savedAvatar) {
     el('mgr-avatar-img').src = savedAvatar;
     el('mgr-avatar-img').style.display = 'block';
     el('mgr-avatar-initials').style.display = 'none';
   }
-  // Load bases + user doc in parallel
-  const [mgrDoc, basesSnap] = await Promise.all([
-    getDoc(doc(db,'user', me.uid)),
-    getDocs(collection(db,'bases'))
-  ]);
-  _cacheBases = basesSnap.docs.map(d => ({id:d.id,...d.data()}));
-  me.assignedBases = mgrDoc.exists() ? (mgrDoc.data().assignedBases || []) : [];
-  _cacheLoaded = true;
   subscribeStats();
-  loadMgrMiniStats();
-  // Load my callbacks from Firebase (survive page refresh)
-  loadCallbacksFromDB();
   loadNextClient();
-}
-
-async function loadCallbacksFromDB() {
-  try {
-    const snap = await getDocs(query(
-      collection(db,'clients'),
-      where('calledBy','==', me.uid),
-      where('result','==','callback'),
-      limit(20)
-    ));
-    callbackQueue = [];
-    snap.docs.forEach(d => {
-      const data = d.data();
-      // Only show callbacks that are still active (not locked by someone else)
-      callbackQueue.push({ id: d.id, ...data });
-    });
-    renderCallbackSidebar();
-  } catch(e) { console.error('loadCallbacksFromDB:', e); }
+  loadMgrMiniStats();
 }
 
 window.uploadMgrAvatar = (e) => {
@@ -1775,158 +1433,52 @@ window.uploadMgrAvatar = (e) => {
   reader.readAsDataURL(file);
 };
 
-let mgrDailyChart = null;
-
-// Money stickers for the chart (shown on top of bars)
-const MONEY_STICKERS = ['💵','💰','🤑','💸','🏆','⭐','🔥','💎','🎯','📈'];
-
 async function loadMgrMiniStats() {
-  const now = new Date();
-  const today = new Date(now); today.setHours(0,0,0,0);
-
-  // ONE query: my calls for last 7 days — covers both today stats + chart
-  const week7ago = new Date(now); week7ago.setDate(week7ago.getDate() - 7); week7ago.setHours(0,0,0,0);
-  const snap7 = await getDocs(query(
-    collection(db,'clients'),
-    where('calledBy','==', me.uid),
-    where('calledAt','>=', Timestamp.fromDate(week7ago)),
-    limit(300)
-  ));
-  const mine = snap7.docs.map(d => d.data());
+  const today = new Date(); today.setHours(0,0,0,0);
+  const snap = await getDocs(collection(db,'clients'));
+  const all = snap.docs.map(d => d.data());
+  const mine = all.filter(c => c.calledBy === me.uid);
   const mineToday = mine.filter(c => {
     if (!c.calledAt) return false;
-    const ms = toMs(c.calledAt);
-    return ms >= today.getTime();
+    const d = c.calledAt.toDate ? c.calledAt.toDate() : new Date(c.calledAt);
+    return d >= today;
   });
-
   el('ms-today').textContent = mineToday.length;
-  el('ms-transferred').textContent = mineToday.filter(c=>c.result==='transferred').length;
-  el('ms-nodial').textContent = mineToday.filter(c=>c.result==='nodial').length;
-  el('ms-ao').textContent = mineToday.filter(c=>c.result==='ao').length;
-  if (el('ms-skip')) el('ms-skip').textContent = mineToday.filter(c=>c.result==='skip').length;
+  el('ms-transferred').textContent = mine.filter(c=>c.result==='transferred').length;
+  el('ms-nodial').textContent = mine.filter(c=>c.result==='nodial').length;
+  el('ms-ao').textContent = mine.filter(c=>c.result==='ao').length;
 
-  // 7-day data
-  const days = [];
-  const labels = [];
-  const counts = [];
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(now);
-    d.setDate(d.getDate() - i);
-    d.setHours(0,0,0,0);
-    const next = new Date(d); next.setDate(next.getDate()+1);
-    const cnt = mine.filter(c => {
-      if (!c.calledAt) return false;
-      const cd = c.calledAt.toDate ? c.calledAt.toDate() : new Date(c.calledAt);
-      return cd >= d && cd < next;
-    }).length;
-    days.push(d);
-    labels.push(d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit'}));
-    counts.push(cnt);
-  }
+  // Top managers by transferred
+  const usersSnap = await getDocs(query(collection(db,'user'), where('role','==','manager')));
+  const managers = usersSnap.docs.map(d=>({uid:d.id,...d.data()}));
+  const topList = managers.map(m => ({
+    name: m.name || m.email,
+    count: all.filter(c=>c.calledBy===m.uid&&c.result==='transferred').length
+  })).sort((a,b)=>b.count-a.count).slice(0,3);
 
-  // Draw chart
-  const ctx = el('mgr-daily-chart');
-  if (ctx) {
-    if (mgrDailyChart) mgrDailyChart.destroy();
-    const maxVal = Math.max(...counts, 1);
-    // gradient
-    const grad = ctx.getContext('2d').createLinearGradient(0,0,0,72);
-    grad.addColorStop(0,'rgba(124,58,237,.7)');
-    grad.addColorStop(1,'rgba(79,70,229,.05)');
-    mgrDailyChart = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels,
-        datasets: [{
-          data: counts,
-          backgroundColor: counts.map((v,i) => i===6
-            ? 'rgba(34,197,94,.85)'   // today = green
-            : 'rgba(124,58,237,.55)'),
-          borderRadius: 6,
-          borderSkipped: false,
-          borderColor: counts.map((v,i) => i===6 ? 'rgba(34,197,94,1)' : 'rgba(124,58,237,.8)'),
-          borderWidth: 1.5,
-        }]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        animation: { duration: 600, easing: 'easeOutQuart' },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label: c => ' ' + c.raw + ' звонков',
-              title: c => c[0].label
-            },
-            backgroundColor: 'rgba(16,16,30,.95)',
-            borderColor: 'rgba(124,58,237,.4)',
-            borderWidth: 1,
-          }
-        },
-        scales: {
-          x: {
-            ticks: { color: '#8888a8', font: { family: 'Montserrat', size: 10 } },
-            grid: { display: false }
-          },
-          y: {
-            display: false,
-            min: 0,
-            max: maxVal + 2,
-          }
-        }
-      },
-      plugins: [{
-        // Draw sticker emoji on top of each bar
-        id: 'stickers',
-        afterDatasetsDraw(chart) {
-          const { ctx, data, scales: { x, y } } = chart;
-          data.datasets[0].data.forEach((val, i) => {
-            if (!val) return;
-            const xPos = x.getPixelForValue(i);
-            const yPos = y.getPixelForValue(val);
-            const sticker = MONEY_STICKERS[i % MONEY_STICKERS.length];
-            ctx.font = '14px serif';
-            ctx.textAlign = 'center';
-            ctx.fillText(sticker, xPos, yPos - 4);
-          });
-        }
-      }]
-    });
-  }
-
-  // Hide top list to save reads — not critical for managers
-  if (el('ms-top-list')) el('ms-top-list').innerHTML = '';
-}
-
-// Minimal cache — only bases (small), no clients cache
-let _cacheClients = null; // not used for loadNextClient anymore
-let _cacheBases   = null;
-let _cacheLoaded  = false;
-let _statsInterval = null;
-
-// Local counters — updated after each act(), no Firestore read needed
-let _localStats = { total:0, called:0, remain:0, todayMine:0, transferred:0, nodial:0, ao:0, skip:0 };
-
-async function loadSharedCache() {
-  // Only load bases — small collection
-  const basesSnap = await getDocs(collection(db,'bases'));
-  _cacheBases = basesSnap.docs.map(d => ({id:d.id,...d.data()}));
-  _cacheLoaded = true;
+  el('ms-top-list').innerHTML = topList.map((m,i) => 
+    `<div style="display:flex;align-items:center;gap:4px;background:var(--bg3);border-radius:8px;padding:4px 8px;font-size:11px;font-weight:700">
+      <span>${['🥇','🥈','🥉'][i]}</span>
+      <span style="color:var(--text)">${m.name.split(' ')[0]}</span>
+      <span style="color:var(--acc2)">${m.count}</span>
+    </div>`
+  ).join('');
 }
 
 function subscribeStats() {
-  // Show active bases count from cache
-  updateStatsDisplay();
-}
-
-function updateStatsDisplay() {
-  const activeCount = _cacheBases ? _cacheBases.filter(b=>b.disabled!==true).length : 0;
-  if (el('p-active-bases')) el('p-active-bases').textContent = activeCount;
-  // Other counters updated by act() or periodically
-}
-
-function updateStatsFromCache() {
-  updateStatsDisplay();
+  if (callUnsub) callUnsub();
+  callUnsub = onSnapshot(collection(db,'clients'), snap => {
+    const all     = snap.docs.map(d=>d.data());
+    const total   = all.length;
+    const done    = all.filter(c=>c.result&&c.result!=='callback').length;
+    const remain  = all.filter(c=>!c.result||c.result==='callback').length;
+    const pct     = total>0 ? Math.round(done/total*100) : 0;
+    el('p-total').textContent  = total;
+    el('p-called').textContent = done;
+    el('p-remain').textContent = remain;
+    el('p-pct').textContent    = pct+'%';
+    el('p-bar').style.width    = pct+'%';
+  });
 }
 
 async function loadNextClient() {
@@ -1934,152 +1486,41 @@ async function loadNextClient() {
   el('cl-empty').style.display   = 'none';
   el('call-card').style.display  = 'none';
 
-  const LOCK_MS = 50 * 60 * 1000; // 50 minutes
-  const now = Date.now();
-  const nowTS = Timestamp.now();
+  // Get manager's assigned bases
+  const mgrDoc = await getDoc(doc(db,'user',me.uid));
+  const assignedBases = mgrDoc.exists() ? (mgrDoc.data().assignedBases || []) : [];
 
-  try {
-    // Use cached data — loaded once at login, no extra reads
-    const assignedBases = me.assignedBases || [];
-    const basesData = _cacheBases || [];
-    const enabledBases = basesData.filter(b => b.disabled !== true).map(b => b.id);
-
-    const targetBases = assignedBases.length > 0
-      ? assignedBases.filter(id => enabledBases.includes(id))
-      : enabledBases;
-
-    if (!targetBases.length) {
-      el('cl-loading').style.display = 'none';
-      const emptyEl = el('cl-empty');
-      emptyEl.innerHTML = `
-        <div style="font-size:72px;margin-bottom:8px">🌸</div>
-        <h2 style="font-size:20px;font-weight:900;margin-bottom:10px;background:linear-gradient(135deg,var(--acc2),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent">
-          А вот не хер так много звонить!
-        </h2>
-        <div style="background:var(--bg3);border:1px solid var(--brd2);border-radius:16px;padding:18px 24px;max-width:380px;margin:0 auto">
-          <p style="color:var(--text);font-size:14px;font-weight:600;margin-bottom:6px">Базы выключены 🔒</p>
-          <p style="color:var(--text2);font-size:13px;line-height:1.6">
-            Все активные базы отключены.<br>
-            Обратитесь к <b style="color:var(--acc2)">Lexus 🌸</b> за помощью.<br>
-            <span style="font-size:12px;color:var(--text2);font-style:italic">По настроению поможет, а может и нет&nbsp;;)</span>
-          </p>
-        </div>
-        <button class="btn btn-ghost" style="margin-top:18px" onclick="loadNextClient()">🔄 Попробовать снова</button>`;
-      emptyEl.style.display = 'flex';
-      return;
+  let snap;
+  if (assignedBases.length > 0) {
+    // Load only from assigned bases
+    const q1 = query(collection(db,'clients'), 
+      where('result','==',null), 
+      where('baseId','in', assignedBases.slice(0,10)),
+      orderBy('createdAt'), limit(1));
+    snap = await getDocs(q1);
+    if (snap.empty) {
+      const q2 = query(collection(db,'clients'), 
+        where('result','==','callback'),
+        where('baseId','in', assignedBases.slice(0,10)),
+        orderBy('calledAt'), limit(1));
+      snap = await getDocs(q2);
     }
-
-    // PARALLEL fetch from ALL bases at once — much faster than sequential!
-    const shuffledBases = [...targetBases].sort(() => Math.random() - 0.5);
-    let claimed = null;
-
-    // Helper: check if a doc is lockable
-    const getLockMs = (d) => d.lockedAt ? (d.lockedAt.toMillis ? d.lockedAt.toMillis() : Number(d.lockedAt)) : 0;
-    const isAvailable = (data) => {
-      if (!data.lockedBy) return true;
-      if (data.lockedBy === me.uid) return false; // skip our own open card
-      return now - getLockMs(data) >= LOCK_MS;    // expired lock = available
-    };
-
-    // Fetch all bases in PARALLEL
-    const allSnaps = await Promise.all(
-      shuffledBases.map(baseId => getDocs(query(
-        collection(db,'clients'),
-        where('baseId','==', baseId),
-        where('result','==', null),
-        limit(20)
-      )))
-    );
-
-    // Flatten + shuffle all candidates
-    const allCandidates = [];
-    allSnaps.forEach(snap => {
-      snap.docs.forEach(d => {
-        const data = d.data();
-        if (isAvailable(data)) allCandidates.push({ id: d.id, ...data });
-      });
-    });
-    // Shuffle for fair distribution
-    allCandidates.sort(() => Math.random() - 0.5);
-
-    // Try to claim first available via transaction
-    for (const candidate of allCandidates) {
-      if (claimed) break;
-      try {
-        await runTransaction(db, async (tx) => {
-          const ref = doc(db,'clients', candidate.id);
-          const fresh = await tx.get(ref);
-          if (!fresh.exists()) throw new Error('gone');
-          const fd = fresh.data();
-          if (fd.result && fd.result !== 'callback') throw new Error('done');
-          if (fd.lockedBy && fd.lockedBy !== me.uid && now - getLockMs(fd) < LOCK_MS) throw new Error('taken');
-          if (fd.lockedBy === me.uid && now - getLockMs(fd) < LOCK_MS) throw new Error('ours');
-          tx.update(ref, { lockedBy: me.uid, lockedAt: nowTS });
-          claimed = { ...candidate, lockedBy: me.uid, lockedAt: nowTS };
-        });
-      } catch(e) {
-        if (['gone','done','taken','ours'].includes(e.message)) continue;
-        throw e;
-      }
+  } else {
+    // No assigned bases - load all
+    const q1 = query(collection(db,'clients'), where('result','==',null), orderBy('createdAt'), limit(1));
+    snap = await getDocs(q1);
+    if (snap.empty) {
+      const q2 = query(collection(db,'clients'), where('result','==','callback'), orderBy('calledAt'), limit(1));
+      snap = await getDocs(q2);
     }
-
-    // If no new clients — try callbacks in parallel
-    if (!claimed) {
-      const cbSnaps = await Promise.all(
-        shuffledBases.map(baseId => getDocs(query(
-          collection(db,'clients'),
-          where('baseId','==', baseId),
-          where('result','==','callback'),
-          limit(10)
-        )))
-      );
-      const cbCandidates = [];
-      cbSnaps.forEach(snap => {
-        snap.docs.forEach(d => {
-          const data = d.data();
-          if (!data.lockedBy || now - getLockMs(data) >= LOCK_MS) {
-            cbCandidates.push({ id: d.id, ...data });
-          }
-        });
-      });
-      cbCandidates.sort(() => Math.random() - 0.5);
-      for (const candidate of cbCandidates) {
-        if (claimed) break;
-        try {
-          await runTransaction(db, async (tx) => {
-            const ref = doc(db,'clients', candidate.id);
-            const fresh = await tx.get(ref);
-            if (!fresh.exists()) throw new Error('gone');
-            const fd = fresh.data();
-            if (fd.lockedBy && fd.lockedBy !== me.uid && now - getLockMs(fd) < LOCK_MS) throw new Error('taken');
-            tx.update(ref, { lockedBy: me.uid, lockedAt: nowTS });
-            claimed = { ...candidate, lockedBy: me.uid, lockedAt: nowTS };
-          });
-        } catch(e) {
-          if (['gone','taken'].includes(e.message)) continue;
-          throw e;
-        }
-        if (claimed) break;
-      }
-    }
-
-    el('cl-loading').style.display = 'none';
-
-    if (!claimed) {
-      el('cl-empty').style.display = 'flex';
-      return;
-    }
-
-    renderCard(claimed);
-
-  } catch(err) {
-    console.error('loadNextClient error:', err);
-    el('cl-loading').style.display = 'none';
-    el('cl-empty').style.display = 'flex';
-    el('cl-empty').innerHTML = '<div class="ico">⚠️</div><h2>Ошибка загрузки</h2><p style="color:var(--text2)">' + err.message + '</p><button class="btn btn-ghost" style="margin-top:16px" onclick="loadNextClient()">🔄 Попробовать снова</button>';
   }
-}
 
+  el('cl-loading').style.display = 'none';
+  if (snap.empty) { el('cl-empty').style.display='flex'; return; }
+
+  const client = { id:snap.docs[0].id, ...snap.docs[0].data() };
+  renderCard(client);
+}
 
 function renderCard(c) {
   el('cc-id').value = c.id;
@@ -2110,15 +1551,13 @@ function renderCard(c) {
             <span class="rel-fname">${r.name||'—'}</span>
             ${r.relation?`<span class="rel-relation">${r.relation}</span>`:''}
           </div>
-          ${r.phone ? r.phone.split(',').map(p => p.trim()).filter(Boolean).map(p => {
-            const op = getOperator(p);
-            const opBadge = op ? `<span style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:6px;background:${op.bg};color:${op.col}">${op.name}</span>` : '';
-            return `<div class="rel-phone">📞 <a href="tel:${p}" onclick="event.stopPropagation()">${p}</a>${opBadge}</div>`;
-          }).join('') : ''}
+          ${r.phone ? r.phone.split(',').map(p => p.trim()).filter(Boolean).map(p => 
+            `<div class="rel-phone">📞 <a href="tel:${p}" onclick="event.stopPropagation()">${p}</a></div>`
+          ).join('') : ''}
           ${r.dob?`<div class="rel-addr">🎂 ${r.dob}</div>`:''}
-          ${r.passport?`<div class="rel-addr">🪪 <b style="color:var(--text);font-weight:800">Паспорт: ${r.passport}</b></div>`:''}
-          ${r.snils?`<div class="rel-addr">📋 <b style="color:var(--text);font-weight:800">СНИЛС: ${r.snils}</b></div>`:''}
-          ${r.address?`<div class="rel-addr">📍 <b style="color:var(--text);font-weight:700">${r.address}</b></div>`:''}
+          ${r.passport?`<div class="rel-addr">🪪 Паспорт: ${r.passport}</div>`:''}
+          ${r.snils?`<div class="rel-addr">📋 СНИЛС: ${r.snils}</div>`:''}
+          ${r.address?`<div class="rel-addr">📍 ${r.address}</div>`:''}
         </div>`).join('')
     : '<div style="color:var(--text2);font-size:13px">Родственники не указаны</div>';
 
@@ -2131,27 +1570,17 @@ window.act = async result => {
   const id = el('cc-id').value;
   const comment = el('cc-comment').value;
   if (!id) return;
-
-  // 1 write — that's it
+  
   await updateDoc(doc(db,'clients',id), {
     result, status:'called', comment,
-    calledBy: me.uid, calledAt: Timestamp.now()
+    calledBy:me.uid, calledAt:Timestamp.now()
   });
-
-  // Update counters locally — no reads needed
-  const msToday = el('ms-today');
-  if (msToday) {
-    const cur = parseInt(msToday.textContent)||0;
-    msToday.textContent = cur + 1;
-    const map = { transferred:'ms-transferred', nodial:'ms-nodial', ao:'ms-ao', skip:'ms-skip' };
-    if (map[result]) {
-      const el2 = el(map[result]);
-      if (el2) el2.textContent = (parseInt(el2.textContent)||0) + 1;
-    }
+  
+  // If callback - add to sidebar queue
+  if (result === 'callback') {
+    addToCallbackQueue(id);
   }
-
-  if (result === 'callback') addToCallbackQueue(id);
-
+  
   const card = el('call-card');
   card.classList.add('leaving');
   el('cc-comment').value = '';
@@ -2239,8 +1668,9 @@ window.importText = async () => {
   
   el('txt-preview').textContent = '⏳ Загружаю ' + clients.length + ' клиентов...';
   
-  const existingNames = new Set(); // Skip dup check to save reads
-
+  const existingSnap = await getDocs(collection(db,'clients'));
+  const existingNames = new Set(existingSnap.docs.map(d => (d.data().deceased||'').toLowerCase().trim()));
+  
   // Create base record
   const baseRef = await addDoc(collection(db,'bases'), {
     name: baseName,
@@ -2373,14 +1803,9 @@ let allBases = [];
 
 async function loadBases() {
   el('bases-list').innerHTML = '<div class="empty-cell">⏳ Загрузка...</div>';
-  // Parallel: fetch bases + clients at same time
-  // Only load bases — calledCount computed from base.total minus remaining (saved in base doc)
-  const basesSnap = await getDocs(query(collection(db,'bases'), orderBy('createdAt','desc')));
-  allBases = basesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-  // Load called counts separately per base (light query per base)
+  const snap = await getDocs(query(collection(db,'bases'), orderBy('createdAt','desc')));
+  allBases = snap.docs.map(d => ({ id: d.id, ...d.data() }));
   renderBases(allBases);
-  // Load stats async without blocking
-  loadBaseStatsCounts(allBases);
 }
 
 window.filterBases = () => {
@@ -2396,27 +1821,15 @@ function renderBases(bases) {
   el('bases-list').innerHTML = `
     <table class="clients-table">
       <thead><tr>
-        <th>Вкл/Выкл</th><th>Название</th><th>Дата</th><th>Клиентов</th><th>Прозвонено</th><th>Осталось</th><th>Прогресс</th><th></th>
+        <th>Название</th><th>Дата</th><th>Клиентов</th><th>Прозвонено</th><th>Осталось</th><th>Прогресс</th><th></th>
       </tr></thead>
       <tbody>${bases.map(b => {
         const total = b.total || 0;
         const called = b.calledCount || 0;
         const remain = total - called;
         const pct = total > 0 ? Math.round(called/total*100) : 0;
-        const isOn = b.disabled !== true;
-        const safeName = b.name.replace(/'/g,'').replace(/"/g,'');
-        return `<tr style="opacity:${isOn?'1':'0.5'}">
-          <td style="text-align:center">
-            <label style="display:inline-flex;align-items:center;cursor:pointer">
-              <input type="checkbox" ${isOn?'checked':''} onchange="toggleBase('${b.id}',this.checked)"
-                style="appearance:none;-webkit-appearance:none;width:38px;height:20px;
-                background:${isOn?'var(--green)':'var(--bg4)'};border-radius:10px;
-                border:1px solid ${isOn?'var(--green)':'var(--brd2)'};
-                position:relative;cursor:pointer;transition:background .25s;outline:none">
-            </label>
-            <div style="font-size:9px;font-weight:700;margin-top:2px;color:${isOn?'var(--green)':'var(--text2)'}">${isOn?'ВКЛ':'ВЫКЛ'}</div>
-          </td>
-          <td><b style="color:${isOn?'var(--acc2)':'var(--text2)'}">${b.name}</b></td>
+        return `<tr>
+          <td><b style="color:var(--acc2)">${b.name}</b></td>
           <td style="color:var(--text2);font-size:12px">${fmt(b.createdAt)}</td>
           <td class="num" style="color:var(--text)">${total}</td>
           <td class="num" style="color:var(--green)">${called}</td>
@@ -2430,121 +1843,28 @@ function renderBases(bases) {
             </div>
           </td>
           <td>
-            <div style="display:flex;gap:6px;flex-wrap:wrap">
-              <button class="btn btn-ghost btn-sm" onclick="showBaseStats('${b.id}','${safeName}')" title="Статистика">📊 Статистика</button>
-              <button class="btn btn-ghost btn-sm" onclick="openExportModal('${b.id}','${safeName}')" title="Выгрузить">📥 Выгрузить</button>
-              <button class="btn btn-danger btn-sm" onclick="deleteBase('${b.id}','${safeName}')" title="Удалить">🗑</button>
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-ghost btn-sm" onclick="openExportModal('${b.id}','${b.name.replace(/'/g,"'")}')" title="Выгрузить">📥 Выгрузить</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteBase('${b.id}','${b.name.replace(/'/g,'')}')" title="Удалить">🗑</button>
             </div>
           </td>
         </tr>`;
       }).join('')}</tbody>
     </table>`;
+  
+  // Load called counts async
   loadBaseStats(bases);
 }
 
-window.toggleBase = async (baseId, enabled) => {
-  // Optimistic update: change local cache immediately, no full reload
-  const base = allBases.find(b => b.id === baseId);
-  if (base) {
-    base.disabled = !enabled;
-    renderBases(allBases); // re-render with cached stats (no Firestore call)
-  }
-  try {
-    await updateDoc(doc(db,'bases',baseId), { disabled: !enabled });
-    toast(enabled ? '✅ База включена — менеджеры звонят' : '⏸ База выключена');
-    // Reload stats in background without blocking UI
-    loadBaseStats(allBases);
-  } catch(e) {
-    // Revert on error
-    if (base) base.disabled = enabled;
-    renderBases(allBases);
-    toast('Ошибка: ' + e.message, 'err');
-  }
-};
-
-window.showBaseStats = async (baseId, baseName) => {
-  const modal = el('base-stats-modal');
-  const title = el('bsm-title');
-  const body  = el('bsm-body');
-  title.textContent = '📊 ' + baseName;
-  body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2)">⏳ Загрузка...</div>';
-  modal.style.display = 'flex';
-
-  const snap = await getDocs(query(collection(db,'clients'), where('baseId','==',baseId)));
-  const clients = snap.docs.map(d => d.data());
-  const total = clients.length;
-  const resultCounts = {};
-  RESULT_KEYS.forEach(k => { resultCounts[k] = clients.filter(c => c.result === k).length; });
-  const fresh = clients.filter(c => !c.result).length;
-  const callbacks = clients.filter(c => c.result === 'callback').length;
-
-  // Manager breakdown
-  const usersSnap = await getDocs(query(collection(db,'user'), where('role','==','manager')));
-  const mgrs = usersSnap.docs.map(d => ({uid:d.id,...d.data()}));
-  const mgrRows = mgrs.map(m => {
-    const mine = clients.filter(c => c.calledBy === m.uid);
-    if (!mine.length) return '';
-    return `<tr>
-      <td style="font-weight:700">${m.name||m.email}</td>
-      <td style="color:var(--green);font-family:var(--mono)">${mine.length}</td>
-      ${RESULT_KEYS.map(k => {
-        const cnt = mine.filter(c=>c.result===k).length;
-        return `<td style="color:${RESULTS[k].color};font-family:var(--mono)">${cnt}</td>`;
-      }).join('')}
-    </tr>`;
-  }).join('');
-
-  body.innerHTML = `
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px">
-      <div style="background:var(--bg3);border-radius:12px;padding:14px;text-align:center">
-        <div style="font-size:26px;font-weight:900;font-family:var(--mono);color:var(--acc2)">${total}</div>
-        <div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-top:4px">Всего</div>
-      </div>
-      <div style="background:var(--bg3);border-radius:12px;padding:14px;text-align:center">
-        <div style="font-size:26px;font-weight:900;font-family:var(--mono);color:var(--text2)">${fresh}</div>
-        <div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-top:4px">🆕 Новых</div>
-      </div>
-      ${RESULT_KEYS.map(k => `
-      <div style="background:${RESULTS[k].color}18;border:1px solid ${RESULTS[k].color}44;border-radius:12px;padding:14px;text-align:center">
-        <div style="font-size:26px;font-weight:900;font-family:var(--mono);color:${RESULTS[k].color}">${resultCounts[k]}</div>
-        <div style="font-size:10px;color:${RESULTS[k].color};text-transform:uppercase;letter-spacing:.5px;margin-top:4px">${RESULTS[k].label}</div>
-        <div style="font-size:11px;color:var(--text2);margin-top:2px">${total>0?Math.round(resultCounts[k]/total*100):0}%</div>
-      </div>`).join('')}
-    </div>
-    ${mgrRows ? `
-    <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">👥 По менеджерам</div>
-    <div style="overflow-x:auto">
-    <table class="clients-table" style="font-size:12px">
-      <thead><tr>
-        <th>Менеджер</th><th style="color:var(--green)">Всего</th>
-        ${RESULT_KEYS.map(k=>`<th style="color:${RESULTS[k].color}">${RESULTS[k].label}</th>`).join('')}
-      </tr></thead>
-      <tbody>${mgrRows}</tbody>
-    </table></div>` : ''}
-  `;
-};
-
-window.closeBaseStatsModal = () => { document.getElementById('base-stats-modal').style.display='none'; };
-
 async function loadBaseStats(bases) {
-  loadBaseStatsCounts(bases);
-}
-
-async function loadBaseStatsCounts(bases) {
-  // Sequential to avoid hammering Firestore (admin panel)
-  try {
-    for (const b of bases) {
-      const snap = await getDocs(query(
-        collection(db,'clients'),
-        where('baseId','==', b.id),
-        limit(500)
-      ));
-      b.calledCount = snap.docs.filter(d => {
-        const r = d.data().result;
-        return r && r !== 'callback';
-      }).length;
-    }
-  } catch(e) { console.error('loadBaseStatsCounts:', e); }
+  const clientsSnap = await getDocs(collection(db,'clients'));
+  const clients = clientsSnap.docs.map(d => ({id:d.id,...d.data()}));
+  
+  bases.forEach(b => {
+    const bClients = clients.filter(c => c.baseId === b.id);
+    const called = bClients.filter(c => c.result && c.result !== 'callback').length;
+    b.calledCount = called;
+  });
   renderBases(bases);
 }
 
@@ -2614,554 +1934,6 @@ window.searchPoteri = () => {
   window.open(url, '_blank');
 };
 
-/* ──────── OPERATOR DETECTION ──────── */
-function getOperator(phone) {
-  const n = phone.replace(/\D/g,'');
-  if (n.length < 10) return null;
-  const p = n.slice(-10);
-
-  const OP_COLORS = {
-    'МТС':               {bg:'#e4002b22',col:'#ff6b6b'},
-    'Билайн':            {bg:'#ffd70022',col:'#ffd700'},
-    'МегаФон':           {bg:'#00c85322',col:'#4ade80'},
-    'Теле2':             {bg:'#00b8d922',col:'#38bdf8'},
-    'Yota':              {bg:'#8b5cf622',col:'#c4b5fd'},
-    'СберМобайл':        {bg:'#22c55e22',col:'#86efac'},
-    'Тинькофф Мобайл':  {bg:'#facc1522',col:'#facc15'},
-    'Ростелеком':        {bg:'#7b2fff22',col:'#b388ff'},
-    'МОТИВ':             {bg:'#f9731622',col:'#fb923c'},
-    'Виртуальный':       {bg:'#6b728022',col:'#9ca3af'},
-  };
-
-  // ── 5-digit prefixes (highest priority — MNP-aware) ──
-  const P5 = {
-    // МТС 5-знак (переносы, MVNO на сети МТС)
-    '91554':'МТС','91555':'МТС','91556':'МТС','91557':'МТС','91558':'МТС','91559':'МТС',
-    '98050':'МТС','98051':'МТС','98052':'МТС','98053':'МТС','98054':'МТС','98055':'МТС',
-    '98056':'МТС','98057':'МТС','98058':'МТС','98059':'МТС',
-    '91500':'МТС','91501':'МТС','91502':'МТС','91503':'МТС','91504':'МТС',
-    '91505':'МТС','91506':'МТС','91507':'МТС','91508':'МТС','91509':'МТС',
-    // Билайн 5-знак
-    '90600':'Билайн','90601':'Билайн','90602':'Билайн','90603':'Билайн','90604':'Билайн',
-    '90605':'Билайн','90606':'Билайн','90607':'Билайн','90608':'Билайн','90609':'Билайн',
-    '96000':'Билайн','96001':'Билайн','96002':'Билайн','96003':'Билайн','96004':'Билайн',
-    '96005':'Билайн','96006':'Билайн','96007':'Билайн','96008':'Билайн','96009':'Билайн',
-    // МегаФон 5-знак
-    '92000':'МегаФон','92001':'МегаФон','92002':'МегаФон','92003':'МегаФон','92004':'МегаФон',
-    '92500':'МегаФон','92501':'МегаФон','92502':'МегаФон','92503':'МегаФон','92504':'МегаФон',
-    '92505':'МегаФон','92506':'МегаФон','92507':'МегаФон','92508':'МегаФон','92509':'МегаФон',
-    // Теле2 5-знак
-    '90000':'Теле2','90001':'Теле2','90002':'Теле2','90003':'Теле2','90004':'Теле2',
-    '90005':'Теле2','90006':'Теле2','90007':'Теле2','90008':'Теле2','90009':'Теле2',
-    '95800':'Теле2','95801':'Теле2','95802':'Теле2','95803':'Теле2','95804':'Теле2',
-    '95805':'Теле2','95806':'Теле2','95807':'Теле2','95808':'Теле2','95809':'Теле2',
-    // Yota 5-знак
-    '95500':'Yota','95501':'Yota','95502':'Yota','95503':'Yota','95504':'Yota',
-    '95505':'Yota','95506':'Yota','95507':'Yota','95508':'Yota','95509':'Yota',
-    '99900':'Yota','99901':'Yota','99902':'Yota','99903':'Yota','99904':'Yota',
-  };
-
-  // ── 4-digit prefixes ──
-  const P4 = {
-    // МТС 4-знак — конкретные диапазоны
-    '9105':'МТС','9106':'МТС','9107':'МТС','9108':'МТС','9109':'МТС',
-    '9110':'МТС','9111':'МТС','9112':'МТС','9113':'МТС','9114':'МТС',
-    '9115':'МТС','9116':'МТС','9117':'МТС','9118':'МТС','9119':'МТС',
-    '9120':'МТС','9121':'МТС','9122':'МТС','9123':'МТС','9124':'МТС',
-    '9125':'МТС','9126':'МТС','9127':'МТС','9128':'МТС','9129':'МТС',
-    '9130':'МТС','9131':'МТС','9132':'МТС','9133':'МТС','9134':'МТС',
-    '9135':'МТС','9136':'МТС','9137':'МТС','9138':'МТС','9139':'МТС',
-    '9140':'МТС','9141':'МТС','9142':'МТС','9143':'МТС','9144':'МТС',
-    '9145':'МТС','9146':'МТС','9147':'МТС','9148':'МТС','9149':'МТС',
-    '9150':'МТС','9151':'МТС','9152':'МТС','9153':'МТС','9154':'МТС',
-    '9155':'МТС','9156':'МТС','9157':'МТС','9158':'МТС','9159':'МТС',
-    '9160':'МТС','9161':'МТС','9162':'МТС','9163':'МТС','9164':'МТС',
-    '9165':'МТС','9166':'МТС','9167':'МТС','9168':'МТС','9169':'МТС',
-    '9170':'МТС','9171':'МТС','9172':'МТС','9173':'МТС','9174':'МТС',
-    '9175':'МТС','9176':'МТС','9177':'МТС','9178':'МТС','9179':'МТС',
-    '9180':'МТС','9181':'МТС','9182':'МТС','9183':'МТС','9184':'МТС',
-    '9185':'МТС','9186':'МТС','9187':'МТС','9188':'МТС','9189':'МТС',
-    '9190':'МТС','9191':'МТС','9192':'МТС','9193':'МТС','9194':'МТС',
-    '9195':'МТС','9196':'МТС','9197':'МТС','9198':'МТС','9199':'МТС',
-    '9800':'МТС','9801':'МТС','9802':'МТС','9803':'МТС','9804':'МТС',
-    '9805':'МТС','9806':'МТС','9807':'МТС','9808':'МТС','9809':'МТС',
-    '9810':'МТС','9811':'МТС','9812':'МТС','9813':'МТС','9814':'МТС',
-    '9815':'МТС','9816':'МТС','9817':'МТС','9818':'МТС','9819':'МТС',
-    '9820':'МТС','9821':'МТС','9822':'МТС','9823':'МТС','9824':'МТС',
-    '9825':'МТС','9826':'МТС','9827':'МТС','9828':'МТС','9829':'МТС',
-    '9830':'МТС','9831':'МТС','9832':'МТС','9833':'МТС','9834':'МТС',
-    '9835':'МТС','9836':'МТС','9837':'МТС','9838':'МТС','9839':'МТС',
-    '9850':'МТС','9851':'МТС','9852':'МТС','9853':'МТС','9854':'МТС',
-    '9855':'МТС','9856':'МТС','9857':'МТС','9858':'МТС','9859':'МТС',
-    '9360':'МТС','9361':'МТС','9362':'МТС','9363':'МТС','9364':'МТС',
-    '9365':'МТС','9366':'МТС','9367':'МТС','9368':'МТС','9369':'МТС',
-    '9390':'МТС','9391':'МТС','9392':'МТС','9393':'МТС','9394':'МТС',
-    '9395':'МТС','9396':'МТС','9397':'МТС','9398':'МТС','9399':'МТС',
-    // Билайн 4-знак
-    '9030':'Билайн','9031':'Билайн','9032':'Билайн','9033':'Билайн','9034':'Билайн',
-    '9035':'Билайн','9036':'Билайн','9037':'Билайн','9038':'Билайн','9039':'Билайн',
-    '9050':'Билайн','9051':'Билайн','9052':'Билайн','9053':'Билайн','9054':'Билайн',
-    '9055':'Билайн','9056':'Билайн','9057':'Билайн','9058':'Билайн','9059':'Билайн',
-    '9060':'Билайн','9061':'Билайн','9062':'Билайн','9063':'Билайн','9064':'Билайн',
-    '9065':'Билайн','9066':'Билайн','9067':'Билайн','9068':'Билайн','9069':'Билайн',
-    '9090':'Билайн','9091':'Билайн','9092':'Билайн','9093':'Билайн','9094':'Билайн',
-    '9095':'Билайн','9096':'Билайн','9097':'Билайн','9098':'Билайн','9099':'Билайн',
-    '9510':'Билайн','9511':'Билайн','9512':'Билайн','9513':'Билайн','9514':'Билайн',
-    '9515':'Билайн','9516':'Билайн','9517':'Билайн','9518':'Билайн','9519':'Билайн',
-    '9530':'Билайн','9531':'Билайн','9532':'Билайн','9533':'Билайн','9534':'Билайн',
-    '9535':'Билайн','9536':'Билайн','9537':'Билайн','9538':'Билайн','9539':'Билайн',
-    '9600':'Билайн','9601':'Билайн','9602':'Билайн','9603':'Билайн','9604':'Билайн',
-    '9605':'Билайн','9606':'Билайн','9607':'Билайн','9608':'Билайн','9609':'Билайн',
-    '9610':'Билайн','9611':'Билайн','9612':'Билайн','9613':'Билайн','9614':'Билайн',
-    '9615':'Билайн','9616':'Билайн','9617':'Билайн','9618':'Билайн','9619':'Билайн',
-    '9620':'Билайн','9621':'Билайн','9622':'Билайн','9623':'Билайн','9624':'Билайн',
-    '9625':'Билайн','9626':'Билайн','9627':'Билайн','9628':'Билайн','9629':'Билайн',
-    '9630':'Билайн','9631':'Билайн','9632':'Билайн','9633':'Билайн','9634':'Билайн',
-    '9635':'Билайн','9636':'Билайн','9637':'Билайн','9638':'Билайн','9639':'Билайн',
-    '9640':'Билайн','9641':'Билайн','9642':'Билайн','9643':'Билайн','9644':'Билайн',
-    '9645':'Билайн','9646':'Билайн','9647':'Билайн','9648':'Билайн','9649':'Билайн',
-    '9650':'Билайн','9651':'Билайн','9652':'Билайн','9653':'Билайн','9654':'Билайн',
-    '9655':'Билайн','9656':'Билайн','9657':'Билайн','9658':'Билайн','9659':'Билайн',
-    '9660':'Билайн','9661':'Билайн','9662':'Билайн','9663':'Билайн','9664':'Билайн',
-    '9665':'Билайн','9666':'Билайн','9667':'Билайн','9668':'Билайн','9669':'Билайн',
-    '9670':'Билайн','9671':'Билайн','9672':'Билайн','9673':'Билайн','9674':'Билайн',
-    '9675':'Билайн','9676':'Билайн','9677':'Билайн','9678':'Билайн','9679':'Билайн',
-    '9680':'Билайн','9681':'Билайн','9682':'Билайн','9683':'Билайн','9684':'Билайн',
-    '9685':'Билайн','9686':'Билайн','9687':'Билайн','9688':'Билайн','9689':'Билайн',
-    '9690':'Билайн','9691':'Билайн','9692':'Билайн','9693':'Билайн','9694':'Билайн',
-    '9695':'Билайн','9696':'Билайн','9697':'Билайн','9698':'Билайн','9699':'Билайн',
-    // МегаФон 4-знак
-    '9200':'МегаФон','9201':'МегаФон','9202':'МегаФон','9203':'МегаФон','9204':'МегаФон',
-    '9205':'МегаФон','9206':'МегаФон','9207':'МегаФон','9208':'МегаФон','9209':'МегаФон',
-    '9210':'МегаФон','9211':'МегаФон','9212':'МегаФон','9213':'МегаФон','9214':'МегаФон',
-    '9215':'МегаФон','9216':'МегаФон','9217':'МегаФон','9218':'МегаФон','9219':'МегаФон',
-    '9220':'МегаФон','9221':'МегаФон','9222':'МегаФон','9223':'МегаФон','9224':'МегаФон',
-    '9225':'МегаФон','9226':'МегаФон','9227':'МегаФон','9228':'МегаФон','9229':'МегаФон',
-    '9230':'МегаФон','9231':'МегаФон','9232':'МегаФон','9233':'МегаФон','9234':'МегаФон',
-    '9235':'МегаФон','9236':'МегаФон','9237':'МегаФон','9238':'МегаФон','9239':'МегаФон',
-    '9240':'МегаФон','9241':'МегаФон','9242':'МегаФон','9243':'МегаФон','9244':'МегаФон',
-    '9245':'МегаФон','9246':'МегаФон','9247':'МегаФон','9248':'МегаФон','9249':'МегаФон',
-    '9250':'МегаФон','9251':'МегаФон','9252':'МегаФон','9253':'МегаФон','9254':'МегаФон',
-    '9255':'МегаФон','9256':'МегаФон','9257':'МегаФон','9258':'МегаФон','9259':'МегаФон',
-    '9260':'МегаФон','9261':'МегаФон','9262':'МегаФон','9263':'МегаФон','9264':'МегаФон',
-    '9265':'МегаФон','9266':'МегаФон','9267':'МегаФон','9268':'МегаФон','9269':'МегаФон',
-    '9270':'МегаФон','9271':'МегаФон','9272':'МегаФон','9273':'МегаФон','9274':'МегаФон',
-    '9275':'МегаФон','9276':'МегаФон','9277':'МегаФон','9278':'МегаФон','9279':'МегаФон',
-    '9280':'МегаФон','9281':'МегаФон','9282':'МегаФон','9283':'МегаФон','9284':'МегаФон',
-    '9285':'МегаФон','9286':'МегаФон','9287':'МегаФон','9288':'МегаФон','9289':'МегаФон',
-    '9290':'МегаФон','9291':'МегаФон','9292':'МегаФон','9293':'МегаФон','9294':'МегаФон',
-    '9295':'МегаФон','9296':'МегаФон','9297':'МегаФон','9298':'МегаФон','9299':'МегаФон',
-    '9300':'МегаФон','9301':'МегаФон','9302':'МегаФон','9303':'МегаФон','9304':'МегаФон',
-    '9305':'МегаФон','9306':'МегаФон','9307':'МегаФон','9308':'МегаФон','9309':'МегаФон',
-    '9310':'МегаФон','9311':'МегаФон','9312':'МегаФон','9313':'МегаФон','9314':'МегаФон',
-    '9315':'МегаФон','9316':'МегаФон','9317':'МегаФон','9318':'МегаФон','9319':'МегаФон',
-    '9320':'МегаФон','9321':'МегаФон','9322':'МегаФон','9323':'МегаФон','9324':'МегаФон',
-    '9325':'МегаФон','9326':'МегаФон','9327':'МегаФон','9328':'МегаФон','9329':'МегаФон',
-    '9330':'МегаФон','9331':'МегаФон','9332':'МегаФон','9333':'МегаФон','9334':'МегаФон',
-    '9335':'МегаФон','9336':'МегаФон','9337':'МегаФон','9338':'МегаФон','9339':'МегаФон',
-    '9340':'МегаФон','9341':'МегаФон','9342':'МегаФон','9343':'МегаФон','9344':'МегаФон',
-    '9345':'МегаФон','9346':'МегаФон','9347':'МегаФон','9348':'МегаФон','9349':'МегаФон',
-    '9370':'МегаФон','9371':'МегаФон','9372':'МегаФон','9373':'МегаФон','9374':'МегаФон',
-    '9375':'МегаФон','9376':'МегаФон','9377':'МегаФон','9378':'МегаФон','9379':'МегаФон',
-    '9380':'МегаФон','9381':'МегаФон','9382':'МегаФон','9383':'МегаФон','9384':'МегаФон',
-    '9385':'МегаФон','9386':'МегаФон','9387':'МегаФон','9388':'МегаФон','9389':'МегаФон',
-    '9500':'МегаФон','9501':'МегаФон','9502':'МегаФон','9503':'МегаФон','9504':'МегаФон',
-    '9505':'МегаФон','9506':'МегаФон','9507':'МегаФон','9508':'МегаФон','9509':'МегаФон',
-    '9520':'МегаФон','9521':'МегаФон','9522':'МегаФон','9523':'МегаФон','9524':'МегаФон',
-    '9525':'МегаФон','9526':'МегаФон','9527':'МегаФон','9528':'МегаФон','9529':'МегаФон',
-    // Теле2 4-знак
-    '9000':'Теле2','9001':'Теле2','9002':'Теле2','9003':'Теле2','9004':'Теле2',
-    '9005':'Теле2','9006':'Теле2','9007':'Теле2','9008':'Теле2','9009':'Теле2',
-    '9010':'Теле2','9011':'Теле2','9012':'Теле2','9013':'Теле2','9014':'Теле2',
-    '9015':'Теле2','9016':'Теле2','9017':'Теле2','9018':'Теле2','9019':'Теле2',
-    '9020':'Теле2','9021':'Теле2','9022':'Теле2','9023':'Теле2','9024':'Теле2',
-    '9025':'Теле2','9026':'Теле2','9027':'Теле2','9028':'Теле2','9029':'Теле2',
-    '9040':'Теле2','9041':'Теле2','9042':'Теле2','9043':'Теле2','9044':'Теле2',
-    '9045':'Теле2','9046':'Теле2','9047':'Теле2','9048':'Теле2','9049':'Теле2',
-    '9080':'Теле2','9081':'Теле2','9082':'Теле2','9083':'Теле2','9084':'Теле2',
-    '9085':'Теле2','9086':'Теле2','9087':'Теле2','9088':'Теле2','9089':'Теле2',
-    '9580':'Теле2','9581':'Теле2','9582':'Теле2','9583':'Теле2','9584':'Теле2',
-    '9585':'Теле2','9586':'Теле2','9587':'Теле2','9588':'Теле2','9589':'Теле2',
-    // Yota 4-знак
-    '9550':'Yota','9551':'Yota','9552':'Yota','9553':'Yota','9554':'Yota',
-    '9555':'Yota','9556':'Yota','9557':'Yota','9558':'Yota','9559':'Yota',
-    '9990':'Yota','9991':'Yota','9992':'Yota','9993':'Yota','9994':'Yota',
-    '9995':'Yota','9996':'Yota','9997':'Yota','9998':'Yota','9999':'Yota',
-    // СберМобайл 4-знак
-    '9450':'СберМобайл','9451':'СберМобайл','9452':'СберМобайл','9453':'СберМобайл',
-    '9454':'СберМобайл','9455':'СберМобайл','9456':'СберМобайл','9457':'СберМобайл',
-    '9458':'СберМобайл','9459':'СберМобайл',
-    '9480':'СберМобайл','9481':'СберМобайл','9482':'СберМобайл','9483':'СберМобайл',
-    '9484':'СберМобайл','9485':'СберМобайл','9486':'СберМобайл','9487':'СберМобайл',
-    '9488':'СберМобайл','9489':'СберМобайл',
-    // Тинькофф Мобайл 4-знак
-    '9470':'Тинькофф Мобайл','9471':'Тинькофф Мобайл','9472':'Тинькофф Мобайл',
-    '9473':'Тинькофф Мобайл','9474':'Тинькофф Мобайл','9475':'Тинькофф Мобайл',
-    '9476':'Тинькофф Мобайл','9477':'Тинькофф Мобайл','9478':'Тинькофф Мобайл',
-    '9479':'Тинькофф Мобайл',
-    // МОТИВ (Урал) 4-знак
-    '9080':'МОТИВ','9081':'МОТИВ','9082':'МОТИВ','9083':'МОТИВ','9084':'МОТИВ',
-    '9085':'МОТИВ','9086':'МОТИВ','9087':'МОТИВ','9088':'МОТИВ','9089':'МОТИВ',
-    // Ростелеком 4-знак
-    '9490':'Ростелеком','9491':'Ростелеком','9492':'Ростелеком','9493':'Ростелеком',
-    '9494':'Ростелеком','9495':'Ростелеком','9496':'Ростелеком','9497':'Ростелеком',
-    '9498':'Ростелеком','9499':'Ростелеком',
-  };
-
-  // ── 3-digit prefixes (fallback) ──
-  const P3 = {
-    '910':'МТС','911':'МТС','912':'МТС','913':'МТС','914':'МТС','915':'МТС',
-    '916':'МТС','917':'МТС','918':'МТС','919':'МТС','980':'МТС','981':'МТС',
-    '982':'МТС','983':'МТС','984':'МТС','985':'МТС','986':'МТС','936':'МТС','939':'МТС',
-    '903':'Билайн','905':'Билайн','906':'Билайн','909':'Билайн',
-    '960':'Билайн','961':'Билайн','962':'Билайн','963':'Билайн','964':'Билайн',
-    '965':'Билайн','966':'Билайн','967':'Билайн','968':'Билайн','969':'Билайн',
-    '920':'МегаФон','921':'МегаФон','922':'МегаФон','923':'МегаФон','924':'МегаФон',
-    '925':'МегаФон','926':'МегаФон','927':'МегаФон','928':'МегаФон','929':'МегаФон',
-    '930':'МегаФон','931':'МегаФон','932':'МегаФон','933':'МегаФон','934':'МегаФон',
-    '937':'МегаФон','938':'МегаФон',
-    '900':'Теле2','901':'Теле2','902':'Теле2','904':'Теле2','908':'Теле2','958':'Теле2',
-    '950':'Теле2','951':'Билайн','952':'МегаФон','953':'Билайн',
-    '955':'Yota','999':'Yota',
-    '945':'СберМобайл','948':'СберМобайл',
-    '947':'Тинькофф Мобайл',
-    '949':'Ростелеком',
-    '977':'МТС','978':'МТС','979':'МТС',
-    '993':'МТС','994':'МТС','995':'МТС','996':'МТС',
-    '771':'Казахстан','772':'Казахстан','775':'Казахстан','776':'Казахстан','777':'Казахстан',
-    '700':'Казахстан','701':'Казахстан','702':'Казахстан','705':'Казахстан',
-  };
-
-  // Check 5 → 4 → 3 digits (most specific first)
-  const p5 = p.slice(0,5);
-  if (P5[p5]) { const c = OP_COLORS[P5[p5]]||{bg:'#ffffff18',col:'#fff'}; return {name:P5[p5],...c}; }
-  const p4 = p.slice(0,4);
-  if (P4[p4]) { const c = OP_COLORS[P4[p4]]||{bg:'#ffffff18',col:'#fff'}; return {name:P4[p4],...c}; }
-  const p3 = p.slice(0,3);
-  if (P3[p3]) { const c = OP_COLORS[P3[p3]]||{bg:'#ffffff18',col:'#fff'}; return {name:P3[p3],...c}; }
-  return null;
-}
-
-/* ──────── SIDEBAR RESIZE ──────── */
-window.addEventListener('DOMContentLoaded', () => {
-  const handle  = document.getElementById('sidebar-resize-handle');
-  const sidebar = document.getElementById('callback-sidebar');
-  if (!handle || !sidebar) return;
-
-  const saved = localStorage.getItem('sidebar_width');
-  if (saved) sidebar.style.width = parseInt(saved) + 'px';
-
-  let dragging = false, startX = 0, startW = 0;
-
-  handle.addEventListener('mousedown', e => {
-    dragging = true; startX = e.clientX; startW = sidebar.offsetWidth;
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-    handle.style.background = 'rgba(124,58,237,.6)';
-    e.preventDefault();
-  });
-  document.addEventListener('mousemove', e => {
-    if (!dragging) return;
-    const newW = Math.min(520, Math.max(140, startW + (startX - e.clientX)));
-    sidebar.style.width = newW + 'px';
-  });
-  document.addEventListener('mouseup', () => {
-    if (!dragging) return;
-    dragging = false;
-    document.body.style.cursor = '';
-    document.body.style.userSelect = '';
-    handle.style.background = 'transparent';
-    localStorage.setItem('sidebar_width', sidebar.offsetWidth);
-  });
-  handle.addEventListener('mouseenter', () => { if (!dragging) handle.style.background = 'rgba(124,58,237,.35)'; });
-  handle.addEventListener('mouseleave', () => { if (!dragging) handle.style.background = 'transparent'; });
-});
-
-/* ──────── STATS TOGGLE PANEL ──────── */
-window.toggleMgrStatsPanel = async () => {
-  const panel = document.getElementById('mgr-stats-detail');
-  const btn   = document.getElementById('mgr-stats-toggle-btn');
-  if (!panel) return;
-  const isOpen = panel.style.display !== 'none';
-  panel.style.display = isOpen ? 'none' : 'block';
-  btn.innerHTML = isOpen
-    ? '📊 Подробная статистика ▼'
-    : '📊 Подробная статистика ▲';
-  if (!isOpen) await loadInlineMgrStats('today');
-};
-
-window.loadInlineMgrStats = async (period) => {
-  const body = document.getElementById('mgr-stats-body-inline');
-  if (!body) return;
-  body.innerHTML = '<div style="text-align:center;padding:10px;color:var(--text2);font-size:12px">⏳</div>';
-
-  const now = new Date();
-  let start, end;
-  if (period === 'today') {
-    start = new Date(now); start.setHours(0,0,0,0);
-    end   = new Date(now); end.setHours(23,59,59,999);
-  } else if (period === 'week') {
-    start = getWeekStart(now, 0); end = new Date(start); end.setDate(end.getDate()+7);
-  } else {
-    start = getWeekStart(now, -1); end = new Date(start); end.setDate(end.getDate()+7);
-  }
-
-  // Only fetch MY calls — not all clients
-  const snap = await getDocs(query(
-    collection(db,'clients'),
-    where('calledBy','==', me.uid),
-    limit(500)
-  ));
-  const mine = snap.docs.map(d=>d.data());
-  const periodMine = mine.filter(c => {
-    if (!c.calledAt) return false;
-    const d = c.calledAt.toDate ? c.calledAt.toDate() : new Date(c.calledAt);
-    return d >= start && d <= end;
-  });
-  const total = periodMine.length;
-  const counts = {};
-  RESULT_KEYS.forEach(k => { counts[k] = periodMine.filter(c=>c.result===k).length; });
-
-  body.innerHTML = `
-    <div style="display:flex;gap:3px;margin-bottom:8px">
-      ${['today','week','prevweek'].map(p => `
-        <button onclick="loadInlineMgrStats('${p}')"
-          style="flex:1;padding:4px 2px;border-radius:6px;border:none;
-          background:${p===period?'var(--acc)':'var(--bg4)'};
-          color:${p===period?'#fff':'var(--text2)'};
-          font-size:10px;font-weight:700;font-family:var(--font);cursor:pointer">
-          ${{today:'Сегодня',week:'Неделя',prevweek:'Прош.'}[p]}
-        </button>`).join('')}
-    </div>
-    <div style="font-size:11px;color:var(--text2);margin-bottom:6px">Итого: <b style="color:var(--acc2)">${total}</b></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
-      ${RESULT_KEYS.map(k => `
-        <div style="background:${RESULTS[k].color}15;border:1px solid ${RESULTS[k].color}33;
-          border-radius:7px;padding:5px 7px;display:flex;align-items:center;justify-content:space-between">
-          <span style="font-size:9px;color:${RESULTS[k].color}">${RESULTS[k].label}</span>
-          <b style="font-size:13px;font-family:var(--mono);color:${RESULTS[k].color}">${counts[k]}</b>
-        </div>`).join('')}
-    </div>`;
-};
-
-</script>
-
-<!-- Export with Filter Modal -->
-<div id="export-filter-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:700;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)closeExportModal()">
-  <div style="background:var(--bg2);border:1px solid var(--brd2);border-radius:20px;padding:28px;width:min(480px,95vw);box-shadow:0 24px 64px rgba(0,0,0,.6);animation:fadeUp .25s ease">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-      <div style="font-size:16px;font-weight:800">📥 Выгрузка базы</div>
-      <button onclick="closeExportModal()" style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);color:#fca5a5;font-size:18px;cursor:pointer;width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700">✕</button>
-    </div>
-    <div id="export-base-name" style="font-size:13px;color:var(--acc2);font-weight:700;margin-bottom:16px"></div>
-    <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Выберите статусы для выгрузки:</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px" id="export-checkboxes"></div>
-    <div style="display:flex;gap:8px;margin-bottom:16px">
-      <button class="btn btn-ghost btn-sm" onclick="selectAllExport(true)">✅ Выбрать все</button>
-      <button class="btn btn-ghost btn-sm" onclick="selectAllExport(false)">☐ Снять все</button>
-    </div>
-    <div style="display:flex;gap:10px;justify-content:flex-end">
-      <button class="btn btn-ghost" onclick="closeExportModal()">Отмена</button>
-      <button class="btn btn-pri" onclick="doFilteredExport()">📥 Выгрузить</button>
-    </div>
-  </div>
-</div>
-
-<!-- Daily Stats Modal -->
-<div id="daily-stats-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:700;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)closeDailyStats()">
-  <div style="background:var(--bg2);border:1px solid var(--brd2);border-radius:20px;padding:28px;width:min(900px,95vw);max-height:88vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.6);animation:fadeUp .25s ease">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <div style="font-size:16px;font-weight:800">📅 Статистика по дням</div>
-      <button onclick="closeDailyStats()" style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);color:#fca5a5;font-size:18px;cursor:pointer;width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700">✕</button>
-    </div>
-    <!-- Mini calendar -->
-    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px;align-items:flex-start">
-      <div style="background:var(--bg3);border:1px solid var(--brd);border-radius:14px;padding:16px;min-width:260px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-          <button onclick="calNav(-1)" style="background:none;border:none;color:var(--acc2);font-size:18px;cursor:pointer">‹</button>
-          <div id="cal-month-label" style="font-size:14px;font-weight:700;color:var(--text)"></div>
-          <button onclick="calNav(1)" style="background:none;border:none;color:var(--acc2);font-size:18px;cursor:pointer">›</button>
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:6px">
-          ${['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].map(d=>`<div style="text-align:center;font-size:10px;color:var(--text2);font-weight:700;padding:4px">${d}</div>`).join('')}
-        </div>
-        <div id="cal-days" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px"></div>
-      </div>
-      <div style="flex:1;min-width:200px">
-        <div id="daily-stats-selected-date" style="font-size:13px;color:var(--text2);margin-bottom:10px">Выберите дату в календаре</div>
-        <div id="daily-stats-content"><div style="color:var(--text2);font-size:13px">👈 Нажми на день</div></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Export with Filter Modal -->
-<div id="export-filter-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:700;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)closeExportModal()">
-  <div style="background:var(--bg2);border:1px solid var(--brd2);border-radius:20px;padding:28px;width:min(480px,95vw);box-shadow:0 24px 64px rgba(0,0,0,.6);animation:fadeUp .25s ease">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-      <div style="font-size:16px;font-weight:800">📥 Выгрузка базы</div>
-      <button onclick="closeExportModal()" style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);color:#fca5a5;font-size:18px;cursor:pointer;width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700">✕</button>
-    </div>
-    <div id="export-base-name" style="font-size:13px;color:var(--acc2);font-weight:700;margin-bottom:16px"></div>
-    <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Выберите статусы для выгрузки:</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px" id="export-checkboxes"></div>
-    <div style="display:flex;gap:8px;margin-bottom:16px">
-      <button class="btn btn-ghost btn-sm" onclick="selectAllExport(true)">✅ Выбрать все</button>
-      <button class="btn btn-ghost btn-sm" onclick="selectAllExport(false)">☐ Снять все</button>
-    </div>
-    <div style="display:flex;gap:10px;justify-content:flex-end">
-      <button class="btn btn-ghost" onclick="closeExportModal()">Отмена</button>
-      <button class="btn btn-pri" onclick="doFilteredExport()">📥 Выгрузить</button>
-    </div>
-  </div>
-</div>
-
-<!-- Daily Stats Modal -->
-<div id="daily-stats-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:700;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)closeDailyStats()">
-  <div style="background:var(--bg2);border:1px solid var(--brd2);border-radius:20px;padding:28px;width:min(900px,95vw);max-height:88vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.6);animation:fadeUp .25s ease">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <div style="font-size:16px;font-weight:800">📅 Статистика по дням</div>
-      <button onclick="closeDailyStats()" style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);color:#fca5a5;font-size:18px;cursor:pointer;width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700">✕</button>
-    </div>
-    <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">
-      <div style="background:var(--bg3);border:1px solid var(--brd);border-radius:14px;padding:16px;min-width:260px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-          <button onclick="calNav(-1)" style="background:none;border:none;color:var(--acc2);font-size:20px;cursor:pointer;padding:4px 8px">‹</button>
-          <div id="cal-month-label" style="font-size:14px;font-weight:700;color:var(--text)"></div>
-          <button onclick="calNav(1)" style="background:none;border:none;color:var(--acc2);font-size:20px;cursor:pointer;padding:4px 8px">›</button>
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px">
-          <div style="text-align:center;font-size:10px;color:var(--text2);font-weight:700;padding:4px">Пн</div>
-          <div style="text-align:center;font-size:10px;color:var(--text2);font-weight:700;padding:4px">Вт</div>
-          <div style="text-align:center;font-size:10px;color:var(--text2);font-weight:700;padding:4px">Ср</div>
-          <div style="text-align:center;font-size:10px;color:var(--text2);font-weight:700;padding:4px">Чт</div>
-          <div style="text-align:center;font-size:10px;color:var(--text2);font-weight:700;padding:4px">Пт</div>
-          <div style="text-align:center;font-size:10px;color:var(--text2);font-weight:700;padding:4px">Сб</div>
-          <div style="text-align:center;font-size:10px;color:var(--text2);font-weight:700;padding:4px">Вс</div>
-        </div>
-        <div id="cal-days" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px"></div>
-      </div>
-      <div style="flex:1;min-width:220px">
-        <div id="daily-stats-selected-date" style="font-size:13px;font-weight:700;color:var(--acc2);margin-bottom:12px">👈 Выберите дату</div>
-        <div id="daily-stats-content"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Base Stats Modal -->
-<div id="base-stats-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:600;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)closeBaseStatsModal()">
-  <div style="background:var(--bg2);border:1px solid var(--brd2);border-radius:20px;padding:28px;width:min(900px,95vw);max-height:85vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.6);animation:fadeUp .25s ease">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-      <div id="bsm-title" style="font-size:17px;font-weight:800"></div>
-      <button onclick="closeBaseStatsModal()" style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);color:#fca5a5;font-size:18px;cursor:pointer;line-height:1;width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700">✕</button>
-    </div>
-    <div id="bsm-body"></div>
-  </div>
-</div>
-
-<!-- Manager Stats Modal -->
-<div id="mgr-stats-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:700;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)closeMgrStatsModal()">
-  <div style="background:var(--bg2);border:1px solid var(--brd2);border-radius:20px;padding:28px;width:min(700px,95vw);max-height:88vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.6);animation:fadeUp .25s ease">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-      <div style="font-size:17px;font-weight:800">📊 Моя статистика</div>
-      <button onclick="closeMgrStatsModal()" style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);color:#fca5a5;font-size:18px;cursor:pointer;width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700">✕</button>
-    </div>
-    <!-- Period tabs -->
-    <div style="display:flex;gap:4px;background:var(--bg3);border:1px solid var(--brd);border-radius:10px;padding:4px;margin-bottom:20px;width:fit-content">
-      <button id="msp-today" onclick="setMgrStatsPeriod('today')" style="padding:7px 18px;border-radius:7px;border:none;background:var(--acc);color:#fff;font-weight:700;font-size:12px;font-family:var(--font);cursor:pointer">Сегодня</button>
-      <button id="msp-week" onclick="setMgrStatsPeriod('week')" style="padding:7px 18px;border-radius:7px;border:none;background:transparent;color:var(--text2);font-weight:700;font-size:12px;font-family:var(--font);cursor:pointer">Эта неделя</button>
-      <button id="msp-prevweek" onclick="setMgrStatsPeriod('prevweek')" style="padding:7px 18px;border-radius:7px;border:none;background:transparent;color:var(--text2);font-weight:700;font-size:12px;font-family:var(--font);cursor:pointer">Прошлая неделя</button>
-    </div>
-    <div id="mgr-stats-body">
-      <div style="text-align:center;padding:40px;color:var(--text2)">⏳ Загрузка...</div>
-    </div>
-    <!-- 7-day chart -->
-    <div style="margin-top:20px">
-      <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">📈 Прозвоны за 7 дней</div>
-      <div style="position:relative;height:120px">
-        <canvas id="mgr-stats-chart"></canvas>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Manager Stats Modal -->
-<div id="mgr-stats-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:700;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)closeMgrStatsModal()">
-  <div style="background:var(--bg2);border:1px solid var(--brd2);border-radius:20px;padding:28px;width:min(700px,95vw);max-height:88vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.6);animation:fadeUp .25s ease">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-      <div style="font-size:17px;font-weight:800">📊 Моя статистика</div>
-      <button onclick="closeMgrStatsModal()" style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);color:#fca5a5;font-size:18px;cursor:pointer;width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700">✕</button>
-    </div>
-    <div style="display:flex;gap:4px;background:var(--bg3);border:1px solid var(--brd);border-radius:10px;padding:4px;margin-bottom:20px;width:fit-content">
-      <button id="msp-today" onclick="setMgrStatsPeriod('today')" style="padding:7px 18px;border-radius:7px;border:none;background:var(--acc);color:#fff;font-weight:700;font-size:12px;font-family:var(--font);cursor:pointer">Сегодня</button>
-      <button id="msp-week" onclick="setMgrStatsPeriod('week')" style="padding:7px 18px;border-radius:7px;border:none;background:transparent;color:var(--text2);font-weight:700;font-size:12px;font-family:var(--font);cursor:pointer">Эта неделя</button>
-      <button id="msp-prevweek" onclick="setMgrStatsPeriod('prevweek')" style="padding:7px 18px;border-radius:7px;border:none;background:transparent;color:var(--text2);font-weight:700;font-size:12px;font-family:var(--font);cursor:pointer">Прошлая неделя</button>
-    </div>
-    <div id="mgr-stats-body"><div style="text-align:center;padding:40px;color:var(--text2)">⏳ Загрузка...</div></div>
-    <div style="margin-top:20px">
-      <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">📈 Прозвоны за 7 дней</div>
-      <div style="position:relative;height:130px"><canvas id="mgr-stats-chart"></canvas></div>
-    </div>
-  </div>
-</div>
-
-<!-- ── THEME PICKER LOGIC ── -->
-<script>
-/* Apply saved theme immediately on load */
-(function() {
-  const saved = localStorage.getItem('crm_theme') || '';
-  if (saved) document.body.classList.add('theme-' + saved);
-  // Mark active button when panel opens
-})();
-
-function toggleThemePicker() {
-  const panel = document.getElementById('theme-picker-panel');
-  panel.classList.toggle('open');
-  // Mark active
-  const saved = localStorage.getItem('crm_theme') || '';
-  document.querySelectorAll('.theme-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.theme === saved);
-  });
-}
-
-// Close picker on outside click
-document.addEventListener('click', function(e) {
-  const panel = document.getElementById('theme-picker-panel');
-  const fab   = document.getElementById('theme-fab');
-  if (panel && !panel.contains(e.target) && e.target !== fab) {
-    panel.classList.remove('open');
-  }
-});
-
-document.querySelectorAll('.theme-btn').forEach(btn => {
-  btn.addEventListener('click', function() {
-    const theme = this.dataset.theme;
-    const saved = localStorage.getItem('crm_theme') || '';
-    // Remove old theme class
-    if (saved) document.body.classList.remove('theme-' + saved);
-    // Apply new
-    if (theme) {
-      document.body.classList.add('theme-' + theme);
-      localStorage.setItem('crm_theme', theme);
-    } else {
-      localStorage.removeItem('crm_theme');
-    }
-    // Update active
-    document.querySelectorAll('.theme-btn').forEach(b => {
-      b.classList.toggle('active', b.dataset.theme === theme);
-    });
-  });
-});
-
-/* Show FAB only when logged in (after app screen appears) */
-const fabObserver = new MutationObserver(() => {
-  const appVisible = document.getElementById('screen-app') &&
-    document.getElementById('screen-app').style.display !== 'none';
-  const fab = document.getElementById('theme-fab');
-  if (fab) fab.style.display = appVisible ? 'flex' : 'none';
-});
-fabObserver.observe(document.body, { childList: true, subtree: true, attributes: true });
 </script>
 
 <!-- Edit Manager Modal -->
@@ -3210,6 +1982,50 @@ fabObserver.observe(document.body, { childList: true, subtree: true, attributes:
     <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--brd)">
       <button class="btn btn-ghost" onclick="closeAssignBases()">Отмена</button>
       <button class="btn btn-pri" onclick="saveAssignBases()">💾 Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- Export Base Modal -->
+<div id="export-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:502;align-items:center;justify-content:center">
+  <div style="background:var(--bg2);border:1px solid var(--brd2);border-radius:20px;padding:28px;width:440px;max-width:94vw;box-shadow:0 24px 64px rgba(0,0,0,.6);animation:fadeUp .25s ease">
+    <div style="font-size:16px;font-weight:800;margin-bottom:6px">📥 Выгрузить базу</div>
+    <div id="export-base-name-label" style="font-size:13px;color:var(--acc2);margin-bottom:18px"></div>
+    <input type="hidden" id="export-base-id">
+    
+    <div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Фильтр по результату</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px">
+      <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;font-weight:600">
+        <input type="checkbox" id="exp-all" checked onchange="toggleExpAll(this.checked)" style="accent-color:var(--acc)"> Все
+      </label>
+      <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;font-weight:600;color:var(--green)">
+        <input type="checkbox" class="exp-filter" value="transferred" style="accent-color:var(--green)"> ✅ Передал
+      </label>
+      <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;font-weight:600;color:#fca5a5">
+        <input type="checkbox" class="exp-filter" value="nodial" style="accent-color:var(--red)"> ❌ Не дозвон
+      </label>
+      <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;font-weight:600;color:#93c5fd">
+        <input type="checkbox" class="exp-filter" value="skip" style="accent-color:var(--blue)"> ⏭ Скип
+      </label>
+      <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;font-weight:600;color:#fcd34d">
+        <input type="checkbox" class="exp-filter" value="callback" style="accent-color:var(--yellow)"> 🔄 Перезвон
+      </label>
+      <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;font-weight:600;color:#f9a8d4">
+        <input type="checkbox" class="exp-filter" value="cut" style="accent-color:var(--pink)"> ✂️ Срез
+      </label>
+      <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;font-weight:600;color:#90e0ef">
+        <input type="checkbox" class="exp-filter" value="ao" style="accent-color:var(--cyan)"> 🎯 АО
+      </label>
+      <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;font-weight:600;color:#d1d5db">
+        <input type="checkbox" class="exp-filter" value="norel" style="accent-color:#6b7280"> 🚷 Нет родств.
+      </label>
+      <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text2)">
+        <input type="checkbox" class="exp-filter" value="new" style="accent-color:var(--acc)"> 🆕 Новые (не прозвонены)
+      </label>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="el('export-modal').style.display='none'">Отмена</button>
+      <button class="btn btn-pri" onclick="doExportBase()">📥 Выгрузить CSV</button>
     </div>
   </div>
 </div>
