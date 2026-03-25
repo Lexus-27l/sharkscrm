@@ -375,7 +375,7 @@ input[type=file]{display:none}
 }
 
 .call-actions{
-  display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:10px;
+  display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px;
 }
 .act-btn{
   padding:14px 8px;border:none;border-radius:14px;
@@ -387,16 +387,22 @@ input[type=file]{display:none}
 .act-btn:hover{transform:translateY(-3px)}
 .act-btn:active{transform:scale(.96)}
 .ab-nd{background:rgba(239,68,68,.12);border:1.5px solid rgba(239,68,68,.4);color:#fca5a5}
-.ab-nd:hover{background:rgba(239,68,68,.22);border-color:var(--red);box-shadow:0 4px 16px rgba(239,68,68,.2)}
 .ab-sk{background:rgba(59,130,246,.12);border:1.5px solid rgba(59,130,246,.4);color:#93c5fd}
-.ab-sk:hover{background:rgba(59,130,246,.22);border-color:var(--blue);box-shadow:0 4px 16px rgba(59,130,246,.2)}
 .ab-cb{background:rgba(245,158,11,.12);border:1.5px solid rgba(245,158,11,.4);color:#fcd34d}
-.ab-cb:hover{background:rgba(245,158,11,.22);border-color:var(--yellow);box-shadow:0 4px 16px rgba(245,158,11,.2)}
 .ab-tr{background:rgba(34,197,94,.14);border:1.5px solid rgba(34,197,94,.5);color:#86efac}
-.ab-tr:hover{background:rgba(34,197,94,.25);border-color:var(--green);box-shadow:0 6px 20px rgba(34,197,94,.3)}
 .ab-ct{background:rgba(236,72,153,.12);border:1.5px solid rgba(236,72,153,.4);color:#f9a8d4}
-.ab-ct:hover{background:rgba(236,72,153,.22);border-color:var(--pink);box-shadow:0 4px 16px rgba(236,72,153,.2)}
-
+.ab-norel{
+  background:rgba(107,114,128,.12);
+  border:1.5px solid rgba(107,114,128,.5);
+  color:#9ca3af;
+}
+.ab-norel:hover{
+  background:rgba(107,114,128,.22);
+  border-color:#6b7280;
+  color:#d1d5db;
+  box-shadow:0 4px 16px rgba(107,114,128,.2);
+}
+    
 /* Charts */
 .chart-two{display:grid;grid-template-columns:280px 1fr;gap:16px}
 .chart-box{background:var(--bg2);border:1px solid var(--brd);border-radius:var(--r2);padding:18px}
@@ -882,6 +888,7 @@ input[type=file]{display:none}
           <button class="act-btn ab-cb" onclick="act('callback')"><span class="ico">🔄</span>Перезвон</button>
           <button class="act-btn ab-tr" onclick="act('transferred')"><span class="ico">✅</span>Передал</button>
           <button class="act-btn ab-ct" onclick="act('cut')"><span class="ico">✂️</span>Срез</button>
+          <button class="act-btn ab-norel" onclick="act('norel')"><span class="ico">🚷</span>Не родственник</button>
           <button class="act-btn" style="background:rgba(0,180,216,.12);border:1.5px solid rgba(0,180,216,.4);color:#90e0ef" onclick="act('ao')"><span class="ico">🎯</span>АО</button>
           <button class="act-btn" style="background:rgba(139,92,246,.12);border:1.5px solid rgba(139,92,246,.4);color:#c4b5fd" onclick="act('wrongop')"><span class="ico">📵</span>Не тот оператор</button>
           <button class="act-btn" style="background:rgba(244,63,94,.12);border:1.5px solid rgba(244,63,94,.5);color:#fda4af" onclick="act('liar')"><span class="ico">🤥</span>Пиздабол ёбаный</button>
@@ -1007,18 +1014,20 @@ let callUnsub  = null;
 let pieChart   = null;
 let barChart   = null;
 
-/* ──────── RESULT CONFIG ──────── */
+/* ──────── РЕЗУЛЬТАТЫ ЗВОНКОВ (с новой кнопкой) ──────── */
 const RESULTS = {
-  nodial:      { label:'❌ Не дозвон',  cls:'rc-nodial',  color:'#e63946' },
-  skip:        { label:'⏭ Скип',        cls:'rc-skip',    color:'#457b9d' },
-  callback:    { label:'🔄 Перезвон',   cls:'rc-callback',color:'#f4a261' },
-  transferred: { label:'✅ Передал',    cls:'rc-passed',  color:'#52b788' },
-  cut:         { label:'✂️ Срез',       cls:'rc-pzdbl',   color:'#d00000' },
-  ao:          { label:'🎯 АО',         cls:'rc-ao',      color:'#00b4d8' },
-  wrongop:     { label:'📵 Не тот оператор', cls:'rc-wrongop',  color:'#8b5cf6' },
-  liar:        { label:'🤥 Пиздабол ёбаный',  cls:'rc-liar',     color:'#f43f5e' },
+  transferred: { label: "✅ Передал",        color: "#22c55e", cls: "rc-transfer" },
+  nodial:      { label: "❌ Не дозвон",      color: "#ef4444", cls: "rc-nodial" },
+  skip:        { label: "⏭ Скип",           color: "#3b82f6", cls: "rc-skip" },
+  callback:    { label: "📞 Перезвон",       color: "#f59e0b", cls: "rc-callback" },
+  cut:         { label: "✂️ Срез",           color: "#ec4899", cls: "rc-cut" },
+  ao:          { label: "🎯 АО",             color: "#06b6d4", cls: "rc-ao" },
+  
+  // НОВАЯ КНОПКА — Не родственник
+  norel:       { label: "🚷 Не родственник", color: "#6b7280", cls: "rc-norel" }
 };
-const RESULT_KEYS = Object.keys(RESULTS);
+
+const RESULT_KEYS = ['transferred', 'nodial', 'skip', 'callback', 'cut', 'ao', 'norel'];
 
 /* ──────── AUTH ──────── */
 onAuthStateChanged(auth, async user => {
@@ -1105,6 +1114,7 @@ window.refreshStats = async () => {
 
 window.setPeriod = async (period) => {
   currentPeriod = period;
+  // Update button styles
   ['today','week','prevweek'].forEach(p => {
     const btn = el('period-' + p);
     if (!btn) return;
@@ -1112,6 +1122,7 @@ window.setPeriod = async (period) => {
     btn.style.color = p === period ? '#fff' : 'var(--text2)';
     btn.style.border = 'none';
   });
+  // Update label
   const lbl = el('period-label');
   const now = new Date();
   if (period === 'today') {
@@ -1125,17 +1136,13 @@ window.setPeriod = async (period) => {
     const sun = new Date(mon); sun.setDate(sun.getDate()+6);
     if (lbl) lbl.textContent = 'Пред. неделя: ' + mon.toLocaleDateString('ru-RU',{day:'numeric',month:'short'}) + ' — ' + sun.toLocaleDateString('ru-RU',{day:'numeric',month:'short'});
   }
-
-  // Фильтруем по периоду для ВСЕХ блоков
-  const { start, end } = getPeriodRange(period);
-  const periodFiltered = allClientsForStats.filter(c => {
+  renderStatsByPeriod(allClientsForStats, period);
+  renderCityStats(allClientsForStats.filter(c => {
+    const { start, end } = getPeriodRange(period);
     if (!c.calledAt) return false;
     const ms = toMs(c.calledAt);
     return ms >= start.getTime() && ms <= end.getTime();
-  });
-
-  renderStatsByPeriod(allClientsForStats, period);
-  renderCityStats(periodFiltered);
+  }));
   if (allClientsForStats.length) loadMgrStats(allClientsForStats);
 };
 
@@ -1250,14 +1257,6 @@ function toMs(calledAt) {
   if (typeof calledAt.toDate === 'function') return calledAt.toDate().getTime();
   if (calledAt.seconds) return calledAt.seconds * 1000;
   return new Date(calledAt).getTime();
-}
-
-function renderStatsByPeriodCustom(clients, label) {
-  // Используется когда передан уже отфильтрованный массив (например из календаря)
-  if (el('pie-title')) el('pie-title').textContent = '📊 ' + label;
-  const resultCounts = {};
-  clients.forEach(c => { if (c.result) resultCounts[c.result] = (resultCounts[c.result]||0)+1; });
-  renderPie(resultCounts);
 }
 
 function renderStatsByPeriod(all, period) {
@@ -1789,41 +1788,11 @@ let mgrDailyChart = null;
 // Money stickers for the chart (shown on top of bars)
 const MONEY_STICKERS = ['💵','💰','🤑','💸','🏆','⭐','🔥','💎','🎯','📈'];
 
-// Key for localStorage stats cache: uid + date
-function getStatsCacheKey() {
-  const d = new Date();
-  const dateStr = d.getFullYear() + '-' + (d.getMonth()+1) + '-' + d.getDate();
-  return 'stats_' + me.uid + '_' + dateStr;
-}
-
-function saveMgrStatsToCache(stats) {
-  try { localStorage.setItem(getStatsCacheKey(), JSON.stringify(stats)); } catch(e) {}
-}
-
-function loadMgrStatsFromCache() {
-  try {
-    const raw = localStorage.getItem(getStatsCacheKey());
-    return raw ? JSON.parse(raw) : null;
-  } catch(e) { return null; }
-}
-
-function applyMgrStats(stats) {
-  if (el('ms-today')) el('ms-today').textContent = stats.today || 0;
-  if (el('ms-transferred')) el('ms-transferred').textContent = stats.transferred || 0;
-  if (el('ms-nodial')) el('ms-nodial').textContent = stats.nodial || 0;
-  if (el('ms-ao')) el('ms-ao').textContent = stats.ao || 0;
-  if (el('ms-skip')) el('ms-skip').textContent = stats.skip || 0;
-}
-
 async function loadMgrMiniStats() {
-  // ── 1. Сначала показываем кешированные данные (мгновенно) ──
-  const cached = loadMgrStatsFromCache();
-  if (cached) applyMgrStats(cached);
-
   const now = new Date();
   const today = new Date(now); today.setHours(0,0,0,0);
 
-  // ONE query: my calls for last 7 days
+  // ONE query: my calls for last 7 days — covers both today stats + chart
   const week7ago = new Date(now); week7ago.setDate(week7ago.getDate() - 7); week7ago.setHours(0,0,0,0);
   const snap7 = await getDocs(query(
     collection(db,'clients'),
@@ -1834,20 +1803,15 @@ async function loadMgrMiniStats() {
   const mine = snap7.docs.map(d => d.data());
   const mineToday = mine.filter(c => {
     if (!c.calledAt) return false;
-    return toMs(c.calledAt) >= today.getTime();
+    const ms = toMs(c.calledAt);
+    return ms >= today.getTime();
   });
 
-  const stats = {
-    today:       mineToday.length,
-    transferred: mineToday.filter(c=>c.result==='transferred').length,
-    nodial:      mineToday.filter(c=>c.result==='nodial').length,
-    ao:          mineToday.filter(c=>c.result==='ao').length,
-    skip:        mineToday.filter(c=>c.result==='skip').length,
-  };
-
-  // ── 2. Обновляем UI и сохраняем в кеш ──
-  applyMgrStats(stats);
-  saveMgrStatsToCache(stats);
+  el('ms-today').textContent = mineToday.length;
+  el('ms-transferred').textContent = mineToday.filter(c=>c.result==='transferred').length;
+  el('ms-nodial').textContent = mineToday.filter(c=>c.result==='nodial').length;
+  el('ms-ao').textContent = mineToday.filter(c=>c.result==='ao').length;
+  if (el('ms-skip')) el('ms-skip').textContent = mineToday.filter(c=>c.result==='skip').length;
 
   // 7-day data
   const days = [];
@@ -2185,7 +2149,7 @@ window.act = async result => {
     calledBy: me.uid, calledAt: Timestamp.now()
   });
 
-  // Update counters locally + save to cache
+  // Update counters locally — no reads needed
   const msToday = el('ms-today');
   if (msToday) {
     const cur = parseInt(msToday.textContent)||0;
@@ -2195,14 +2159,6 @@ window.act = async result => {
       const el2 = el(map[result]);
       if (el2) el2.textContent = (parseInt(el2.textContent)||0) + 1;
     }
-    // Save updated stats to localStorage
-    try {
-      const cached = loadMgrStatsFromCache() || { today:0, transferred:0, nodial:0, ao:0, skip:0 };
-      cached.today = parseInt(el('ms-today').textContent)||0;
-      const rmap = { transferred:'transferred', nodial:'nodial', ao:'ao', skip:'skip' };
-      if (rmap[result]) cached[rmap[result]] = (cached[rmap[result]]||0) + 1;
-      saveMgrStatsToCache(cached);
-    } catch(e) {}
   }
 
   if (result === 'callback') addToCallbackQueue(id);
