@@ -2291,6 +2291,20 @@ window.importText = async () => {
 };
 
 function parseTxtClients(raw) {
+  // Detect format: old format uses "<b>" tags, new format uses plain FIO + DATE lines
+  const hasOldFormat = raw.includes('<b>') && /^\d+\./m.test(raw);
+  if (hasOldFormat) {
+    return parseTxtClientsOldFormat(raw);
+  } else {
+    return parseTxtClientsNewFormat(raw);
+  }
+}
+
+/* ── OLD FORMAT (unchanged) ─────────────────────────────────────
+   Each client starts with: "N. <b>NAME</b> DATE"
+   Relatives start with: "#N NAME DATE"
+   ─────────────────────────────────────────────────────────────── */
+function parseTxtClientsOldFormat(raw) {
   const clients = [];
   const lines = raw.split('\n');
   let current = null;
@@ -2373,6 +2387,111 @@ function parseTxtClients(raw) {
   if (current) {
     if (currentRel) current.relatives.push({...currentRel});
     if (current.deceased) clients.push(current);
+  }
+
+  return clients;
+}
+
+/* ── NEW FORMAT ─────────────────────────────────────────────────
+   Structure per client block (separated by "---..." lines or blank lines):
+     Строка 1: ФИО умершего  ДД.ММ.ГГГГ
+     Строка 2: Адрес умершего (любой текст без даты или явного ФИО)
+     Далее: блоки родственников, каждый начинается с ФИО ДД.ММ.ГГГГ
+            затем один или несколько номеров телефонов (7XXXXXXXXXX или 8XXXXXXXXXX)
+   ─────────────────────────────────────────────────────────────── */
+function parseTxtClientsNewFormat(raw) {
+  const clients = [];
+
+  // Split into client blocks by separator lines (3+ dashes/equals/dots) or double blank lines
+  const blocks = raw.split(/\n(?:[\-─═\.]{3,})\n|\n{2,}(?=\S)/);
+
+  // Regex: line that is a person's FIO + date  e.g. "Явашкеев Наран Юрьевич 27.10.1975"
+  // Must have at least 2 words and end with a date
+  const fioDateRe = /^([А-ЯЁа-яёA-Za-z][^\d\n]{4,}?)\s+(\d{1,2}\.\d{2}\.\d{4})\s*$/;
+
+  // Regex: phone number line (7 or 8 prefix, 11 digits, may have spaces/dashes stripped)
+  const phoneLineRe = /^[78]\d{10}$/;
+
+  // Regex: separator inside a block
+  const separatorRe = /^[\-─═\.]{3,}$/;
+
+  // Regex: region/address line – no date at end, not a phone, not a separator
+  // We consider it an address if it contains typical address keywords or is all caps / has digits not forming a date
+  function isAddressLine(s) {
+    if (!s) return false;
+    if (phoneLineRe.test(s)) return false;
+    if (separatorRe.test(s)) return false;
+    if (fioDateRe.test(s)) return false;
+    // Has address keywords
+    if (/калмык|республик|респ\.|район|р-н|поселок|п\.|улица|ул\.|проспект|пр\.|дом|д\.|кв\.|с\.|деревня|город|г\./i.test(s)) return true;
+    // All uppercase words with commas/numbers suggest an address
+    if (/[А-ЯЁ]{3,}/.test(s) && /[,\d]/.test(s)) return true;
+    return false;
+  }
+
+  for (const block of blocks) {
+    const lines = block.split('\n').map(l => l.trim()).filter(l => l && !separatorRe.test(l));
+    if (!lines.length) continue;
+
+    // Line 0: deceased FIO + DOB
+    const firstMatch = lines[0].match(fioDateRe);
+    if (!firstMatch) continue; // can't identify deceased
+
+    const deceased = firstMatch[1].trim();
+    const dob = firstMatch[2];
+
+    // Line 1: deceased address (optional – may be absent)
+    let region = '';
+    let relStart = 1;
+
+    if (lines.length > 1 && isAddressLine(lines[1])) {
+      region = lines[1];
+      relStart = 2;
+    }
+
+    const relatives = [];
+    let currentRel = null;
+
+    for (let i = relStart; i < lines.length; i++) {
+      const line = lines[i];
+
+      // Separator inside block → stop
+      if (separatorRe.test(line)) break;
+
+      // Check if it's a new relative's FIO + DOB line
+      const relMatch = line.match(fioDateRe);
+      if (relMatch) {
+        if (currentRel) relatives.push({...currentRel});
+        const relName = relMatch[1].trim();
+        const relDob = relMatch[2];
+        currentRel = { name: relName, dob: relDob, phone: '', address: '', passport: '', snils: '', relation: '' };
+        continue;
+      }
+
+      // Phone line
+      if (phoneLineRe.test(line)) {
+        if (!currentRel) {
+          // phone before any relative FIO — attach to deceased block (skip gracefully)
+          continue;
+        }
+        // Normalize to 7XXXXXXXXXX
+        const normalized = '7' + line.slice(1);
+        currentRel.phone = currentRel.phone ? currentRel.phone + ', ' + normalized : normalized;
+        continue;
+      }
+
+      // Address for relative
+      if (currentRel && isAddressLine(line)) {
+        currentRel.address = line;
+        continue;
+      }
+    }
+
+    if (currentRel) relatives.push({...currentRel});
+
+    if (deceased) {
+      clients.push({ deceased, dob, region, relatives });
+    }
   }
 
   return clients;
