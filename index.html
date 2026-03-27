@@ -2871,35 +2871,136 @@ async function loadBaseStatsCounts(bases) {
 
 window.exportBase = async (baseId, baseName) => {
   toast('⏳ Подготовка выгрузки...');
+
+  // 1. Загружаем всех клиентов базы
   const snap = await getDocs(query(collection(db,'clients'), where('baseId','==',baseId)));
-  const clients = snap.docs.map(d => d.data());
-  
+  const clients = snap.docs.map(d => ({ _id: d.id, ...d.data() }));
   if (!clients.length) { toast('⚠️ База пуста','warn'); return; }
-  
-  // Build CSV
-  const rows = [['ФИО умершего','Дата рождения','Регион/Адрес','Родственник 1','Телефон 1','Паспорт 1','СНИЛС 1','Родственник 2','Телефон 2','Паспорт 2','СНИЛС 2','Результат','Комментарий','Дата звонка']];
-  
+
+  // 2. Загружаем имена менеджеров (один раз)
+  const usersSnap = await getDocs(collection(db,'user'));
+  const mgrMap = {};
+  usersSnap.docs.forEach(d => { mgrMap[d.id] = d.data().name || d.data().email || d.id; });
+
+  // 3. Локализация статусов
+  const STATUS_LABELS = {
+    transferred: 'Передал',
+    nodial:      'Не дозвон',
+    skip:        'Скип',
+    callback:    'Перезвон',
+    cut:         'Срез',
+    ao:          'АО',
+    norel:       'Не родственник',
+    wrongop:     'Не тот оператор',
+    liar:        'Пиздабол'
+  };
+
+  // 4. Определяем максимальное кол-во родственников для заголовков
+  const maxRel = Math.max(1, ...clients.map(c => (c.relatives||[]).length));
+
+  // 5. Строим заголовки
+  const headers = [
+    '№', 'ФИО умершего', 'Дата рождения', 'Адрес',
+  ];
+  for (let i = 1; i <= maxRel; i++) {
+    headers.push(`Родственник ${i}`, `Дата р. ${i}`, `Телефон ${i}`, `Паспорт ${i}`, `СНИЛС ${i}`);
+  }
+  headers.push('Статус', 'Комментарий', 'Менеджер', 'Дата звонка', 'Время звонка');
+
+  // 6. Строим строки
+  const rows = clients.map((c, idx) => {
+    const row = [
+      idx + 1,
+      c.deceased || '',
+      c.dob || '',
+      c.region || '',
+    ];
+    for (let i = 0; i < maxRel; i++) {
+      const r = (c.relatives||[])[i] || {};
+      row.push(r.name||'', r.dob||'', r.phone||'', r.passport||'', r.snils||'');
+    }
+    // Статус русским текстом
+    const statusRu = c.result ? (STATUS_LABELS[c.result] || c.result) : 'Новый';
+    // Дата и время звонка
+    let dateStr = '', timeStr = '';
+    if (c.calledAt) {
+      const d = c.calledAt.toDate ? c.calledAt.toDate() : new Date(c.calledAt);
+      dateStr = d.toLocaleDateString('ru-RU');
+      timeStr = d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+    }
+    row.push(
+      statusRu,
+      c.comment || '',
+      c.calledBy ? (mgrMap[c.calledBy] || c.calledBy) : '',
+      dateStr,
+      timeStr
+    );
+    return row;
+  });
+
+  // 7. Формируем Excel через XLSX
+  const wb = XLSX.utils.book_new();
+  const wsData = [headers, ...rows];
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+  // Ширина колонок
+  const colWidths = headers.map((h, i) => {
+    if (i === 0) return { wch: 5 };
+    if (h.includes('ФИО') || h.includes('Родственник') || h.includes('Адрес')) return { wch: 30 };
+    if (h.includes('Телефон')) return { wch: 16 };
+    if (h.includes('Статус')) return { wch: 18 };
+    if (h.includes('Менеджер')) return { wch: 20 };
+    if (h.includes('Комментарий')) return { wch: 25 };
+    return { wch: 14 };
+  });
+  ws['!cols'] = colWidths;
+
+  XLSX.utils.book_append_sheet(wb, ws, 'База');
+
+  // Лист со сводкой по статусам
+  const summaryData = [['Статус', 'Количество', '%']];
+  const total = clients.length;
+  const groups = {};
   clients.forEach(c => {
-    const r1 = (c.relatives||[])[0] || {};
-    const r2 = (c.relatives||[])[1] || {};
-    rows.push([
-      c.deceased||'', c.dob||'', c.region||'',
-      r1.name||'', r1.phone||'', r1.passport||'', r1.snils||'',
-      r2.name||'', r2.phone||'', r2.passport||'', r2.snils||'',
-      c.result||'', c.comment||'',
-      c.calledAt ? (c.calledAt.toDate ? c.calledAt.toDate().toLocaleDateString('ru-RU') : '') : ''
+    const key = c.result || 'new';
+    groups[key] = (groups[key] || 0) + 1;
+  });
+  const order = ['new','transferred','nodial','skip','callback','cut','ao','norel','wrongop','liar'];
+  order.forEach(k => {
+    if (groups[k]) {
+      const label = k === 'new' ? 'Новый' : (STATUS_LABELS[k] || k);
+      summaryData.push([label, groups[k], Math.round(groups[k]/total*100) + '%']);
+    }
+  });
+  summaryData.push(['', '', '']);
+  summaryData.push(['ИТОГО', total, '100%']);
+  const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+  wsSummary['!cols'] = [{ wch: 22 }, { wch: 12 }, { wch: 8 }];
+  XLSX.utils.book_append_sheet(wb, wsSummary, 'Сводка');
+
+  // Лист по менеджерам
+  const mgrSummary = [['Менеджер', 'Всего', ...Object.keys(STATUS_LABELS).map(k => STATUS_LABELS[k])]];
+  const mgrGroups = {};
+  clients.forEach(c => {
+    if (!c.calledBy) return;
+    if (!mgrGroups[c.calledBy]) mgrGroups[c.calledBy] = { name: mgrMap[c.calledBy]||c.calledBy, counts: {} };
+    const key = c.result || 'new';
+    mgrGroups[c.calledBy].counts[key] = (mgrGroups[c.calledBy].counts[key] || 0) + 1;
+  });
+  Object.values(mgrGroups).forEach(m => {
+    const total = Object.values(m.counts).reduce((a,b)=>a+b,0);
+    mgrSummary.push([
+      m.name, total,
+      ...Object.keys(STATUS_LABELS).map(k => m.counts[k] || 0)
     ]);
   });
-  
-  const csvContent = rows.map(r => r.map(v => '"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
-  const blob = new Blob(['\uFEFF'+csvContent], {type:'text/csv;charset=utf-8;'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = baseName + '.csv';
-  document.body.appendChild(a); a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  toast('✅ Выгружено ' + clients.length + ' клиентов!');
+  const wsMgr = XLSX.utils.aoa_to_sheet(mgrSummary);
+  wsMgr['!cols'] = [{ wch: 22 }, { wch: 8 }, ...Object.keys(STATUS_LABELS).map(() => ({ wch: 14 }))];
+  XLSX.utils.book_append_sheet(wb, wsMgr, 'По менеджерам');
+
+  // 8. Скачиваем
+  XLSX.writeFile(wb, baseName + '.xlsx');
+  toast('✅ Выгружено ' + clients.length + ' клиентов → ' + baseName + '.xlsx');
 };
 
 window.deleteBase = async (baseId, baseName) => {
