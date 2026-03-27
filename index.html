@@ -2295,7 +2295,121 @@ function parseTxtClients(raw) {
   if (raw.includes('<b>') && /^\d+\./m.test(raw)) {
     return parseTxtClientsOldFormat(raw);
   }
+  // Emoji report format: contains "👤 УМЕРШИЙ" or "ФИО:" labels with emoji dates/addresses
+  if (/👤\s*УМЕРШИЙ/i.test(raw) || /^ФИО:/m.test(raw)) {
+    return parseTxtClientsEmojiReport(raw);
+  }
   return parseTxtClientsUniversal(raw);
+}
+
+/* ── EMOJI REPORT FORMAT ─────────────────────────────────────────
+   Format:
+     👤 УМЕРШИЙ #N
+     ФИО: Фамилия Имя Отчество
+     📅 ДД.ММ.ГГГГ
+     🏠 АДРЕС
+     
+        • Родственник ДД.ММ.ГГГГ — 7XXXXXXXXXX (Оператор)
+     
+     ----------
+   ─────────────────────────────────────────────────────────────── */
+function parseTxtClientsEmojiReport(raw) {
+  const clients = [];
+  const text = raw.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const lines = text.split('\n');
+
+  function cleanEmoji(s) {
+    // Remove emoji and special unicode chars, trim
+    return s.replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27FF}\u{2300}-\u{23FF}\u{1F300}-\u{1F9FF}\uFE00-\uFE0F\u200D\u{1FA00}-\u{1FFFF}]/gu, '').trim();
+  }
+
+  function isSep(s) { return /^[\-─═\._ ]{3,}$/.test(s); }
+
+  let current = null;
+
+  for (let i = 0; i < lines.length; i++) {
+    const raw_line = lines[i];
+    const stripped = raw_line.trim();
+    const clean = cleanEmoji(stripped);
+
+    // Skip header lines and separators
+    if (!stripped || isSep(clean)) {
+      if (isSep(clean) && current) {
+        clients.push(current);
+        current = null;
+      }
+      continue;
+    }
+
+    // Detect "👤 УМЕРШИЙ #N" — start of a new client block
+    if (/УМЕРШИЙ\s*#?\d*/i.test(clean)) {
+      if (current) clients.push(current);
+      current = { deceased: '', dob: '', region: '', relatives: [] };
+      continue;
+    }
+
+    // Skip non-client lines if no current client
+    if (!current) continue;
+
+    // "ФИО: Фамилия Имя Отчество"
+    if (/^ФИО\s*:/i.test(clean)) {
+      current.deceased = clean.replace(/^ФИО\s*:\s*/i, '').trim();
+      continue;
+    }
+
+    // "📅 ДД.ММ.ГГГГ" — date line (emoji stripped, so starts with date)
+    if (/^\d{1,2}\.\d{2}\.\d{4}$/.test(clean)) {
+      current.dob = clean;
+      continue;
+    }
+
+    // "🏠 АДРЕС" — address line
+    // After emoji cleanup it's just the address text; we detect it as
+    // a non-relative, non-date, non-fio-label line that comes before relatives
+    if (!current.region && clean && !/^[•\-\*]/.test(clean) && !/^ФИО/i.test(clean) && !current.relatives.length) {
+      // Check it's not a date
+      if (!/^\d{1,2}\.\d{2}\.\d{4}/.test(clean)) {
+        current.region = clean;
+        continue;
+      }
+    }
+
+    // "• Родственник ДД.ММ.ГГГГ — 7XXXXXXXXXX (Оператор)"
+    // Also handles "   • ..." with leading spaces
+    const relMatch = stripped.match(/[•\-\*]\s*(.+)/);
+    if (relMatch) {
+      let relText = cleanEmoji(relMatch[1]).trim();
+      // Extract phone: 7XXXXXXXXXX or 79XXXXXXXXX
+      const phoneM = relText.match(/\b(7\d{10})\b/);
+      const phone = phoneM ? phoneM[1] : '';
+      // Remove phone and operator from text
+      relText = relText.replace(/—?\s*7\d{10}\s*(\([^)]*\))?/g, '').trim();
+      // Remove trailing " —" or "—"
+      relText = relText.replace(/\s*—\s*$/, '').trim();
+      // Extract date from relative
+      const dobM = relText.match(/(\d{1,2}\.\d{2}\.\d{4})/);
+      const relDob = dobM ? dobM[1] : '';
+      const relName = relText.replace(/\d{1,2}\.\d{2}\.\d{4}/, '').trim();
+
+      if (relName) {
+        current.relatives.push({
+          name: relName,
+          dob: relDob,
+          phone: phone,
+          address: '',
+          passport: '',
+          snils: '',
+          relation: ''
+        });
+      }
+      continue;
+    }
+  }
+
+  // Push last client if file doesn't end with separator
+  if (current && current.deceased) clients.push(current);
+
+  return clients;
 }
 
 /* ── OLD FORMAT (unchanged) ─────────────────────────────────────
