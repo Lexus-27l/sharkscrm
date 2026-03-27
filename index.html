@@ -1735,7 +1735,7 @@ async function initManager() {
     el('mgr-avatar-img').style.display = 'block';
     el('mgr-avatar-initials').style.display = 'none';
   }
-  // Load bases + user doc in parallel
+  // Load bases + user doc in parallel (initial fetch)
   const [mgrDoc, basesSnap] = await Promise.all([
     getDoc(doc(db,'user', me.uid)),
     getDocs(collection(db,'bases'))
@@ -1748,6 +1748,43 @@ async function initManager() {
   // Load my callbacks from Firebase (survive page refresh)
   loadCallbacksFromDB();
   loadNextClient();
+
+  // ── Real-time listeners: no more manual reload needed ──────────
+
+  // 1. Listen to manager's own doc → detect when admin assigns/removes bases
+  onSnapshot(doc(db,'user', me.uid), (snap) => {
+    if (!snap.exists()) return;
+    const newAssigned = snap.data().assignedBases || [];
+    const oldAssigned = me.assignedBases || [];
+    const added = newAssigned.filter(id => !oldAssigned.includes(id));
+    me.assignedBases = newAssigned;
+    if (added.length) {
+      // New bases were assigned — reload client card silently
+      toast('📂 Новые базы назначены, обновляю...', 'info');
+      loadNextClient();
+    }
+  });
+
+  // 2. Listen to bases collection → detect new bases added or enabled/disabled by admin
+  onSnapshot(collection(db,'bases'), (snap) => {
+    const newBases = snap.docs.map(d => ({id:d.id,...d.data()}));
+    const oldIds = (_cacheBases||[]).map(b=>b.id).sort().join(',');
+    const newIds = newBases.map(b=>b.id).sort().join(',');
+    const oldEnabledIds = (_cacheBases||[]).filter(b=>b.disabled!==true).map(b=>b.id).sort().join(',');
+    const newEnabledIds = newBases.filter(b=>b.disabled!==true).map(b=>b.id).sort().join(',');
+    _cacheBases = newBases;
+    updateStatsDisplay();
+    // If enabled bases changed — refresh card (new base appeared or base was turned on)
+    if (oldEnabledIds !== newEnabledIds || oldIds !== newIds) {
+      // Only reload if manager panel is active and card area is visible
+      const cardVisible = el('call-card') && el('call-card').style.display !== 'none';
+      const emptyVisible = el('cl-empty') && el('cl-empty').style.display !== 'none';
+      if (!cardVisible) {
+        // No card shown — try to get one now
+        loadNextClient();
+      }
+    }
+  });
 }
 
 async function loadCallbacksFromDB() {
