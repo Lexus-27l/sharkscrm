@@ -2793,7 +2793,7 @@ window.showBaseStats = async (baseId, baseName) => {
 
   const snap = await getDocs(query(collection(db,'clients'), where('baseId','==',baseId)));
   const clients = snap.docs.map(d => d.data());
-  const total = clients.length;
+  const total = filteredClients.length;
   const resultCounts = {};
   RESULT_KEYS.forEach(k => { resultCounts[k] = clients.filter(c => c.result === k).length; });
   const fresh = clients.filter(c => !c.result).length;
@@ -2869,13 +2869,85 @@ async function loadBaseStatsCounts(bases) {
   renderBases(bases);
 }
 
-window.exportBase = async (baseId, baseName) => {
+// ── EXPORT MODAL STATE ─────────────────────────────────────────
+let _exportBaseId   = null;
+let _exportBaseName = null;
+
+window.openExportModal = (baseId, baseName) => {
+  _exportBaseId   = baseId;
+  _exportBaseName = baseName;
+
+  // Fill base name label (use first found element — avoid duplicate-id issues)
+  const nameEl = document.querySelector('#export-base-name');
+  if (nameEl) nameEl.textContent = '📁 ' + baseName;
+
+  // Build status checkboxes
+  const STATUS_LABELS = {
+    new:      '🆕 Новый',
+    transferred: '✅ Передал',
+    nodial:   '❌ Не дозвон',
+    skip:     '⏭ Скип',
+    callback: '📞 Перезвон',
+    cut:      '✂️ Срез',
+    ao:       '🎯 АО',
+    norel:    '🚷 Не родственник',
+    wrongop:  '📵 Не тот оператор',
+    liar:     '🤥 Пиздабол'
+  };
+  const box = document.querySelector('#export-checkboxes');
+  if (box) {
+    box.innerHTML = Object.entries(STATUS_LABELS).map(([k,label]) => `
+      <label style="display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--brd);
+        border-radius:8px;padding:8px 10px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text)">
+        <input type="checkbox" data-status="${k}" checked
+          style="width:15px;height:15px;accent-color:var(--acc);cursor:pointer">
+        ${label}
+      </label>`).join('');
+  }
+
+  // Show modal (use first found to avoid duplicate-id conflict)
+  const modal = document.querySelector('#export-filter-modal');
+  if (modal) modal.style.display = 'flex';
+};
+
+window.closeExportModal = () => {
+  const modal = document.querySelector('#export-filter-modal');
+  if (modal) modal.style.display = 'none';
+};
+
+window.selectAllExport = (checked) => {
+  document.querySelectorAll('#export-checkboxes input[type=checkbox]')
+    .forEach(cb => cb.checked = checked);
+};
+
+window.doFilteredExport = async () => {
+  if (!_exportBaseId) return;
+
+  // Collect checked statuses
+  const selected = new Set();
+  document.querySelectorAll('#export-checkboxes input[type=checkbox]').forEach(cb => {
+    if (cb.checked) selected.add(cb.dataset.status);
+  });
+  if (!selected.size) { toast('⚠️ Выберите хотя бы один статус', 'warn'); return; }
+
+  window.closeExportModal();
+  await exportBase(_exportBaseId, _exportBaseName, selected);
+};
+
+window.exportBase = async (baseId, baseName, statusFilter) => {
   toast('⏳ Подготовка выгрузки...');
 
   // 1. Загружаем всех клиентов базы
   const snap = await getDocs(query(collection(db,'clients'), where('baseId','==',baseId)));
   const clients = snap.docs.map(d => ({ _id: d.id, ...d.data() }));
   if (!clients.length) { toast('⚠️ База пуста','warn'); return; }
+
+  // Apply status filter if provided
+  const allClients = clients;
+  const filteredClients = statusFilter
+    ? clients.filter(c => statusFilter.has(c.result || 'new'))
+    : clients;
+  if (!filteredClients.length) { toast('⚠️ Нет клиентов с выбранными статусами','warn'); return; }
 
   // 2. Загружаем имена менеджеров (один раз)
   const usersSnap = await getDocs(collection(db,'user'));
@@ -2896,7 +2968,7 @@ window.exportBase = async (baseId, baseName) => {
   };
 
   // 4. Определяем максимальное кол-во родственников для заголовков
-  const maxRel = Math.max(1, ...clients.map(c => (c.relatives||[]).length));
+  const maxRel = Math.max(1, ...filteredClients.map(c => (c.relatives||[]).length));
 
   // 5. Строим заголовки
   const headers = [
@@ -2908,7 +2980,7 @@ window.exportBase = async (baseId, baseName) => {
   headers.push('Статус', 'Комментарий', 'Менеджер', 'Дата звонка', 'Время звонка');
 
   // 6. Строим строки
-  const rows = clients.map((c, idx) => {
+  const rows = filteredClients.map((c, idx) => {
     const row = [
       idx + 1,
       c.deceased || '',
@@ -2961,7 +3033,7 @@ window.exportBase = async (baseId, baseName) => {
   const summaryData = [['Статус', 'Количество', '%']];
   const total = clients.length;
   const groups = {};
-  clients.forEach(c => {
+  filteredClients.forEach(c => {
     const key = c.result || 'new';
     groups[key] = (groups[key] || 0) + 1;
   });
@@ -2981,7 +3053,7 @@ window.exportBase = async (baseId, baseName) => {
   // Лист по менеджерам
   const mgrSummary = [['Менеджер', 'Всего', ...Object.keys(STATUS_LABELS).map(k => STATUS_LABELS[k])]];
   const mgrGroups = {};
-  clients.forEach(c => {
+  filteredClients.forEach(c => {
     if (!c.calledBy) return;
     if (!mgrGroups[c.calledBy]) mgrGroups[c.calledBy] = { name: mgrMap[c.calledBy]||c.calledBy, counts: {} };
     const key = c.result || 'new';
@@ -3000,7 +3072,8 @@ window.exportBase = async (baseId, baseName) => {
 
   // 8. Скачиваем
   XLSX.writeFile(wb, baseName + '.xlsx');
-  toast('✅ Выгружено ' + clients.length + ' клиентов → ' + baseName + '.xlsx');
+  const filterNote = statusFilter ? ' (фильтр: ' + selected.size + ' статусов)' : '';
+  toast('✅ Выгружено ' + filteredClients.length + ' из ' + allClients.length + ' клиентов → ' + baseName + '.xlsx');
 };
 
 window.deleteBase = async (baseId, baseName) => {
@@ -3418,25 +3491,7 @@ window.loadInlineMgrStats = async (period) => {
 </div>
 
 <!-- Export with Filter Modal -->
-<div id="export-filter-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:700;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)closeExportModal()">
-  <div style="background:var(--bg2);border:1px solid var(--brd2);border-radius:20px;padding:28px;width:min(480px,95vw);box-shadow:0 24px 64px rgba(0,0,0,.6);animation:fadeUp .25s ease">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-      <div style="font-size:16px;font-weight:800">📥 Выгрузка базы</div>
-      <button onclick="closeExportModal()" style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);color:#fca5a5;font-size:18px;cursor:pointer;width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700">✕</button>
-    </div>
-    <div id="export-base-name" style="font-size:13px;color:var(--acc2);font-weight:700;margin-bottom:16px"></div>
-    <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Выберите статусы для выгрузки:</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px" id="export-checkboxes"></div>
-    <div style="display:flex;gap:8px;margin-bottom:16px">
-      <button class="btn btn-ghost btn-sm" onclick="selectAllExport(true)">✅ Выбрать все</button>
-      <button class="btn btn-ghost btn-sm" onclick="selectAllExport(false)">☐ Снять все</button>
-    </div>
-    <div style="display:flex;gap:10px;justify-content:flex-end">
-      <button class="btn btn-ghost" onclick="closeExportModal()">Отмена</button>
-      <button class="btn btn-pri" onclick="doFilteredExport()">📥 Выгрузить</button>
-    </div>
-  </div>
-</div>
+
 
 <!-- Daily Stats Modal -->
 <div id="daily-stats-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:700;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)closeDailyStats()">
