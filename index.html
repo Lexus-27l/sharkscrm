@@ -2354,7 +2354,99 @@ function parseTxtClients(raw) {
   if (/👤\s*УМЕРШИЙ/i.test(raw) || /^ФИО:/m.test(raw)) {
     return parseTxtClientsEmojiReport(raw);
   }
+  // Markdown bold format: N. **ФИО** + "Дата рождения:" + "Адрес:" + "Родственники:"
+  if (/\*\*[А-ЯЁ][^\*]+\*\*/.test(raw) && /Дата рождения:/i.test(raw)) {
+    return parseTxtClientsMarkdown(raw);
+  }
   return parseTxtClientsUniversal(raw);
+}
+
+/* ── MARKDOWN BOLD FORMAT ────────────────────────────────────────
+   Format (воронежская / орлов files):
+     N. **Фамилия Имя Отчество**
+        Дата рождения: ДД.ММ.ГГГГ
+        Адрес: текст адреса
+        Родственники:
+        • Имя Фамилия ДД.ММ.ГГГГ — 7XXXXXXXXXX
+        • Имя Фамилия ДД.ММ.ГГГГ — 7XXXXXXXXXX, 7XXXXXXXXXX
+   ─────────────────────────────────────────────────────────────── */
+function parseTxtClientsMarkdown(raw) {
+  const clients = [];
+  const text = raw.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const lines = text.split('\n');
+
+  let current = null;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const stripped = line.trim();
+
+    // Skip empty lines
+    if (!stripped) continue;
+
+    // Detect new client: N. **Имя Фамилия Отчество** or **Имя Фамилия Отчество**
+    const boldMatch = stripped.match(/^(?:\d+\.\s*)?\*\*(.+?)\*\*/);
+    if (boldMatch) {
+      if (current && current.deceased) clients.push(current);
+      current = { deceased: boldMatch[1].trim(), dob: '', region: '', relatives: [] };
+      continue;
+    }
+
+    if (!current) continue;
+
+    // Дата рождения:
+    const dobMatch = stripped.match(/^Дата рождения[:\s]+(\d{1,2}\.\d{2}\.\d{4})/i);
+    if (dobMatch) {
+      current.dob = dobMatch[1];
+      continue;
+    }
+
+    // Адрес:
+    const addrMatch = stripped.match(/^Адрес[:\s]+(.+)/i);
+    if (addrMatch) {
+      current.region = addrMatch[1].trim();
+      continue;
+    }
+
+    // Skip "Родственники:" header line
+    if (/^Родственники\s*:/i.test(stripped)) continue;
+
+    // Relative line: • Имя Фамилия ДД.ММ.ГГГГ — 7XXXXXXXXXX[, 7XXXXXXXXXX]
+    if (/^[•\-\*]/.test(stripped)) {
+      let relText = stripped.replace(/^[•\-\*]\s*/, '').trim();
+
+      // Extract all phone numbers (7XXXXXXXXXX)
+      const phones = [];
+      const phoneRe = /\b(7\d{10})\b/g;
+      let pm;
+      while ((pm = phoneRe.exec(relText)) !== null) phones.push(pm[1]);
+      const phone = phones.join(', ');
+
+      // Remove phones and dash separator from text
+      let nameAndDob = relText.replace(/—\s*[\d\s,]+/g, '').replace(/\b7\d{10}\b/g, '').replace(/,\s*$/, '').trim();
+
+      // Extract date from relative
+      const relDobMatch = nameAndDob.match(/(\d{1,2}\.\d{2}\.\d{4})/);
+      const relDob = relDobMatch ? relDobMatch[1] : '';
+      const relName = nameAndDob.replace(/\d{1,2}\.\d{2}\.\d{4}/, '').replace(/\s{2,}/g, ' ').trim();
+
+      if (relName) {
+        current.relatives.push({
+          name: relName,
+          dob: relDob,
+          phone: phone,
+          address: '',
+          passport: '',
+          snils: '',
+          relation: ''
+        });
+      }
+      continue;
+    }
+  }
+
+  if (current && current.deceased) clients.push(current);
+  return clients;
 }
 
 /* ── EMOJI REPORT FORMAT ─────────────────────────────────────────
