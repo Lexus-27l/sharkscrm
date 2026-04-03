@@ -1527,7 +1527,7 @@ async function loadClients() {
   managersNameMap = {};
   usersSnap.docs.forEach(d => { managersNameMap[d.id] = d.data().name || d.data().email || d.id; });
 
-  const snap = await getDocs(query(collection(db,'clients'), orderBy('createdAt','desc'), limit(500)));
+  const snap = await getDocs(query(collection(db,'clients'), orderBy('createdAt','desc'), limit(200))); // limit снижен с 500 до 200 для экономии чтений
   allClientsCache = snap.docs.map(d=>({id:d.id,...d.data()}));
 
   // Populate city filter
@@ -1769,26 +1769,32 @@ async function initManager() {
     }
   });
 
-  // 2. Listen to bases collection → detect new bases added or enabled/disabled by admin
-  onSnapshot(collection(db,'bases'), (snap) => {
-    const newBases = snap.docs.map(d => ({id:d.id,...d.data()}));
-    const oldIds = (_cacheBases||[]).map(b=>b.id).sort().join(',');
-    const newIds = newBases.map(b=>b.id).sort().join(',');
-    const oldEnabledIds = (_cacheBases||[]).filter(b=>b.disabled!==true).map(b=>b.id).sort().join(',');
-    const newEnabledIds = newBases.filter(b=>b.disabled!==true).map(b=>b.id).sort().join(',');
-    _cacheBases = newBases;
-    updateStatsDisplay();
-    // If enabled bases changed — refresh card (new base appeared or base was turned on)
-    if (oldEnabledIds !== newEnabledIds || oldIds !== newIds) {
-      // Only reload if manager panel is active and card area is visible
-      const cardVisible = el('call-card') && el('call-card').style.display !== 'none';
-      const emptyVisible = el('cl-empty') && el('cl-empty').style.display !== 'none';
-      if (!cardVisible) {
-        // No card shown — try to get one now
-        loadNextClient();
+  // 2. Периодически обновляем кеш баз — раз в 2 минуты (НЕ onSnapshot!).
+  // onSnapshot на коллекцию bases вызывал лавину чтений: каждый increment(calledCount)
+  // в act() тригерил snapshot для ВСЕХ подключённых менеджеров одновременно.
+  // Опрос раз в 2 минуты достаточен — базы включает/выключает только админ.
+  async function refreshBasesCache() {
+    try {
+      const snap = await getDocs(collection(db,'bases'));
+      const newBases = snap.docs.map(d => ({id:d.id,...d.data()}));
+      const oldEnabledIds = (_cacheBases||[]).filter(b=>b.disabled!==true).map(b=>b.id).sort().join(',');
+      const newEnabledIds = newBases.filter(b=>b.disabled!==true).map(b=>b.id).sort().join(',');
+      const oldIds = (_cacheBases||[]).map(b=>b.id).sort().join(',');
+      const newIds = newBases.map(b=>b.id).sort().join(',');
+      _cacheBases = newBases;
+      updateStatsDisplay();
+      // Если базы изменились и карточка не показана — загрузить новую
+      if ((oldEnabledIds !== newEnabledIds || oldIds !== newIds)) {
+        const cardVisible = el('call-card') && el('call-card').style.display !== 'none';
+        if (!cardVisible) loadNextClient();
       }
-    }
-  });
+    } catch(e) { /* тихо игнорируем */ }
+  }
+  // Первый опрос через 2 мин, затем каждые 2 мин
+  setTimeout(() => {
+    refreshBasesCache();
+    setInterval(refreshBasesCache, 2 * 60 * 1000);
+  }, 2 * 60 * 1000);
 }
 
 async function loadCallbacksFromDB() {
@@ -1829,19 +1835,31 @@ let mgrDailyChart = null;
 // Money stickers for the chart (shown on top of bars)
 const MONEY_STICKERS = ['💵','💰','🤑','💸','🏆','⭐','🔥','💎','🎯','📈'];
 
+let _mgrMiniStatsCache = null;
+let _mgrMiniStatsCacheTime = 0;
+
 async function loadMgrMiniStats() {
   const now = new Date();
   const today = new Date(now); today.setHours(0,0,0,0);
 
-  // ONE query: my calls for last 7 days — covers both today stats + chart
-  const week7ago = new Date(now); week7ago.setDate(week7ago.getDate() - 7); week7ago.setHours(0,0,0,0);
-  const snap7 = await getDocs(query(
-    collection(db,'clients'),
-    where('calledBy','==', me.uid),
-    where('calledAt','>=', Timestamp.fromDate(week7ago)),
-    limit(300)
-  ));
-  const mine = snap7.docs.map(d => d.data());
+  // Кеш на 5 минут — не читаем Firestore при каждом обновлении страницы
+  const CACHE_MS = 5 * 60 * 1000;
+  let mine;
+  if (_mgrMiniStatsCache && (Date.now() - _mgrMiniStatsCacheTime) < CACHE_MS) {
+    mine = _mgrMiniStatsCache;
+  } else {
+    // ONE query: my calls for last 7 days — covers both today stats + chart
+    const week7ago = new Date(now); week7ago.setDate(week7ago.getDate() - 7); week7ago.setHours(0,0,0,0);
+    const snap7 = await getDocs(query(
+      collection(db,'clients'),
+      where('calledBy','==', me.uid),
+      where('calledAt','>=', Timestamp.fromDate(week7ago)),
+      limit(300)
+    ));
+    mine = snap7.docs.map(d => d.data());
+    _mgrMiniStatsCache = mine;
+    _mgrMiniStatsCacheTime = Date.now();
+  }
   const mineToday = mine.filter(c => {
     if (!c.calledAt) return false;
     const ms = toMs(c.calledAt);
@@ -2218,7 +2236,7 @@ window.act = async result => {
     }
   }
 
-  // Update counters locally — no reads needed
+  // Обновляем счётчики локально в DOM — 0 чтений Firestore
   const msToday = el('ms-today');
   if (msToday) {
     const cur = parseInt(msToday.textContent)||0;
@@ -2228,6 +2246,11 @@ window.act = async result => {
       const el2 = el(map[result]);
       if (el2) el2.textContent = (parseInt(el2.textContent)||0) + 1;
     }
+  }
+  // Обновляем локальный кеш мини-статистики — добавляем запись без перечтения
+  if (_mgrMiniStatsCache && result !== 'skip') {
+    _mgrMiniStatsCache.push({ result, calledAt: Timestamp.now(), calledBy: me.uid });
+    // НЕ сбрасываем время кеша — данные актуальны, просто добавили строку
   }
 
   if (result === 'callback') addToCallbackQueue(id);
@@ -2898,7 +2921,7 @@ window.showBaseStats = async (baseId, baseName) => {
   body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2)">⏳ Загрузка...</div>';
   modal.style.display = 'flex';
 
-  const snap = await getDocs(query(collection(db,'clients'), where('baseId','==',baseId)));
+  const snap = await getDocs(query(collection(db,'clients'), where('baseId','==',baseId), limit(1000)));
   const clients = snap.docs.map(d => d.data());
   const total = clients.length;
   const resultCounts = {};
