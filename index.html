@@ -833,7 +833,7 @@ input[type=file]{display:none}
         <button class="btn btn-ghost" style="margin-top:18px" onclick="loadNextClient()">🔄 Проверить ещё раз</button>
       </div>
       <div class="call-card" id="call-card">
-        <input type="hidden" id="cc-id"><input type="hidden" id="cc-base-id">
+        <input type="hidden" id="cc-id">
         <!-- 2-column layout -->
         <div style="display:grid;grid-template-columns:260px 1fr;gap:10px;margin-bottom:10px">
           <!-- LEFT: deceased info -->
@@ -986,7 +986,7 @@ import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged,
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getFirestore, collection, addDoc, getDocs, getDoc, setDoc, doc,
          updateDoc, deleteDoc, query, where, orderBy, onSnapshot,
-         writeBatch, Timestamp, limit, runTransaction, arrayUnion, increment }
+         writeBatch, Timestamp, limit, runTransaction, arrayUnion }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -1174,27 +1174,22 @@ function getPeriodRange(period) {
 }
 
 async function loadStats() {
-  // ОПТИМИЗАЦИЯ: вместо сканирования ВСЕХ прозвоненных клиентов →
-  // берём агрегаты из документов bases (0 доп. чтений на clients),
-  // а для графиков/таблицы читаем только последние 7 дней (лимит 2000).
   const basesSnap = await getDocs(collection(db,'bases'));
   const bases = basesSnap.docs.map(d=>d.data());
   const total = bases.reduce((s,b) => s + (b.total||0), 0);
-  // calledCount — счётчик в документе базы, обновляется через increment в act()
-  const done  = bases.reduce((s,b) => s + (b.calledCount||0), 0);
-  const remain = Math.max(0, total - done);
-  const pct    = total > 0 ? Math.round(done/total*100) : 0;
 
-  // Для графиков и таблицы менеджеров — только последние 7 дней
-  const week7ago = new Date(); week7ago.setDate(week7ago.getDate()-7); week7ago.setHours(0,0,0,0);
+  // Fetch clients with result for charts
   const calledSnap = await getDocs(query(
     collection(db,'clients'),
-    where('calledAt','>=', Timestamp.fromDate(week7ago)),
-    limit(2000)
+    where('result','!=', null)
   ));
   allClientsForStats = calledSnap.docs.map(d => ({ id:d.id, ...d.data() }));
 
-  // "Прозвонено сегодня"
+  const done   = allClientsForStats.filter(c => c.result !== 'callback').length;
+  const remain = total - done;
+  const pct    = total > 0 ? Math.round(done/total*100) : 0;
+
+  // "Прозвонено" = сколько прозвонено ЗА СЕГОДНЯ
   const todayStart = new Date(); todayStart.setHours(0,0,0,0);
   const todayDone = allClientsForStats.filter(c => {
     if (!c.calledAt) return false;
@@ -1202,9 +1197,10 @@ async function loadStats() {
   }).length;
 
   el('s-total').textContent = total;
-  el('s-called').textContent = todayDone;
-  el('s-remain').textContent = remain;
+  el('s-called').textContent = todayDone; // today only
+  el('s-remain').textContent = Math.max(0, remain);
   el('s-pct').textContent   = pct + '%';
+  // Change label to "Прозвонено сегодня"
   const calledLbl = document.querySelector('#s-called')?.closest('.scard')?.querySelector('.scard-lbl');
   if (calledLbl) calledLbl.textContent = 'Прозвонено сегодня';
 
@@ -1427,7 +1423,7 @@ async function doImport() {
   const existingNames = new Set(); // Skip duplicate check to save reads
   // Create base record
   const baseRef = await addDoc(collection(db,'bases'), {
-    name: baseName, createdAt: Timestamp.now(), total: 0, calledCount: 0, clientIds: []
+    name: baseName, createdAt: Timestamp.now(), total: 0, clientIds: []
   });
   const batch   = writeBatch(db);
   let count = 0; let skipped = 0; const addedIds = [];
@@ -1527,7 +1523,7 @@ async function loadClients() {
   managersNameMap = {};
   usersSnap.docs.forEach(d => { managersNameMap[d.id] = d.data().name || d.data().email || d.id; });
 
-  const snap = await getDocs(query(collection(db,'clients'), orderBy('createdAt','desc'), limit(200))); // limit снижен с 500 до 200 для экономии чтений
+  const snap = await getDocs(query(collection(db,'clients'), orderBy('createdAt','desc'), limit(500)));
   allClientsCache = snap.docs.map(d=>({id:d.id,...d.data()}));
 
   // Populate city filter
@@ -1769,32 +1765,26 @@ async function initManager() {
     }
   });
 
-  // 2. Периодически обновляем кеш баз — раз в 2 минуты (НЕ onSnapshot!).
-  // onSnapshot на коллекцию bases вызывал лавину чтений: каждый increment(calledCount)
-  // в act() тригерил snapshot для ВСЕХ подключённых менеджеров одновременно.
-  // Опрос раз в 2 минуты достаточен — базы включает/выключает только админ.
-  async function refreshBasesCache() {
-    try {
-      const snap = await getDocs(collection(db,'bases'));
-      const newBases = snap.docs.map(d => ({id:d.id,...d.data()}));
-      const oldEnabledIds = (_cacheBases||[]).filter(b=>b.disabled!==true).map(b=>b.id).sort().join(',');
-      const newEnabledIds = newBases.filter(b=>b.disabled!==true).map(b=>b.id).sort().join(',');
-      const oldIds = (_cacheBases||[]).map(b=>b.id).sort().join(',');
-      const newIds = newBases.map(b=>b.id).sort().join(',');
-      _cacheBases = newBases;
-      updateStatsDisplay();
-      // Если базы изменились и карточка не показана — загрузить новую
-      if ((oldEnabledIds !== newEnabledIds || oldIds !== newIds)) {
-        const cardVisible = el('call-card') && el('call-card').style.display !== 'none';
-        if (!cardVisible) loadNextClient();
+  // 2. Listen to bases collection → detect new bases added or enabled/disabled by admin
+  onSnapshot(collection(db,'bases'), (snap) => {
+    const newBases = snap.docs.map(d => ({id:d.id,...d.data()}));
+    const oldIds = (_cacheBases||[]).map(b=>b.id).sort().join(',');
+    const newIds = newBases.map(b=>b.id).sort().join(',');
+    const oldEnabledIds = (_cacheBases||[]).filter(b=>b.disabled!==true).map(b=>b.id).sort().join(',');
+    const newEnabledIds = newBases.filter(b=>b.disabled!==true).map(b=>b.id).sort().join(',');
+    _cacheBases = newBases;
+    updateStatsDisplay();
+    // If enabled bases changed — refresh card (new base appeared or base was turned on)
+    if (oldEnabledIds !== newEnabledIds || oldIds !== newIds) {
+      // Only reload if manager panel is active and card area is visible
+      const cardVisible = el('call-card') && el('call-card').style.display !== 'none';
+      const emptyVisible = el('cl-empty') && el('cl-empty').style.display !== 'none';
+      if (!cardVisible) {
+        // No card shown — try to get one now
+        loadNextClient();
       }
-    } catch(e) { /* тихо игнорируем */ }
-  }
-  // Первый опрос через 2 мин, затем каждые 2 мин
-  setTimeout(() => {
-    refreshBasesCache();
-    setInterval(refreshBasesCache, 2 * 60 * 1000);
-  }, 2 * 60 * 1000);
+    }
+  });
 }
 
 async function loadCallbacksFromDB() {
@@ -1835,31 +1825,19 @@ let mgrDailyChart = null;
 // Money stickers for the chart (shown on top of bars)
 const MONEY_STICKERS = ['💵','💰','🤑','💸','🏆','⭐','🔥','💎','🎯','📈'];
 
-let _mgrMiniStatsCache = null;
-let _mgrMiniStatsCacheTime = 0;
-
 async function loadMgrMiniStats() {
   const now = new Date();
   const today = new Date(now); today.setHours(0,0,0,0);
 
-  // Кеш на 5 минут — не читаем Firestore при каждом обновлении страницы
-  const CACHE_MS = 5 * 60 * 1000;
-  let mine;
-  if (_mgrMiniStatsCache && (Date.now() - _mgrMiniStatsCacheTime) < CACHE_MS) {
-    mine = _mgrMiniStatsCache;
-  } else {
-    // ONE query: my calls for last 7 days — covers both today stats + chart
-    const week7ago = new Date(now); week7ago.setDate(week7ago.getDate() - 7); week7ago.setHours(0,0,0,0);
-    const snap7 = await getDocs(query(
-      collection(db,'clients'),
-      where('calledBy','==', me.uid),
-      where('calledAt','>=', Timestamp.fromDate(week7ago)),
-      limit(300)
-    ));
-    mine = snap7.docs.map(d => d.data());
-    _mgrMiniStatsCache = mine;
-    _mgrMiniStatsCacheTime = Date.now();
-  }
+  // ONE query: my calls for last 7 days — covers both today stats + chart
+  const week7ago = new Date(now); week7ago.setDate(week7ago.getDate() - 7); week7ago.setHours(0,0,0,0);
+  const snap7 = await getDocs(query(
+    collection(db,'clients'),
+    where('calledBy','==', me.uid),
+    where('calledAt','>=', Timestamp.fromDate(week7ago)),
+    limit(300)
+  ));
+  const mine = snap7.docs.map(d => d.data());
   const mineToday = mine.filter(c => {
     if (!c.calledAt) return false;
     const ms = toMs(c.calledAt);
@@ -2001,13 +1979,15 @@ async function loadNextClient() {
   el('cl-empty').style.display   = 'none';
   el('call-card').style.display  = 'none';
 
-  const LOCK_MS = 40 * 60 * 1000;
+  const LOCK_MS = 40 * 60 * 1000; // 40 минут — потом карточка переходит другому
   const now = Date.now();
   const nowTS = Timestamp.now();
+
+  // Helper
   const getLockMs = (d) => d.lockedAt ? (d.lockedAt.toMillis ? d.lockedAt.toMillis() : Number(d.lockedAt)) : 0;
 
   try {
-    // 1. Определяем доступные базы из кеша (0 чтений)
+    // 1. Определяем доступные базы из кеша
     const assignedBases = me.assignedBases || [];
     const basesData = _cacheBases || [];
     const enabledBases = basesData.filter(b => b.disabled !== true).map(b => b.id);
@@ -2036,73 +2016,74 @@ async function loadNextClient() {
       return;
     }
 
-    // ─────────────────────────────────────────────────────────────────
-    // ОПТИМИЗАЦИЯ: вместо limit(50) × N баз параллельно →
-    // перебираем базы по одной (случайный порядок), берём limit(15).
-    // Итого: максимум N запросов по 15 чтений = в 3-5× меньше чтений,
-    // при этом lock-механизм полностью гарантирует уникальность карточек.
-    // ─────────────────────────────────────────────────────────────────
+    // 2. Параллельно загружаем кандидатов из всех баз
+    //    limit(50) — достаточно даже для 20+ менеджеров одновременно
     const shuffledBases = [...targetBases].sort(() => Math.random() - 0.5);
 
-    let claimed = null;
-
-    for (const baseId of shuffledBases) {
-      if (claimed) break;
-
-      // Один запрос на одну базу — limit 15 (достаточно для 15+ менеджеров)
-      const snap = await getDocs(query(
+    const allSnaps = await Promise.all(
+      shuffledBases.map(baseId => getDocs(query(
         collection(db,'clients'),
         where('baseId','==', baseId),
         where('result','==', null),
-        limit(15)
-      ));
+        limit(50)
+      )))
+    );
 
-      // Фильтруем кандидатов локально (0 дополнительных чтений)
-      const candidates = [];
+    // 3. Собираем кандидатов с чёткими правилами:
+    //    - нет lockedBy → свободен
+    //    - lockedBy == я → ПРОПУСКАЕМ (мы уже держим эту карточку, нельзя брать снова!)
+    //    - lockedBy == кто-то другой + не истёк → ПРОПУСКАЕМ
+    //    - lockedBy == кто-то другой + истёк (40 мин) → ДОСТУПЕН
+    const allCandidates = [];
+    allSnaps.forEach(snap => {
       snap.docs.forEach(d => {
         const data = d.data();
+        // Никогда не показываем карточку менеджеру, который её уже скипнул
         const skippedBy = data.skippedBy || [];
-        if (skippedBy.includes(me.uid)) return;      // я уже скипнул — пропускаем
-        if (data.lockedBy === me.uid) return;         // уже наша открытая карточка
-        if (data.lockedBy && data.lockedBy !== me.uid) {
+        if (skippedBy.includes(me.uid)) return;
+        if (!data.lockedBy) {
+          allCandidates.push({ id: d.id, ...data }); // свободен
+        } else if (data.lockedBy === me.uid) {
+          return; // наша карточка уже открыта — не берём повторно
+        } else {
+          // чужая — берём только если истёк лок
           const age = now - getLockMs(data);
-          if (age < LOCK_MS) return;                  // чужая и не истекла — пропускаем
+          if (age >= LOCK_MS) allCandidates.push({ id: d.id, ...data });
         }
-        candidates.push({ id: d.id, ...data });
       });
+    });
 
-      // Перемешиваем для равномерного распределения между менеджерами
-      candidates.sort(() => Math.random() - 0.5);
+    // Перемешиваем для равномерного распределения
+    allCandidates.sort(() => Math.random() - 0.5);
 
-      // Атомарно захватываем первого подходящего (транзакция = защита от race condition)
-      for (const candidate of candidates) {
-        if (claimed) break;
-        try {
-          await runTransaction(db, async (tx) => {
-            const ref = doc(db,'clients', candidate.id);
-            const fresh = await tx.get(ref);
-            if (!fresh.exists()) throw new Error('gone');
-            const fd = fresh.data();
-            if (fd.result && fd.result !== 'callback') throw new Error('done');
-            if ((fd.skippedBy || []).includes(me.uid)) throw new Error('skipped');
-            if (fd.lockedBy === me.uid) throw new Error('mine');
-            if (fd.lockedBy && fd.lockedBy !== me.uid) {
-              if (now - getLockMs(fd) < LOCK_MS) throw new Error('taken');
-            }
-            tx.update(ref, { lockedBy: me.uid, lockedAt: nowTS });
-            claimed = { ...candidate, lockedBy: me.uid, lockedAt: nowTS };
-          });
-        } catch(e) {
-          if (['gone','done','taken','mine','skipped'].includes(e.message)) continue;
-          throw e;
-        }
-      }
-
-      // Нашли карточку в этой базе — не идём дальше по базам
+    // 4. Атомарно захватываем первого доступного
+    let claimed = null;
+    for (const candidate of allCandidates) {
       if (claimed) break;
+      try {
+        await runTransaction(db, async (tx) => {
+          const ref = doc(db,'clients', candidate.id);
+          const fresh = await tx.get(ref);
+          if (!fresh.exists()) throw new Error('gone');
+          const fd = fresh.data();
+          // Финальная проверка внутри транзакции (race condition защита)
+          if (fd.result && fd.result !== 'callback') throw new Error('done');
+          if ((fd.skippedBy || []).includes(me.uid)) throw new Error('skipped'); // я уже скипнул
+          if (fd.lockedBy === me.uid) throw new Error('mine'); // уже наша
+          if (fd.lockedBy && fd.lockedBy !== me.uid) {
+            const age = now - getLockMs(fd);
+            if (age < LOCK_MS) throw new Error('taken'); // ещё занята
+          }
+          tx.update(ref, { lockedBy: me.uid, lockedAt: nowTS });
+          claimed = { ...candidate, lockedBy: me.uid, lockedAt: nowTS };
+        });
+      } catch(e) {
+        if (['gone','done','taken','mine','skipped'].includes(e.message)) continue;
+        throw e;
+      }
     }
 
-    // Если новых нет — показываем перезвоны (только МОИ, один запрос)
+    // 5. Если новых нет — перезвоны (только МОИ)
     if (!claimed) {
       const myCallbacks = await getDocs(query(
         collection(db,'clients'),
@@ -2154,9 +2135,6 @@ async function loadNextClient() {
 
 function renderCard(c) {
   el('cc-id').value = c.id;
-  // Store baseId in DOM so act() can increment counter without extra read
-  const ccBaseId = document.getElementById('cc-base-id');
-  if (ccBaseId) ccBaseId.value = c.baseId || '';
   el('cc-name').textContent = c.deceased || 'Не указано';
   // Region
   const regionEl = el('cc-region');
@@ -2215,10 +2193,7 @@ window.act = async result => {
     });
   } else {
     // Финальный результат — фиксируем и снимаем лок
-    const clientRef = doc(db,'clients',id);
-    // ОПТИМИЗАЦИЯ: baseId берём из DOM (сохранён в renderCard) — 0 дополнительных чтений
-    const baseIdForIncrement = (document.getElementById('cc-base-id') || {}).value || '';
-    await updateDoc(clientRef, {
+    await updateDoc(doc(db,'clients',id), {
       result,
       status: 'called',
       comment,
@@ -2227,16 +2202,9 @@ window.act = async result => {
       lockedBy: null,
       lockedAt: null
     });
-    // Инкрементируем счётчик в документе базы — чтобы loadStats/loadBases
-    // не сканировали всю коллекцию clients каждый раз
-    if (baseIdForIncrement && result !== 'callback') {
-      try {
-        await updateDoc(doc(db,'bases', baseIdForIncrement), { calledCount: increment(1) });
-      } catch(e) { /* не критично */ }
-    }
   }
 
-  // Обновляем счётчики локально в DOM — 0 чтений Firestore
+  // Update counters locally — no reads needed
   const msToday = el('ms-today');
   if (msToday) {
     const cur = parseInt(msToday.textContent)||0;
@@ -2246,11 +2214,6 @@ window.act = async result => {
       const el2 = el(map[result]);
       if (el2) el2.textContent = (parseInt(el2.textContent)||0) + 1;
     }
-  }
-  // Обновляем локальный кеш мини-статистики — добавляем запись без перечтения
-  if (_mgrMiniStatsCache && result !== 'skip') {
-    _mgrMiniStatsCache.push({ result, calledAt: Timestamp.now(), calledBy: me.uid });
-    // НЕ сбрасываем время кеша — данные актуальны, просто добавили строку
   }
 
   if (result === 'callback') addToCallbackQueue(id);
@@ -2349,7 +2312,6 @@ window.importText = async () => {
     name: baseName,
     createdAt: Timestamp.now(),
     total: 0,
-    calledCount: 0,
     clientIds: []
   });
   
@@ -2824,8 +2786,8 @@ let allBases = [];
 
 async function loadBases() {
   el('bases-list').innerHTML = '<div class="empty-cell">⏳ Загрузка...</div>';
-  // ОПТИМИЗАЦИЯ: читаем только коллекцию bases (маленькая).
-  // calledCount хранится прямо в документе базы и обновляется инкрементально.
+  // Parallel: fetch bases + clients at same time
+  // Only load bases — calledCount computed from base.total minus remaining (saved in base doc)
   const basesSnap = await getDocs(query(collection(db,'bases'), orderBy('createdAt','desc')));
   allBases = basesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
   // Load called counts separately per base (light query per base)
@@ -2921,9 +2883,9 @@ window.showBaseStats = async (baseId, baseName) => {
   body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2)">⏳ Загрузка...</div>';
   modal.style.display = 'flex';
 
-  const snap = await getDocs(query(collection(db,'clients'), where('baseId','==',baseId), limit(1000)));
+  const snap = await getDocs(query(collection(db,'clients'), where('baseId','==',baseId)));
   const clients = snap.docs.map(d => d.data());
-  const total = clients.length;
+  const total = filteredClients.length;
   const resultCounts = {};
   RESULT_KEYS.forEach(k => { resultCounts[k] = clients.filter(c => c.result === k).length; });
   const fresh = clients.filter(c => !c.result).length;
@@ -2978,13 +2940,24 @@ window.showBaseStats = async (baseId, baseName) => {
 window.closeBaseStatsModal = () => { document.getElementById('base-stats-modal').style.display='none'; };
 
 async function loadBaseStats(bases) {
-  // ОПТИМИЗАЦИЯ: calledCount уже хранится в документе базы
-  // и обновляется через increment в act() — не нужно читать clients
-  renderBases(bases);
+  loadBaseStatsCounts(bases);
 }
 
 async function loadBaseStatsCounts(bases) {
-  // Оставляем для совместимости — просто рендерим с кешированными данными
+  // Sequential to avoid hammering Firestore (admin panel)
+  try {
+    for (const b of bases) {
+      const snap = await getDocs(query(
+        collection(db,'clients'),
+        where('baseId','==', b.id),
+        limit(500)
+      ));
+      b.calledCount = snap.docs.filter(d => {
+        const r = d.data().result;
+        return r && r !== 'callback';
+      }).length;
+    }
+  } catch(e) { console.error('loadBaseStatsCounts:', e); }
   renderBases(bases);
 }
 
